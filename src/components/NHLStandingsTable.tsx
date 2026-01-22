@@ -1,7 +1,9 @@
 import {useEffect, useState} from "react";
 // import {toast} from "react-toastify";
-import Calendar from 'react-calendar';
+import DateRangePicker from '@wojtekmaj/react-daterange-picker';
+import '@wojtekmaj/react-daterange-picker/dist/DateRangePicker.css';
 import 'react-calendar/dist/Calendar.css';
+// import Calendar from 'react-calendar';
 import * as React from "react";
 
 // FIXME: sort out what isn't configured properly so i can stop ignoring the
@@ -46,19 +48,20 @@ const TeamStat: React.FC<TeamStatEntry> = ({date, goal_diff, goals_against, goal
 );
 
 type DateValuePiece = Date | null;
-type DateValue = DateValuePiece;// | [DateValuePiece, DateValuePiece];  // FIXME: we're going to use the range version instead, soon...
+type DateValue = DateValuePiece | [DateValuePiece, DateValuePiece];
 
 export default function TeamStatList() {
     const [teamStats, setTeamStats] = useState<TeamStatEntry[]>([]);
-    const [startDate, setStartDate] = useState<DateValue>(new Date());
-    const [endDate, setEndDate] = useState<DateValue>(new Date());
+    const [dateRange, setDateRange] = useState<Value>([new Date(), new Date()]);
+    // const [startDate, setStartDate] = useState<DateValue>(new Date());
+    // const [endDate, setEndDate] = useState<DateValue>(new Date());
 
     // this method fetches the NHL stats from the database.
     useEffect(() => {
         async function getTeamStats() {
             // FIXME: THE REACT-CALENDAR COMPONENT SEEMS TO ALLOW FOR THIS TO BE INTRINSICALLY CONFIGURED
-            const prettyStartDate = changeDateToMyPreferredStringFormat(startDate);
-            const prettyEndDate = changeDateToMyPreferredStringFormat(endDate);
+            const prettyStartDate = changeDateToMyPreferredStringFormat(dateRange[0]);
+            const prettyEndDate = changeDateToMyPreferredStringFormat(dateRange[1]);
 
             const response = await fetch(`http://localhost:5050/api/nhl_standings/?startDate=${prettyStartDate}&endDate=${prettyEndDate}`);
             if (!response.ok) {
@@ -71,7 +74,7 @@ export default function TeamStatList() {
         }
 
         getTeamStats();
-    }, [startDate, endDate]);
+    }, dateRange);
 
     // this method will map out the team stats on the table
     function teamStatsList() {
@@ -97,22 +100,26 @@ export default function TeamStatList() {
     }
 
     // FIXME: THE REACT-CALENDAR COMPONENT SEEMS TO ALLOW FOR THIS TO BE INTRINSICALLY CONFIGURED
-    function changeDateToMyPreferredStringFormat(inputDate: DateValue) {
-        if(inputDate === null) {
+    function changeDateToMyPreferredStringFormat(dateRange: DateValue) {
+        if(dateRange === null) {
             return;
         }
-        const monthDigits: string = ('0'+(inputDate.getMonth()+1)).slice(-2);
-        const dayDigits: string = ('0'+inputDate.getDate()).slice(-2);
-        return `${inputDate.getFullYear()}-${monthDigits}-${dayDigits}`;
+
+        if(dateRange instanceof Date) {
+            const inputDate = dateRange;
+            const monthDigits: string = ('0' + (inputDate.getMonth() + 1)).slice(-2);
+            const dayDigits: string = ('0' + inputDate.getDate()).slice(-2);
+            return `${inputDate.getFullYear()}-${monthDigits}-${dayDigits}`;
+        }
     }
 
-    const onChangeStart = (value: Value)=> {
-        setStartDate(value);
-    }
-
-    const onChangeEnd = (value: Value) => {
-        setEndDate(value);
-    }
+    // const onChangeStart = (value: Value)=> {
+    //     setStartDate(value);
+    // }
+    //
+    // const onChangeEnd = (value: Value) => {
+    //     setEndDate(value);
+    // }
 
     // this following section will display the table with the team standings stats
     const CLASS_TH_LEFT = "h-12 px-4 text-left align-middle font-medium text-muted-foreground";
@@ -124,14 +131,8 @@ export default function TeamStatList() {
             <div className="flex justify-start">
                 <div>
                     <div className="text-blue-800 bg-blue-200 font-bold">
-                        Start
-                        <Calendar onChange={onChangeStart} value={startDate}/>
-                    </div>
-                </div>
-                <div>
-                    <div className="text-blue-800 bg-blue-200 font-bold">
-                        End
-                        <Calendar onChange={onChangeEnd} value={endDate}/>
+                        Date Range:
+                        <DateRangePicker onChange={setDateRange} value={dateRange}/>
                     </div>
                 </div>
             </div>
