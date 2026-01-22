@@ -1,9 +1,8 @@
 import {useEffect, useState} from "react";
-// import {toast} from "react-toastify";
+import {toast} from "react-toastify";
 import DateRangePicker from '@wojtekmaj/react-daterange-picker';
 import '@wojtekmaj/react-daterange-picker/dist/DateRangePicker.css';
 import 'react-calendar/dist/Calendar.css';
-// import Calendar from 'react-calendar';
 import * as React from "react";
 
 // FIXME: sort out what isn't configured properly so i can stop ignoring the
@@ -48,18 +47,14 @@ const TeamStat: React.FC<TeamStatEntry> = ({date, goal_diff, goals_against, goal
 );
 
 type DateValuePiece = Date | null;
-type DateValue = DateValuePiece | [DateValuePiece, DateValuePiece];
 
 export default function TeamStatList() {
     const [teamStats, setTeamStats] = useState<TeamStatEntry[]>([]);
     const [dateRange, setDateRange] = useState<Value>([new Date(), new Date()]);
-    // const [startDate, setStartDate] = useState<DateValue>(new Date());
-    // const [endDate, setEndDate] = useState<DateValue>(new Date());
 
     // this method fetches the NHL stats from the database.
     useEffect(() => {
         async function getTeamStats() {
-            // FIXME: THE REACT-CALENDAR COMPONENT SEEMS TO ALLOW FOR THIS TO BE INTRINSICALLY CONFIGURED
             const prettyStartDate = changeDateToMyPreferredStringFormat(dateRange[0]);
             const prettyEndDate = changeDateToMyPreferredStringFormat(dateRange[1]);
 
@@ -99,27 +94,34 @@ export default function TeamStatList() {
         });
     }
 
-    // FIXME: THE REACT-CALENDAR COMPONENT SEEMS TO ALLOW FOR THIS TO BE INTRINSICALLY CONFIGURED
-    function changeDateToMyPreferredStringFormat(dateRange: DateValue) {
-        if(dateRange === null) {
+    function changeDateToMyPreferredStringFormat(originalDate: DateValuePiece) {
+        function join(date: Date, options: any[], separator: string) {
+            function format(option: Intl.DateTimeFormatOptions | undefined) {
+                let formatter = new Intl.DateTimeFormat('en', option);
+                return formatter.format(date);
+            }
+            return options.map(format).join(separator);
+        }
+
+        if(originalDate === null) {
             return;
         }
 
-        if(dateRange instanceof Date) {
-            const inputDate = dateRange;
-            const monthDigits: string = ('0' + (inputDate.getMonth() + 1)).slice(-2);
-            const dayDigits: string = ('0' + inputDate.getDate()).slice(-2);
-            return `${inputDate.getFullYear()}-${monthDigits}-${dayDigits}`;
-        }
+        const options = [{year: 'numeric'}, {month: '2-digit'}, {day: '2-digit'}];
+        const prettyDate = join(originalDate, options, '-');
+        toast.info(DateTranslation(originalDate, prettyDate));
+        return prettyDate;
     }
 
-    // const onChangeStart = (value: Value)=> {
-    //     setStartDate(value);
-    // }
-    //
-    // const onChangeEnd = (value: Value) => {
-    //     setEndDate(value);
-    // }
+    function DateTranslation(originalDate: Date, prettyDate: String) {
+        return (
+            <div className="grid grid-cols-2 w-full">
+                <h3 className="text-zinc-800 text-sm font-bold col-span-2">DATE PRETTIFIED!</h3>
+                <p className="p-2 text-sm">Original</p><p>{originalDate.toISOString()}</p>
+                <p className="p-2 text-sm">Pretty</p><p>{prettyDate}</p>
+            </div>
+        );
+    }
 
     // this following section will display the table with the team standings stats
     const CLASS_TH_LEFT = "h-12 px-4 text-left align-middle font-medium text-muted-foreground";
@@ -132,7 +134,7 @@ export default function TeamStatList() {
                 <div>
                     <div className="text-blue-800 bg-blue-200 font-bold">
                         Date Range:
-                        <DateRangePicker onChange={setDateRange} value={dateRange}/>
+                        <DateRangePicker onChange={setDateRange} value={dateRange} format="yyyy-MM-dd"/>
                     </div>
                 </div>
             </div>
@@ -141,7 +143,6 @@ export default function TeamStatList() {
                     <table className="w-full caption-bottom text-sm">
                         <thead className="[&amp;_tr]:border-b">
                         <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
-                        {/*<tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">*/}
                             <th className={CLASS_TH_LEFT}>Date</th>
                             <th className={CLASS_TH_CENTER}>Team</th>
                             <th className={CLASS_TH_CENTER}>Wins</th>
