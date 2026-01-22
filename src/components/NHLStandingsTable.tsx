@@ -1,10 +1,14 @@
 import {useEffect, useState} from "react";
 // import {toast} from "react-toastify";
 import Calendar from 'react-calendar';
+import 'react-calendar/dist/Calendar.css';
 import * as React from "react";
+
+// FIXME: sort out what isn't configured properly so i can stop ignoring the
+//        'cannot find module react-calender/dist/shared/types' error that
+//        IDEA is giving me, even though the code itself *can* find that module
 // @ts-ignore
 import type {Value} from "react-calendar/dist/shared/types";
-// import type {Value} from "react-calendar/dist/shared/types";
 
 const CLASS_TD = "p-4 align-middle"
 const CLASS_TD_LEFT = `${CLASS_TD} text-left`;
@@ -21,15 +25,17 @@ interface TeamStatEntry {
     ot_losses: number,
     points: number,
     wins: string,
-    _id: string,
+    key: string,
 }
 
 const TeamStat: React.FC<TeamStatEntry> = ({date, goal_diff, goals_against, goals_for, local_logo, losses, team_name, ot_losses, points, wins}: TeamStatEntry) => (
-    <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
+    <tr className="p-0 transition-colors data-[state=selected]:bg-muted">
         <td className={CLASS_TD_LEFT}>{date}</td>
-        <td className={`flex ${CLASS_TD_LEFT}`}>
-            <img className="h-16 w-16" src={`src/assets/logos/${local_logo}`} alt="logo"></img>
-            <p className={CLASS_TD_LEFT}>{team_name}</p>
+        <td className={`flex`}>
+            <div>
+            <img className="h-16 w-16 align-middle justify-center" src={`src/assets/logos/${local_logo}`} alt="logo"></img>
+            <p className={CLASS_TD}>{team_name}</p>
+            </div>
         </td>
         <td className={CLASS_TD_CENTER}>{wins}</td>
         <td className={CLASS_TD_CENTER}>{losses}</td>
@@ -42,19 +48,17 @@ const TeamStat: React.FC<TeamStatEntry> = ({date, goal_diff, goals_against, goal
 );
 
 type DateValuePiece = Date | null;
-
-type DateValue = DateValuePiece;// | [DateValuePiece, DateValuePiece];
+type DateValue = DateValuePiece;// | [DateValuePiece, DateValuePiece];  // FIXME: we're going to use the range version instead, soon...
 
 export default function TeamStatList() {
     const [teamStats, setTeamStats] = useState<TeamStatEntry[]>([]);
-    // const [startDate, setStartDate] = useState<DateValue>(changeDateToMyPreferredStringFormat(new Date()));
-    // const [endDate, setEndDate] = useState<DateValue>(changeDateToMyPreferredStringFormat(new Date()));
     const [startDate, setStartDate] = useState<DateValue>(new Date());
     const [endDate, setEndDate] = useState<DateValue>(new Date());
 
     // this method fetches the NHL stats from the database.
     useEffect(() => {
         async function getTeamStats() {
+            // FIXME: THE REACT-CALENDAR COMPONENT SEEMS TO ALLOW FOR THIS TO BE INTRINSICALLY CONFIGURED
             const prettyStartDate = changeDateToMyPreferredStringFormat(startDate);
             const prettyEndDate = changeDateToMyPreferredStringFormat(endDate);
 
@@ -88,7 +92,7 @@ export default function TeamStatList() {
                     ot_losses={team_stat.ot_losses}
                     points={team_stat.points}
                     wins={team_stat.wins}
-                    _id= {id_key}
+                    key={id_key}
                 />
             );
         });
@@ -104,31 +108,17 @@ export default function TeamStatList() {
         return `${inputDate.getFullYear()}-${monthDigits}-${dayDigits}`;
     }
 
-    // function onChangeStart(newStartDate: DateValue) {
-    //     // const simpleStartDate = changeDateToMyPreferredStringFormat(newStartDate);
-    //     // const msg = `onChangeStart(${newStartDate}) => ${simpleStartDate}`;
-    //     // toast.info(msg);
-    //     // console.log(msg);
-    //     setStartDate(newStartDate);
-    // }
-    //
-    // function onChangeEnd(newEndDate: DateValue) {
-    //     // const simpleEndDate = changeDateToMyPreferredStringFormat(newEndDate);
-    //     // toast.info(`onChangeEnd(${newEndDate}) => ${simpleEndDate}`);
-    //     setEndDate(newEndDate);
-    // }
+    const onChangeStart = (value: Value)=> {
+        setStartDate(value);
+    }
+
+    const onChangeEnd = (value: Value) => {
+        setEndDate(value);
+    }
 
     // this following section will display the table with the team standings stats
     const CLASS_TH_LEFT = "h-12 px-4 text-left align-middle font-medium text-muted-foreground";
     const CLASS_TH_CENTER = "h-12 px-4 text-center align-middle font-medium text-muted-foreground";
-
-    const onChangeStart2 = (value: Value)=> {
-        setStartDate(value);
-    }
-
-    const onChangeEnd2 = (value: Value) => {
-        setEndDate(value);
-    }
 
     return (
         <>
@@ -137,15 +127,13 @@ export default function TeamStatList() {
                 <div>
                     <div className="text-blue-800 bg-blue-200 font-bold">
                         Start
-                        <Calendar onChange={onChangeStart2} value={startDate}/>
-                        {/*<Calendar onChange={onChangeStart} value={startDate}/>*/}
+                        <Calendar onChange={onChangeStart} value={startDate}/>
                     </div>
                 </div>
                 <div>
                     <div className="text-blue-800 bg-blue-200 font-bold">
                         End
-                        <Calendar onChange={onChangeEnd2} value={endDate}/>
-                        {/*<Calendar onChange={onChangeEnd} value={endDate}/>*/}
+                        <Calendar onChange={onChangeEnd} value={endDate}/>
                     </div>
                 </div>
             </div>
@@ -154,8 +142,9 @@ export default function TeamStatList() {
                     <table className="w-full caption-bottom text-sm">
                         <thead className="[&amp;_tr]:border-b">
                         <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
+                        {/*<tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">*/}
                             <th className={CLASS_TH_LEFT}>Date</th>
-                            <th className={CLASS_TH_LEFT}>Name</th>
+                            <th className={CLASS_TH_CENTER}>Team</th>
                             <th className={CLASS_TH_CENTER}>Wins</th>
                             <th className={CLASS_TH_CENTER}>Losses</th>
                             <th className={CLASS_TH_CENTER}>OT Losses</th>

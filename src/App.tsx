@@ -6,7 +6,7 @@ const App = () => {
     return (
         <div className="w-full p-6">
             <Navbar />
-            <Outlet />
+            <Outlet/>
             <ToastContainer/>
             <div className="bg-neutral-100 p-4 w-full">
                 <img alt="SomedayTundra logo" className="h-10 mx-auto" src="src/assets/somedaytundra.png"></img>
