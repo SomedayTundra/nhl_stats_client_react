@@ -32,10 +32,8 @@ const TeamStat: React.FC<TeamStatEntry> = ({date, goal_diff, goals_against, goal
     <tr className="p-0 transition-colors data-[state=selected]:bg-muted">
         <td className={CLASS_TD_LEFT}>{date}</td>
         <td className={`flex`}>
-            <div>
             <img className="h-16 w-16 align-middle justify-center" src={`src/assets/logos/${local_logo}`} alt="logo"></img>
             <p className={CLASS_TD}>{team_name}</p>
-            </div>
         </td>
         <td className={CLASS_TD_CENTER}>{wins}</td>
         <td className={CLASS_TD_CENTER}>{losses}</td>
