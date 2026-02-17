@@ -11,6 +11,8 @@ import * as React from "react";
 // @ts-ignore
 import type {Value} from "react-calendar/dist/shared/types";
 
+const SERVER = 'localhost:8000'
+
 const CLASS_TD = "p-4 align-middle"
 const CLASS_TD_LEFT = `${CLASS_TD} text-left`;
 const CLASS_TD_CENTER = `${CLASS_TD} text-center`;
@@ -20,7 +22,7 @@ interface TeamStatEntry {
     goal_diff: number,
     goals_against: number,
     goals_for: number,
-    local_logo: string,
+    logo: string,
     losses: number,
     team_name: string,
     ot_losses: number,
@@ -29,11 +31,12 @@ interface TeamStatEntry {
     key: string,
 }
 
-const TeamStat: React.FC<TeamStatEntry> = ({date, goal_diff, goals_against, goals_for, local_logo, losses, team_name, ot_losses, points, wins}: TeamStatEntry) => (
+// TODO: FIGURE OUT IF IMAGES FETCHED VIA localhost:8000/.../logos/{name} ARE DEFINITELY CACHED BY THE BROWSER
+const TeamStat: React.FC<TeamStatEntry> = ({date, goal_diff, goals_against, goals_for, logo, losses, team_name, ot_losses, points, wins}: TeamStatEntry) => (
     <tr className="p-0 transition-colors data-[state=selected]:bg-muted">
         <td className={CLASS_TD_LEFT}>{date}</td>
         <td className={`flex`}>
-            <img className="h-16 w-16 align-middle justify-center" src={`src/assets/logos/${local_logo}`} alt="logo"></img>
+            <img className="h-16 w-16 align-middle justify-center" src={`http://localhost:8000/api/nhl_standings/logos?logo_filename=${logo}`} alt="logo"></img>
             <p className={CLASS_TD}>{team_name}</p>
         </td>
         <td className={CLASS_TD_CENTER}>{wins}</td>
@@ -58,7 +61,7 @@ export default function TeamStatList() {
             const prettyStartDate = changeDateToMyPreferredStringFormat(dateRange[0]);
             const prettyEndDate = changeDateToMyPreferredStringFormat(dateRange[1]);
 
-            const response = await fetch(`http://localhost:5050/api/nhl_standings/?startDate=${prettyStartDate}&endDate=${prettyEndDate}`);
+            const response = await fetch(`http://${SERVER}/api/nhl_standings/?start_date=${prettyStartDate}&end_date=${prettyEndDate}`);
             if (!response.ok) {
                 const message = `An error occurred: ${response.statusText}`;
                 console.error(message);
@@ -82,7 +85,7 @@ export default function TeamStatList() {
                     goal_diff= {team_stat.goal_diff}
                     goals_against= {team_stat.goals_against}
                     goals_for={team_stat.goals_for}
-                    local_logo={team_stat.local_logo}
+                    logo={team_stat.logo}
                     losses={team_stat.losses}
                     team_name={team_stat.team_name}
                     ot_losses={team_stat.ot_losses}
