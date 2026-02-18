@@ -1,5 +1,5 @@
 import {NavLink, type NavLinkRenderProps} from "react-router-dom";
-import logo from "..//assets//nhl_logo.png"
+import logo from "../assets/nhl_logo.png"
 
 const NavBar = () => {
 

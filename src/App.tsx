@@ -1,7 +1,7 @@
 import { Outlet } from "react-router-dom";
 import Navbar from "./components/NavBar.tsx";
 import {ToastContainer} from 'react-toastify';
-import logo_full from ".//assets//somedaytundra_full.png"
+import logo_full from "./assets/somedaytundra_full.png"
 
 const App = () => {
     return (
