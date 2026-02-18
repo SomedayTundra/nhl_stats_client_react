@@ -132,7 +132,7 @@ export default function TeamStatList() {
 
     return (
         <>
-            <h3 className="text-lg font-semibold p-4">Team Standings</h3>
+            <h3 className="text-lg font-semibold p-4">Team Standings TABLE</h3>
             <div className="flex justify-start">
                 <div>
                     <div className="text-blue-800 bg-blue-200 font-bold p-1">
