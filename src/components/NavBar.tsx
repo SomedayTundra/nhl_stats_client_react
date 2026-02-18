@@ -10,9 +10,9 @@ const NavBar = () => {
     return (
         <div>
             <nav className="bg-indigo-700 border-b border-indigo-500">
-                <div className="mx-auto max-w-7xl px-2 sm:px-6 lg:px-8">
-                    <div className="flex h-20 items-center justify-between">
-                        <div className="flex flex-1 items-center justify-center md:items-stretch md:justify-start">
+                <div className="mx-auto px-2 sm:px-6 lg:px-8">
+                    <div className="flex h-20 items-center justify-start">
+                        <div className="flex flex-1 items-start justify-left md:items-stretch md:justify-start">
                             <NavLink to="/" className="flex shrink-0 items-center mr-4">
                                 <img
                                     className="h-10 w-auto"
@@ -23,19 +23,12 @@ const NavBar = () => {
                                     NHL Stats
                                 </span>
                             </NavLink>
-                            <div className="md:ml-auto">
-                                <div className="flex space-x-2">
-                                    <NavLink to="/" className={linkClass}>
-                                        Home
-                                    </NavLink>
-                                    <NavLink to="/nhl_standings" className={linkClass}>
-                                        Table
-                                    </NavLink>
-                                    <NavLink to="/nhl_stats_chart" className={linkClass}>
-                                        Chart
-                                    </NavLink>
-                                </div>
-                            </div>
+                            <NavLink to="/nhl_standings" className={linkClass}>
+                                Table
+                            </NavLink>
+                            <NavLink to="/nhl_stats_chart" className={linkClass}>
+                                Chart
+                            </NavLink>
                         </div>
                     </div>
                 </div>
