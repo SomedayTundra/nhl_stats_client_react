@@ -1,5 +1,5 @@
 import {useEffect, useState} from "react";
-import {toast} from "react-toastify";
+// import {toast} from "react-toastify";
 import DateRangePicker from '@wojtekmaj/react-daterange-picker';
 import '@wojtekmaj/react-daterange-picker/dist/DateRangePicker.css';
 import 'react-calendar/dist/Calendar.css';
@@ -112,19 +112,19 @@ export default function TeamStatList() {
 
         const options = [{year: 'numeric'}, {month: '2-digit'}, {day: '2-digit'}];
         const prettyDate = join(originalDate, options, '-');
-        toast.info(DateTranslation(originalDate, prettyDate));
+        // toast.info(DateTranslationToast(originalDate, prettyDate));
         return prettyDate;
     }
 
-    function DateTranslation(originalDate: Date, prettyDate: String) {
-        return (
-            <div className="grid grid-cols-2 w-full">
-                <h3 className="text-zinc-800 text-sm font-bold col-span-2">DATE PRETTIFIED!</h3>
-                <p className="p-2 text-sm">Original</p><p>{originalDate.toISOString()}</p>
-                <p className="p-2 text-sm">Pretty</p><p>{prettyDate}</p>
-            </div>
-        );
-    }
+    // function DateTranslationToast(originalDate: Date, prettyDate: String) {
+    //     return (
+    //         <div className="grid grid-cols-2 w-full">
+    //             <h3 className="text-zinc-800 text-sm font-bold col-span-2">DATE PRETTIFIED!</h3>
+    //             <p className="p-2 text-sm">Original</p><p>{originalDate.toISOString()}</p>
+    //             <p className="p-2 text-sm">Pretty</p><p>{prettyDate}</p>
+    //         </div>
+    //     );
+    // }
 
     // this following section will display the table with the team standings stats
     const CLASS_TH_LEFT = "h-12 px-4 text-left align-middle font-medium text-muted-foreground";
@@ -135,8 +135,8 @@ export default function TeamStatList() {
             <h3 className="text-lg font-semibold p-4">Team Standings</h3>
             <div className="flex justify-start">
                 <div>
-                    <div className="text-blue-800 bg-blue-200 font-bold">
-                        Date Range:
+                    <div className="text-blue-800 bg-blue-200 font-bold p-1">
+                        <span className="pr-2">Date Range:</span>
                         <DateRangePicker onChange={setDateRange} value={dateRange} format="yyyy-MM-dd"/>
                     </div>
                 </div>
