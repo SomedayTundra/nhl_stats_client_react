@@ -1,9 +1,8 @@
+import * as React from "react";
 import {useEffect, useState} from "react";
-// import {toast} from "react-toastify";
 import DateRangePicker from '@wojtekmaj/react-daterange-picker';
 import '@wojtekmaj/react-daterange-picker/dist/DateRangePicker.css';
 import 'react-calendar/dist/Calendar.css';
-import * as React from "react";
 
 // FIXME: sort out what isn't configured properly so i can stop ignoring the
 //        'cannot find module react-calender/dist/shared/types' error that
@@ -25,6 +24,8 @@ interface TeamStatEntry {
     logo: string,
     losses: number,
     team_name: string,
+    team_common_name: string,
+    team_abbrev: string,
     ot_losses: number,
     points: number,
     wins: string,
@@ -32,12 +33,12 @@ interface TeamStatEntry {
 }
 
 // TODO: FIGURE OUT IF IMAGES FETCHED VIA localhost:8000/.../logos/{name} ARE DEFINITELY CACHED BY THE BROWSER
-const TeamStat: React.FC<TeamStatEntry> = ({date, goal_diff, goals_against, goals_for, logo, losses, team_name, ot_losses, points, wins}: TeamStatEntry) => (
+const TeamStat: React.FC<TeamStatEntry> = ({date, goal_diff, goals_against, goals_for, logo, losses, team_name, team_common_name, team_abbrev, ot_losses, points, wins}: TeamStatEntry) => (
     <tr className="p-0 transition-colors data-[state=selected]:bg-muted">
         <td className={CLASS_TD_LEFT}>{date}</td>
         <td className={`flex`}>
             <img className="h-16 w-16 align-middle justify-center" src={`http://localhost:8000/api/nhl_standings/logos?logo_filename=${logo}`} alt="logo"></img>
-            <p className={CLASS_TD}>{team_name}</p>
+            <p className={CLASS_TD}>{team_name} ({team_common_name}) [{team_abbrev}]</p>
         </td>
         <td className={CLASS_TD_CENTER}>{wins}</td>
         <td className={CLASS_TD_CENTER}>{losses}</td>
@@ -88,6 +89,8 @@ export default function TeamStatList() {
                     logo={team_stat.logo}
                     losses={team_stat.losses}
                     team_name={team_stat.team_name}
+                    team_common_name={team_stat.team_common_name}
+                    team_abbrev={team_stat.team_abbrev}
                     ot_losses={team_stat.ot_losses}
                     points={team_stat.points}
                     wins={team_stat.wins}
@@ -111,20 +114,17 @@ export default function TeamStatList() {
         }
 
         const options = [{year: 'numeric'}, {month: '2-digit'}, {day: '2-digit'}];
-        const prettyDate = join(originalDate, options, '-');
-        // toast.info(DateTranslationToast(originalDate, prettyDate));
-        return prettyDate;
+        return join(originalDate, options, '-');
     }
 
-    // function DateTranslationToast(originalDate: Date, prettyDate: String) {
-    //     return (
-    //         <div className="grid grid-cols-2 w-full">
-    //             <h3 className="text-zinc-800 text-sm font-bold col-span-2">DATE PRETTIFIED!</h3>
-    //             <p className="p-2 text-sm">Original</p><p>{originalDate.toISOString()}</p>
-    //             <p className="p-2 text-sm">Pretty</p><p>{prettyDate}</p>
-    //         </div>
-    //     );
-    // }
+    // @ts-ignore
+    function ShowToast(msg: String) {
+        return (
+            <div className="grid grid-cols-2 w-full">
+                <h3 className="text-zinc-800 text-sm font-bold col-span-2">{msg}</h3>
+            </div>
+        );
+    }
 
     // this following section will display the table with the team standings stats
     const CLASS_TH_LEFT = "h-12 px-4 text-left align-middle font-medium text-muted-foreground";
