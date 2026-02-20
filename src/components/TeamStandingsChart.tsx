@@ -1,9 +1,9 @@
+import * as React from "react";
 import {useEffect, useState} from "react";
 // import {toast} from "react-toastify";
 import DateRangePicker from '@wojtekmaj/react-daterange-picker';
 import '@wojtekmaj/react-daterange-picker/dist/DateRangePicker.css';
 import 'react-calendar/dist/Calendar.css';
-import * as React from "react";
 
 // FIXME: sort out what isn't configured properly so i can stop ignoring the
 //        'cannot find module react-calender/dist/shared/types' error that
@@ -51,6 +51,50 @@ const TeamStat: React.FC<TeamStatEntry> = ({date, goal_diff, goals_against, goal
 
 type DateValuePiece = Date | null;
 
+"use client"
+
+import {GitCommitVertical, TrendingUp} from "lucide-react"
+import {CartesianGrid, Line, LineChart, XAxis} from "recharts"
+
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardFooter,
+    CardHeader,
+    CardTitle,
+} from "./ui/card"
+
+import {
+    ChartContainer,
+    ChartTooltip,
+    ChartTooltipContent,
+    type ChartConfig,
+} from "./ui/chart"
+
+export const description = "A multiple line chart"
+
+const chartData = [
+    {month: "Oct 21", ducks: 186, wild: 80},
+    {month: "Oct 22", ducks: 305, wild: 200},
+    {month: "Oct 23", ducks: 237, wild: 120},
+    {month: "Oct 24", ducks: 73, wild: 190},
+    {month: "Oct 25", ducks: 209, wild: 130},
+    {month: "Oct 26", ducks: 214, wild: 140},
+]
+
+const chartConfig = {
+    ducks: {
+        label: "Ducks",
+        color: "var(--chart-1)",
+    },
+    wild: {
+        label: "Wild",
+        color: "var(--chart-2)",
+    },
+} satisfies ChartConfig
+
+
 export default function TeamStatList() {
     const [teamStats, setTeamStats] = useState<TeamStatEntry[]>([]);
     const [dateRange, setDateRange] = useState<Value>([new Date(), new Date()]);
@@ -58,8 +102,8 @@ export default function TeamStatList() {
     // this method fetches the NHL stats from the database.
     useEffect(() => {
         async function getTeamStats() {
-            const prettyStartDate = changeDateToMyPreferredStringFormat(dateRange[0]);
-            const prettyEndDate = changeDateToMyPreferredStringFormat(dateRange[1]);
+            const prettyStartDate: string|undefined = changeDateToMyPreferredStringFormat(dateRange[0]);
+            const prettyEndDate: string|undefined = changeDateToMyPreferredStringFormat(dateRange[1]);
 
             const response = await fetch(`http://${SERVER}/api/nhl_standings/?start_date=${prettyStartDate}&end_date=${prettyEndDate}`);
             if (!response.ok) {
@@ -68,6 +112,7 @@ export default function TeamStatList() {
                 return;
             }
             const team_stats = await response.json();
+
             setTeamStats(team_stats);
         }
 
@@ -76,14 +121,14 @@ export default function TeamStatList() {
 
     // this method will map out the team stats on the table
     function teamStatsList() {
-        return teamStats.map((team_stat) => {
+        return teamStats.map((team_stat: TeamStatEntry) => {
             console.debug(team_stat);
             const id_key = team_stat.date + '_' + team_stat.team_name;
             return (
                 <TeamStat
                     date={team_stat.date}
-                    goal_diff= {team_stat.goal_diff}
-                    goals_against= {team_stat.goals_against}
+                    goal_diff={team_stat.goal_diff}
+                    goals_against={team_stat.goals_against}
                     goals_for={team_stat.goals_for}
                     logo={team_stat.logo}
                     losses={team_stat.losses}
@@ -103,66 +148,94 @@ export default function TeamStatList() {
                 let formatter = new Intl.DateTimeFormat('en', option);
                 return formatter.format(date);
             }
+
             return options.map(format).join(separator);
         }
 
-        if(originalDate === null) {
+        if (originalDate === null) {
             return;
         }
 
         const options = [{year: 'numeric'}, {month: '2-digit'}, {day: '2-digit'}];
-        const prettyDate = join(originalDate, options, '-');
+
+        // EXAMPLE OF HOW TO SHOW A TOAST IN THE <TOASTCONTAINER/> OVER IN App.tsx
         // toast.info(DateTranslationToast(originalDate, prettyDate));
-        return prettyDate;
+
+        return join(originalDate, options, '-');
     }
 
-    // function DateTranslationToast(originalDate: Date, prettyDate: String) {
-    //     return (
-    //         <div className="grid grid-cols-2 w-full">
-    //             <h3 className="text-zinc-800 text-sm font-bold col-span-2">DATE PRETTIFIED!</h3>
-    //             <p className="p-2 text-sm">Original</p><p>{originalDate.toISOString()}</p>
-    //             <p className="p-2 text-sm">Pretty</p><p>{prettyDate}</p>
-    //         </div>
-    //     );
-    // }
-
-    // this following section will display the table with the team standings stats
-    const CLASS_TH_LEFT = "h-12 px-4 text-left align-middle font-medium text-muted-foreground";
-    const CLASS_TH_CENTER = "h-12 px-4 text-center align-middle font-medium text-muted-foreground";
+    // @ts-ignore
+    function ShowToast(msg: String) {
+        return (
+            <div className="grid grid-cols-2 w-full">
+                <h3 className="text-zinc-800 text-sm font-bold col-span-2">{msg}</h3>
+            </div>
+        );
+    }
 
     return (
-        <>
-            <h3 className="text-lg font-semibold p-4">Team Standings CHART</h3>
-            <div className="flex justify-start">
-                <div>
-                    <div className="text-blue-800 bg-blue-200 font-bold p-1">
-                        <span className="pr-2">Date Range:</span>
-                        <DateRangePicker onChange={setDateRange} value={dateRange} format="yyyy-MM-dd"/>
+        <Card className="w-1/2">
+            <CardHeader>
+                <CardTitle>Team Standings Per Day</CardTitle>
+                <CardDescription>
+                    <div className="flex justify-start">
+                        <div>
+                            <div className="text-blue-800 bg-blue-200 font-bold p-1">
+                                <span className="pr-2">Date Range:</span>
+                                <DateRangePicker onChange={setDateRange} value={dateRange} format="yyyy-MM-dd"/>
+                            </div>
+                        </div>
+                    </div>
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                <ChartContainer config={chartConfig}>
+                    <LineChart
+                        accessibilityLayer
+                        data={chartData}
+                        margin={{
+                            left: 12,
+                            right: 12,
+                        }}
+                    >
+                        <CartesianGrid vertical={false}/>
+                        <XAxis
+                            dataKey="month"
+                            tickLine={true}
+                            axisLine={true}
+                            tickMargin={8}
+                        />
+                        <ChartTooltip cursor={true} content={<ChartTooltipContent/>}/>
+                        <Line
+                            dataKey="ducks"
+                            type="monotone"
+                            stroke="var(--chart-1)"
+                            strokeWidth={2}
+                            dot={{
+                                fill: "var(--chart-1)",
+                            }}
+                        />
+                        <Line
+                            dataKey="wild"
+                            type="monotone"
+                            stroke="var(--chart-2)"
+                            strokeWidth={2}
+                            dot={{
+                                fill: "var(--chart-2)",
+                            }}
+                        />
+                    </LineChart>
+                </ChartContainer>
+            </CardContent>
+            <CardFooter>
+                <div className="flex w-full items-start gap-2 text-sm">
+                    <div className="grid gap-2">
+                        <div className="flex items-center gap-2 leading-none font-medium">
+                            THIS IS THE FOOTER <TrendingUp className="h-4 w-4"/>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div className="border rounded-lg overflow-hidden">
-                <div className="relative w-full overflow-auto">
-                    <table className="w-full caption-bottom text-sm">
-                        <thead className="[&amp;_tr]:border-b">
-                        <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
-                            <th className={CLASS_TH_LEFT}>Date</th>
-                            <th className={CLASS_TH_CENTER}>Team</th>
-                            <th className={CLASS_TH_CENTER}>Wins</th>
-                            <th className={CLASS_TH_CENTER}>Losses</th>
-                            <th className={CLASS_TH_CENTER}>OT Losses</th>
-                            <th className={CLASS_TH_CENTER}>Points</th>
-                            <th className={CLASS_TH_CENTER}>Goals For</th>
-                            <th className={CLASS_TH_CENTER}>Goals Against</th>
-                            <th className={CLASS_TH_CENTER}>Goal Diff</th>
-                        </tr>
-                        </thead>
-                        <tbody className="[&amp;_tr:last-child]:border-0">
-                        {teamStatsList()}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </>
+            </CardFooter>
+        </Card>
     );
 }
