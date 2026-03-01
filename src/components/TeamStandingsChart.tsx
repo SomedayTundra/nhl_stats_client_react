@@ -151,6 +151,8 @@ export default function TeamStandingsChart() {
         );
     }
 
+    const lineType = "monotone"
+
     return (
         <Card className="w-11/12">
             <CardHeader>
@@ -186,56 +188,56 @@ export default function TeamStandingsChart() {
                         <ChartTooltip cursor={true} content={<ChartTooltipContent/>}/>
                         <Line
                             dataKey="TBL"
-                            type="monotone"
+                            type={lineType}
                             stroke="var(--chart-3)"
                             strokeWidth={2}
                             dot={false}
                         />
                         <Line
                             dataKey="BUF"
-                            type="monotone"
+                            type={lineType}
                             stroke="var(--chart-2)"
                             strokeWidth={2}
                             dot={false}
                         />
                         <Line
                             dataKey="DET"
-                            type="monotone"
+                            type={lineType}
                             stroke="var(--chart-1)"
                             strokeWidth={2}
                             dot={false}
                         />
                         <Line
                             dataKey="MTL"
-                            type="monotone"
+                            type={lineType}
                             stroke="var(--chart-4)"
                             strokeWidth={2}
                             dot={false}
                         />
                         <Line
                             dataKey="BOS"
-                            type="monotone"
+                            type={lineType}
                             stroke="var(--chart-5)"
                             strokeWidth={2}
                             dot={false}
                         />
                         <Line
                             dataKey="OTT"
-                            type="monotone"
+                            type={lineType}
                             stroke="var(--chart-6)"
                             strokeWidth={2}
                             dot={false}
                         />
                         <Line
                             dataKey="FLA"
-                            type="monotone"
+                            type={lineType}
                             stroke="var(--chart-7)"
                             strokeWidth={2}
                             dot={false}
                         />
                         <Line
                             dataKey="TOR"
-                            type="monotone"
+                            type={lineType}
                             stroke="var(--chart-8)"
                             strokeWidth={2}
                             dot={false}
