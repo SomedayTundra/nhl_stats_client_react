@@ -34,17 +34,37 @@ export const description = "A multiple line chart"
 // ]
 //
 let chartConfig = {
-    ANA: {
-        label: "Ducks",
+    TB: {
+        label: "Lightning",
         color: "var(--chart-1)",
+    },
+    BUF: {
+        label: "Sabres",
+        color: "var(--chart-2)",
     },
     DET: {
         label: "Red Wings",
-        color: "var(--chart-2)",
-    },
-    MIN: {
-        label: "Wild",
         color: "var(--chart-3)",
+    },
+    MTL: {
+        label: "Canadiens",
+        color: "var(--chart-4)",
+    },
+    BOS: {
+        label: "Bruins",
+        color: "var(--chart-5)",
+    },
+    OTT: {
+        label: "Senators",
+        color: "var(--chart-6)",
+    },
+    FLA: {
+        label: "Panthers",
+        color: "var(--chart-7)",
+    },
+    TOR: {
+        label: "Maple Leafs",
+        color: "var(--chart-8)",
     },
 } satisfies ChartConfig
 
@@ -165,23 +185,58 @@ export default function TeamStandingsChart() {
                         />
                         <ChartTooltip cursor={true} content={<ChartTooltipContent/>}/>
                         <Line
-                            dataKey="ANA"
+                            dataKey="TB"
                             type="monotone"
                             stroke="var(--chart-1)"
                             strokeWidth={2}
                             dot={false}
                         />
                         <Line
-                            dataKey="DET"
+                            dataKey="BUF"
                             type="monotone"
                             stroke="var(--chart-2)"
                             strokeWidth={2}
                             dot={false}
                         />
                         <Line
-                            dataKey="MIN"
+                            dataKey="DET"
                             type="monotone"
                             stroke="var(--chart-3)"
+                            strokeWidth={2}
+                            dot={false}
+                        />
+                        <Line
+                            dataKey="MTL"
+                            type="monotone"
+                            stroke="var(--chart-4)"
+                            strokeWidth={2}
+                            dot={false}
+                        />
+                        <Line
+                            dataKey="BOS"
+                            type="monotone"
+                            stroke="var(--chart-5)"
+                            strokeWidth={2}
+                            dot={false}
+                        />
+                        <Line
+                            dataKey="OTT"
+                            type="monotone"
+                            stroke="var(--chart-6)"
+                            strokeWidth={2}
+                            dot={false}
+                        />
+                        <Line
+                            dataKey="FLA"
+                            type="monotone"
+                            stroke="var(--chart-7)"
+                            strokeWidth={2}
+                            dot={false}
+                        />
+                        <Line
+                            dataKey="TOR"
+                            type="monotone"
+                            stroke="var(--chart-8)"
                             strokeWidth={2}
                             dot={false}
                         />
