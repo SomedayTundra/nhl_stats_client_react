@@ -34,9 +34,9 @@ export const description = "A multiple line chart"
 // ]
 //
 let chartConfig = {
-    TB: {
+    TBL: {
         label: "Lightning",
-        color: "var(--chart-1)",
+        color: "var(--chart-3)",
     },
     BUF: {
         label: "Sabres",
@@ -44,7 +44,7 @@ let chartConfig = {
     },
     DET: {
         label: "Red Wings",
-        color: "var(--chart-3)",
+        color: "var(--chart-1)",
     },
     MTL: {
         label: "Canadiens",
@@ -185,9 +185,9 @@ export default function TeamStandingsChart() {
                         />
                         <ChartTooltip cursor={true} content={<ChartTooltipContent/>}/>
                         <Line
-                            dataKey="TB"
+                            dataKey="TBL"
                             type="monotone"
-                            stroke="var(--chart-1)"
+                            stroke="var(--chart-3)"
                             strokeWidth={2}
                             dot={false}
                         />
@@ -201,7 +201,7 @@ export default function TeamStandingsChart() {
                         <Line
                             dataKey="DET"
                             type="monotone"
-                            stroke="var(--chart-3)"
+                            stroke="var(--chart-1)"
                             strokeWidth={2}
                             dot={false}
                         />
