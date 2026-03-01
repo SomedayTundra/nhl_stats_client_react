@@ -1,0 +1,15 @@
+export default interface TeamStatEntry {
+    date: string,
+    goal_diff: number,
+    goals_against: number,
+    goals_for: number,
+    logo: string,
+    losses: number,
+    team_name: string,
+    team_common_name: string,
+    team_abbrev: string,
+    ot_losses: number,
+    points: number,
+    wins: string,
+    key: string,
+}

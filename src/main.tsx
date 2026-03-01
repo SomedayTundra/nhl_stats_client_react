@@ -8,24 +8,24 @@ import {
 import './index.css'
 import App from './App.tsx'
 import NotFound from "./components/NotFound.tsx";
-import NHLStandingsTable from "./components/TeamStandingsTable.tsx"
-import NHLStatsChart from "./components/TeamStandingsChart.tsx"
+import TeamStandingsTable from "./components/TeamStandingsTable.tsx"
+import TeamStandingsChart from "./components/TeamStandingsChart.tsx"
 
 const router = createBrowserRouter([
     {
         path: "/",
         element: <App />,
         children: [
-            {path: "/", element: <NHLStandingsTable />},
-            {path: "/nhl_standings", element: <NHLStandingsTable />},
+            {path: "/", element: <TeamStandingsTable />},
+            {path: "/nhl_standings", element: <TeamStandingsTable />},
         ],
     },
     {
         path: "/",
         element: <App />,
         children: [
-            {path: "/", element: <NHLStandingsTable />},
-            {path: "/nhl_stats_chart", element: <NHLStatsChart />},
+            {path: "/", element: <TeamStandingsTable />},
+            {path: "/nhl_stats_chart", element: <TeamStandingsChart />},
         ],
     },
     {

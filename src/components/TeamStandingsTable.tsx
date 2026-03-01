@@ -3,6 +3,7 @@ import {useEffect, useState} from "react";
 import DateRangePicker from '@wojtekmaj/react-daterange-picker';
 import '@wojtekmaj/react-daterange-picker/dist/DateRangePicker.css';
 import 'react-calendar/dist/Calendar.css';
+import type TeamStatEntry from "@/components/TeamStatEntry.tsx";
 
 // FIXME: sort out what isn't configured properly so i can stop ignoring the
 //        'cannot find module react-calender/dist/shared/types' error that
@@ -16,21 +17,6 @@ const CLASS_TD = "p-4 align-middle"
 const CLASS_TD_LEFT = `${CLASS_TD} text-left`;
 const CLASS_TD_CENTER = `${CLASS_TD} text-center`;
 
-interface TeamStatEntry {
-    date: string,
-    goal_diff: number,
-    goals_against: number,
-    goals_for: number,
-    logo: string,
-    losses: number,
-    team_name: string,
-    team_common_name: string,
-    team_abbrev: string,
-    ot_losses: number,
-    points: number,
-    wins: string,
-    key: string,
-}
 
 // TODO: FIGURE OUT IF IMAGES FETCHED VIA localhost:8000/.../logos/{name} ARE DEFINITELY CACHED BY THE BROWSER
 const TeamStat: React.FC<TeamStatEntry> = ({date, goal_diff, goals_against, goals_for, logo, losses, team_name, team_common_name, team_abbrev, ot_losses, points, wins}: TeamStatEntry) => (
@@ -52,7 +38,7 @@ const TeamStat: React.FC<TeamStatEntry> = ({date, goal_diff, goals_against, goal
 
 type DateValuePiece = Date | null;
 
-export default function TeamStatList() {
+export default function TeamStandingsTable() {
     const [teamStats, setTeamStats] = useState<TeamStatEntry[]>([]);
     const [dateRange, setDateRange] = useState<Value>([new Date(), new Date()]);
 
@@ -147,7 +133,7 @@ export default function TeamStatList() {
                         <thead className="[&amp;_tr]:border-b">
                         <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
                             <th className={CLASS_TH_LEFT}>Date</th>
-                            <th className={CLASS_TH_CENTER}>Team</th>
+                            <th className={CLASS_TH_LEFT}>Team</th>
                             <th className={CLASS_TH_CENTER}>Wins</th>
                             <th className={CLASS_TH_CENTER}>Losses</th>
                             <th className={CLASS_TH_CENTER}>OT Losses</th>

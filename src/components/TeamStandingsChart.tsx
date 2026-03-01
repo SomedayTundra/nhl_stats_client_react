@@ -1,109 +1,69 @@
 import * as React from "react";
 import {useEffect, useState} from "react";
-// import {toast} from "react-toastify";
 import DateRangePicker from '@wojtekmaj/react-daterange-picker';
 import '@wojtekmaj/react-daterange-picker/dist/DateRangePicker.css';
 import 'react-calendar/dist/Calendar.css';
+import type TeamStatEntry from "@/components/TeamStatEntry.tsx";
 
 // FIXME: sort out what isn't configured properly so i can stop ignoring the
 //        'cannot find module react-calender/dist/shared/types' error that
 //        IDEA is giving me, even though the code itself *can* find that module
 // @ts-ignore
 import type {Value} from "react-calendar/dist/shared/types";
+import {TrendingUp} from "lucide-react"
+import {CartesianGrid, Line, LineChart, XAxis} from "recharts"
+
+import {Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle,} from "./ui/card"
+
+import {type ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent,} from "./ui/chart"
 
 const SERVER = 'localhost:8000'
-
-const CLASS_TD = "p-4 align-middle"
-const CLASS_TD_LEFT = `${CLASS_TD} text-left`;
-const CLASS_TD_CENTER = `${CLASS_TD} text-center`;
-
-interface TeamStatEntry {
-    date: string,
-    goal_diff: number,
-    goals_against: number,
-    goals_for: number,
-    logo: string,
-    losses: number,
-    team_name: string,
-    ot_losses: number,
-    points: number,
-    wins: string,
-    key: string,
-}
-
-// TODO: FIGURE OUT IF IMAGES FETCHED VIA localhost:8000/.../logos/{name} ARE DEFINITELY CACHED BY THE BROWSER
-const TeamStat: React.FC<TeamStatEntry> = ({date, goal_diff, goals_against, goals_for, logo, losses, team_name, ot_losses, points, wins}: TeamStatEntry) => (
-    <tr className="p-0 transition-colors data-[state=selected]:bg-muted">
-        <td className={CLASS_TD_LEFT}>{date}</td>
-        <td className={`flex`}>
-            <img className="h-16 w-16 align-middle justify-center" src={`http://localhost:8000/api/nhl_standings/logos?logo_filename=${logo}`} alt="logo"></img>
-            <p className={CLASS_TD}>{team_name}</p>
-        </td>
-        <td className={CLASS_TD_CENTER}>{wins}</td>
-        <td className={CLASS_TD_CENTER}>{losses}</td>
-        <td className={CLASS_TD_CENTER}>{ot_losses}</td>
-        <td className={CLASS_TD_CENTER}>{points}</td>
-        <td className={CLASS_TD_CENTER}>{goals_for}</td>
-        <td className={CLASS_TD_CENTER}>{goals_against}</td>
-        <td className={CLASS_TD_CENTER}>{goal_diff}</td>
-    </tr>
-);
-
 type DateValuePiece = Date | null;
 
 "use client"
 
-import {GitCommitVertical, TrendingUp} from "lucide-react"
-import {CartesianGrid, Line, LineChart, XAxis} from "recharts"
-
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardFooter,
-    CardHeader,
-    CardTitle,
-} from "./ui/card"
-
-import {
-    ChartContainer,
-    ChartTooltip,
-    ChartTooltipContent,
-    type ChartConfig,
-} from "./ui/chart"
-
 export const description = "A multiple line chart"
 
-const chartData = [
-    {month: "Oct 21", ducks: 186, wild: 80},
-    {month: "Oct 22", ducks: 305, wild: 200},
-    {month: "Oct 23", ducks: 237, wild: 120},
-    {month: "Oct 24", ducks: 73, wild: 190},
-    {month: "Oct 25", ducks: 209, wild: 130},
-    {month: "Oct 26", ducks: 214, wild: 140},
-]
-
-const chartConfig = {
-    ducks: {
+// let chartData = [
+//     {date: "Oct 21", ducks: 186, wild: 80},
+//     {date: "Oct 22", ducks: 305, wild: 200},
+//     {date: "Oct 23", ducks: 237, wild: 120},
+//     {date: "Oct 24", ducks: 73, wild: 190},
+//     {date: "Oct 25", ducks: 209, wild: 130},
+//     {date: "Oct 26", ducks: 214, wild: 140},
+// ]
+//
+let chartConfig = {
+    ANA: {
         label: "Ducks",
         color: "var(--chart-1)",
     },
-    wild: {
-        label: "Wild",
+    DET: {
+        label: "Red Wings",
         color: "var(--chart-2)",
+    },
+    MIN: {
+        label: "Wild",
+        color: "var(--chart-3)",
     },
 } satisfies ChartConfig
 
+// type LineDescriptor = { label: string, color: string }
+// let chartData: Record<string,string|number>[] = []
+// let chartConfig: Map<[k in string], LineDescriptor> = new Map() satisfies ChartConfig;
 
-export default function TeamStatList() {
-    const [teamStats, setTeamStats] = useState<TeamStatEntry[]>([]);
+export default function TeamStandingsChart() {
+    // const [teamStats, setTeamStats] = useState<TeamStatEntry[]>([]);
     const [dateRange, setDateRange] = useState<Value>([new Date(), new Date()]);
+    const [chartData, setChartData] = useState<Record<string,string|number>[]>([]);
 
     // this method fetches the NHL stats from the database.
     useEffect(() => {
         async function getTeamStats() {
-            const prettyStartDate: string|undefined = changeDateToMyPreferredStringFormat(dateRange[0]);
-            const prettyEndDate: string|undefined = changeDateToMyPreferredStringFormat(dateRange[1]);
+            const prettyStartDate = "10-07-2025"
+            const prettyEndDate = "2026-02-28"
+            // const prettyStartDate: string|undefined = changeDateToMyPreferredStringFormat(dateRange[0]);
+            // const prettyEndDate: string|undefined = changeDateToMyPreferredStringFormat(dateRange[1]);
 
             const response = await fetch(`http://${SERVER}/api/nhl_standings/?start_date=${prettyStartDate}&end_date=${prettyEndDate}`);
             if (!response.ok) {
@@ -111,36 +71,38 @@ export default function TeamStatList() {
                 console.error(message);
                 return;
             }
-            const team_stats = await response.json();
+            const teamStats = await response.json();
 
-            setTeamStats(team_stats);
+            // setTeamStats(teamStats);
+
+            // clear out any old data
+            let newChartData: Record<string,string|number>[] = []
+            // chartConfig.clear()
+
+            teamStats.map((team_stat: TeamStatEntry) => {
+                // get data entry for the given date
+                let existingDate = newChartData.find((entry) => entry["date"] == team_stat.date);
+                if (!existingDate) {
+                    existingDate = {date: team_stat.date}
+                    newChartData.push(existingDate);
+                }
+
+                // add an entry associating this team's abbreviation with this team's points
+                existingDate[team_stat.team_abbrev] = team_stat.points
+
+                // make sure there is a chart config entry for this team's abbreviation
+                // const existingConfig = chartConfig.get(team_stat.team_abbrev)
+                // if(!existingConfig) {
+                //     const configEntry: LineDescriptor = {label: team_stat.team_common_name, color: "var(--chart-1)"};
+                //     chartConfig.set(team_stat.team_abbrev, configEntry)
+                // }
+            });
+
+            setChartData(newChartData);
         }
 
         getTeamStats();
     }, dateRange);
-
-    // this method will map out the team stats on the table
-    function teamStatsList() {
-        return teamStats.map((team_stat: TeamStatEntry) => {
-            console.debug(team_stat);
-            const id_key = team_stat.date + '_' + team_stat.team_name;
-            return (
-                <TeamStat
-                    date={team_stat.date}
-                    goal_diff={team_stat.goal_diff}
-                    goals_against={team_stat.goals_against}
-                    goals_for={team_stat.goals_for}
-                    logo={team_stat.logo}
-                    losses={team_stat.losses}
-                    team_name={team_stat.team_name}
-                    ot_losses={team_stat.ot_losses}
-                    points={team_stat.points}
-                    wins={team_stat.wins}
-                    key={id_key}
-                />
-            );
-        });
-    }
 
     function changeDateToMyPreferredStringFormat(originalDate: DateValuePiece) {
         function join(date: Date, options: any[], separator: string) {
@@ -156,11 +118,7 @@ export default function TeamStatList() {
             return;
         }
 
-        const options = [{year: 'numeric'}, {month: '2-digit'}, {day: '2-digit'}];
-
-        // EXAMPLE OF HOW TO SHOW A TOAST IN THE <TOASTCONTAINER/> OVER IN App.tsx
-        // toast.info(DateTranslationToast(originalDate, prettyDate));
-
+        const options = [{year: 'numeric'}, {date: '2-digit'}, {day: '2-digit'}];
         return join(originalDate, options, '-');
     }
 
@@ -174,7 +132,7 @@ export default function TeamStatList() {
     }
 
     return (
-        <Card className="w-1/2">
+        <Card className="w-11/12">
             <CardHeader>
                 <CardTitle>Team Standings Per Day</CardTitle>
                 <CardDescription>
@@ -200,29 +158,32 @@ export default function TeamStatList() {
                     >
                         <CartesianGrid vertical={false}/>
                         <XAxis
-                            dataKey="month"
+                            dataKey="date"
                             tickLine={true}
                             axisLine={true}
                             tickMargin={8}
                         />
                         <ChartTooltip cursor={true} content={<ChartTooltipContent/>}/>
                         <Line
-                            dataKey="ducks"
+                            dataKey="ANA"
                             type="monotone"
                             stroke="var(--chart-1)"
                             strokeWidth={2}
-                            dot={{
-                                fill: "var(--chart-1)",
-                            }}
+                            dot={false}
                         />
                         <Line
-                            dataKey="wild"
+                            dataKey="DET"
                             type="monotone"
                             stroke="var(--chart-2)"
                             strokeWidth={2}
-                            dot={{
-                                fill: "var(--chart-2)",
-                            }}
+                            dot={false}
+                        />
+                        <Line
+                            dataKey="MIN"
+                            type="monotone"
+                            stroke="var(--chart-3)"
+                            strokeWidth={2}
+                            dot={false}
                         />
                     </LineChart>
                 </ChartContainer>
