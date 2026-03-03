@@ -12,10 +12,21 @@ import type TeamStatEntry from "@/components/TeamStatEntry.tsx";
 import type {Value} from "react-calendar/dist/shared/types";
 import {TrendingUp} from "lucide-react"
 import {CartesianGrid, Line, LineChart, XAxis} from "recharts"
-
 import {Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle,} from "./ui/card"
-
 import {type ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent,} from "./ui/chart"
+
+import {
+    Combobox,
+    ComboboxContent,
+    ComboboxEmpty,
+    ComboboxInput,
+    ComboboxItem,
+    ComboboxList,
+} from "./ui/combobox"
+
+const lineTypes = [
+    'basis', 'bump', 'linear', 'natural', 'monotone', 'step',
+] as const
 
 const SERVER = 'localhost:8000'
 type DateValuePiece = Date | null;
@@ -24,15 +35,6 @@ type DateValuePiece = Date | null;
 
 export const description = "A multiple line chart"
 
-// let chartData = [
-//     {date: "Oct 21", ducks: 186, wild: 80},
-//     {date: "Oct 22", ducks: 305, wild: 200},
-//     {date: "Oct 23", ducks: 237, wild: 120},
-//     {date: "Oct 24", ducks: 73, wild: 190},
-//     {date: "Oct 25", ducks: 209, wild: 130},
-//     {date: "Oct 26", ducks: 214, wild: 140},
-// ]
-//
 let chartConfig = {
     TBL: {
         label: "Lightning",
@@ -75,13 +77,14 @@ let chartConfig = {
 export default function TeamStandingsChart() {
     // const [teamStats, setTeamStats] = useState<TeamStatEntry[]>([]);
     const [dateRange, setDateRange] = useState<Value>([new Date(), new Date()]);
-    const [chartData, setChartData] = useState<Record<string,string|number>[]>([]);
+    const [chartData, setChartData] = useState<Record<string, string | number>[]>([]);
+    const [lineType, setLineType] = useState("monotone")
 
     // this method fetches the NHL stats from the database.
     useEffect(() => {
         async function getTeamStats() {
-            const prettyStartDate = "10-07-2025"
-            const prettyEndDate = "2026-02-28"
+            const prettyStartDate = "2025-12-01"
+            const prettyEndDate = "2026-03-02"
             // const prettyStartDate: string|undefined = changeDateToMyPreferredStringFormat(dateRange[0]);
             // const prettyEndDate: string|undefined = changeDateToMyPreferredStringFormat(dateRange[1]);
 
@@ -96,7 +99,7 @@ export default function TeamStandingsChart() {
             // setTeamStats(teamStats);
 
             // clear out any old data
-            let newChartData: Record<string,string|number>[] = []
+            let newChartData: Record<string, string | number>[] = []
             // chartConfig.clear()
 
             teamStats.map((team_stat: TeamStatEntry) => {
@@ -151,20 +154,29 @@ export default function TeamStandingsChart() {
         );
     }
 
-    const lineType = "monotone"
-
     return (
-        <Card className="w-11/12">
+        <Card className="h-9/12 w-9/12">
             <CardHeader>
                 <CardTitle>Team Standings Per Day</CardTitle>
                 <CardDescription>
                     <div className="flex justify-start">
-                        <div>
-                            <div className="text-blue-800 bg-blue-200 font-bold p-1">
-                                <span className="pr-2">Date Range:</span>
-                                <DateRangePicker onChange={setDateRange} value={dateRange} format="yyyy-MM-dd"/>
-                            </div>
+                        <div className="text-blue-800 bg-blue-200 font-bold p-1">
+                            <span className="pr-2">Date Range:</span>
+                            <DateRangePicker onChange={setDateRange} value={dateRange} format="yyyy-MM-dd"/>
                         </div>
+                        <Combobox items={lineTypes} defaultValue={lineTypes[4]} onInputValueChange={setLineType} autoHighlight>
+                            <ComboboxInput placeholder="Select a line type"/>
+                            <ComboboxContent>
+                                <ComboboxEmpty>No items found.</ComboboxEmpty>
+                                <ComboboxList>
+                                    {(item) => (
+                                        <ComboboxItem key={item} value={item}>
+                                            {item}
+                                        </ComboboxItem>
+                                    )}
+                                </ComboboxList>
+                            </ComboboxContent>
+                        </Combobox>
                     </div>
                 </CardDescription>
             </CardHeader>
