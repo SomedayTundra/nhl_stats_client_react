@@ -1,7 +1,7 @@
+"use client"
+
 import * as React from "react";
 import {useEffect, useState} from "react";
-import DateRangePicker from '@wojtekmaj/react-daterange-picker';
-import '@wojtekmaj/react-daterange-picker/dist/DateRangePicker.css';
 import 'react-calendar/dist/Calendar.css';
 import type TeamStatEntry from "@/components/TeamStatEntry.tsx";
 
@@ -11,7 +11,7 @@ import type TeamStatEntry from "@/components/TeamStatEntry.tsx";
 // @ts-ignore
 import type {Value} from "react-calendar/dist/shared/types";
 import {TrendingUp} from "lucide-react"
-import {CartesianGrid, Line, LineChart, XAxis} from "recharts"
+import {CartesianGrid, Line, LineChart, XAxis, YAxis} from "recharts"
 import {Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle,} from "./ui/card"
 import {type ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent,} from "./ui/chart"
 
@@ -23,17 +23,15 @@ import {
     ComboboxItem,
     ComboboxList,
 } from "./ui/combobox"
+import type {DateRange, OnSelectHandler} from "react-day-picker";
+import {DateRangeContext} from "@/state/DateRangeContext.tsx";
+import DatePickerWithRange from "@/components/DatePickerWithRange.tsx";
 
 const lineTypes = [
     'basis', 'bump', 'linear', 'natural', 'monotone', 'step',
 ] as const
 
 const SERVER = 'localhost:8000'
-type DateValuePiece = Date | null;
-
-"use client"
-
-export const description = "A multiple line chart"
 
 let chartConfig = {
     TBL: {
@@ -70,23 +68,26 @@ let chartConfig = {
     },
 } satisfies ChartConfig
 
-// type LineDescriptor = { label: string, color: string }
-// let chartData: Record<string,string|number>[] = []
-// let chartConfig: Map<[k in string], LineDescriptor> = new Map() satisfies ChartConfig;
-
 export default function TeamStandingsChart() {
     // const [teamStats, setTeamStats] = useState<TeamStatEntry[]>([]);
-    const [dateRange, setDateRange] = useState<Value>([new Date(), new Date()]);
     const [chartData, setChartData] = useState<Record<string, string | number>[]>([]);
     const [lineType, setLineType] = useState("monotone")
+    const [date, setDate] = React.useState<DateRange | undefined>({from: new Date(), to: new Date()})
+
+    const handleDateSelect: OnSelectHandler<DateRange | undefined> = (selected) => {
+        setDate(selected);
+    };
+
+    const dateRangeContextValue = {
+        dateRange: date,
+        setDateRange: handleDateSelect
+    };
 
     // this method fetches the NHL stats from the database.
     useEffect(() => {
         async function getTeamStats() {
-            const prettyStartDate = "2025-12-01"
-            const prettyEndDate = "2026-03-02"
-            // const prettyStartDate: string|undefined = changeDateToMyPreferredStringFormat(dateRange[0]);
-            // const prettyEndDate: string|undefined = changeDateToMyPreferredStringFormat(dateRange[1]);
+            const prettyStartDate: string|undefined = changeDateToMyPreferredStringFormat(date?.from);
+            const prettyEndDate: string|undefined = changeDateToMyPreferredStringFormat(date?.to);
 
             const response = await fetch(`http://${SERVER}/api/nhl_standings/?start_date=${prettyStartDate}&end_date=${prettyEndDate}`);
             if (!response.ok) {
@@ -125,24 +126,24 @@ export default function TeamStandingsChart() {
         }
 
         getTeamStats();
-    }, dateRange);
+    }, [dateRangeContextValue.dateRange]);
 
-    function changeDateToMyPreferredStringFormat(originalDate: DateValuePiece) {
+    function changeDateToMyPreferredStringFormat(originalDate: Date|undefined) {
         function join(date: Date, options: any[], separator: string) {
             function format(option: Intl.DateTimeFormatOptions | undefined) {
                 let formatter = new Intl.DateTimeFormat('en', option);
                 return formatter.format(date);
             }
-
             return options.map(format).join(separator);
         }
 
-        if (originalDate === null) {
+        if(originalDate === null) {
             return;
         }
-
-        const options = [{year: 'numeric'}, {date: '2-digit'}, {day: '2-digit'}];
-        return join(originalDate, options, '-');
+        else {
+            const options = [{year: 'numeric'}, {month: '2-digit'}, {day: '2-digit'}];
+            return join(originalDate, options, '-');
+        }
     }
 
     // @ts-ignore
@@ -155,117 +156,116 @@ export default function TeamStandingsChart() {
     }
 
     return (
-        <Card className="h-9/12 w-9/12">
-            <CardHeader>
-                <CardTitle>Team Standings Per Day</CardTitle>
-                <CardDescription>
-                    <div className="flex justify-start">
-                        <div className="text-blue-800 bg-blue-200 font-bold p-1">
-                            <span className="pr-2">Date Range:</span>
-                            <DateRangePicker onChange={setDateRange} value={dateRange} format="yyyy-MM-dd"/>
+        <DateRangeContext value={dateRangeContextValue}>
+            <div className="flex">
+                <DatePickerWithRange/>
+                <Combobox items={lineTypes} defaultValue={lineTypes[4]} onInputValueChange={setLineType} autoHighlight>
+                    <ComboboxInput placeholder="Select a line type"/>
+                    <ComboboxContent>
+                        <ComboboxEmpty>No items found.</ComboboxEmpty>
+                        <ComboboxList>
+                            {(item) => (
+                                <ComboboxItem key={item} value={item}>
+                                    {item}
+                                </ComboboxItem>
+                            )}
+                        </ComboboxList>
+                    </ComboboxContent>
+                </Combobox>
+            </div>
+            <Card className="h-9/12 w-9/12">
+                <CardHeader>
+                    <CardTitle>Team Standings Over Time</CardTitle>
+                    <CardDescription>
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <ChartContainer config={chartConfig}>
+                        <LineChart
+                            accessibilityLayer
+                            data={chartData}
+                            margin={{
+                                left: 12,
+                                right: 12,
+                            }}
+                        >
+                            <CartesianGrid vertical={false}/>
+                            <XAxis
+                                dataKey="date"
+                                tickLine={true}
+                                axisLine={true}
+                                tickMargin={8}
+                            />
+                            <ChartTooltip cursor={true} content={<ChartTooltipContent/>}/>
+                            <Line
+                                dataKey="TBL"
+                                type={lineType}
+                                stroke="var(--chart-3)"
+                                strokeWidth={2}
+                                dot={false}
+                            />
+                            <Line
+                                dataKey="BUF"
+                                type={lineType}
+                                stroke="var(--chart-2)"
+                                strokeWidth={2}
+                                dot={false}
+                            />
+                            <Line
+                                dataKey="DET"
+                                type={lineType}
+                                stroke="var(--chart-1)"
+                                strokeWidth={2}
+                                dot={false}
+                            />
+                            <Line
+                                dataKey="MTL"
+                                type={lineType}
+                                stroke="var(--chart-4)"
+                                strokeWidth={2}
+                                dot={false}
+                            />
+                            <Line
+                                dataKey="BOS"
+                                type={lineType}
+                                stroke="var(--chart-5)"
+                                strokeWidth={2}
+                                dot={false}
+                            />
+                            <Line
+                                dataKey="OTT"
+                                type={lineType}
+                                stroke="var(--chart-6)"
+                                strokeWidth={2}
+                                dot={false}
+                            />
+                            <Line
+                                dataKey="FLA"
+                                type={lineType}
+                                stroke="var(--chart-7)"
+                                strokeWidth={2}
+                                dot={false}
+                            />
+                            <Line
+                                dataKey="TOR"
+                                type={lineType}
+                                stroke="var(--chart-8)"
+                                strokeWidth={2}
+                                dot={false}
+                            />
+                        </LineChart>
+                    </ChartContainer>
+                </CardContent>
+                <CardFooter>
+                    <div className="flex w-full items-start gap-2 text-sm">
+                        <div className="grid gap-2">
+                            <div className="flex items-center gap-2 leading-none font-medium">
+                                THIS IS THE FOOTER <TrendingUp className="h-4 w-4"/>
+                            </div>
                         </div>
-                        <Combobox items={lineTypes} defaultValue={lineTypes[4]} onInputValueChange={setLineType} autoHighlight>
-                            <ComboboxInput placeholder="Select a line type"/>
-                            <ComboboxContent>
-                                <ComboboxEmpty>No items found.</ComboboxEmpty>
-                                <ComboboxList>
-                                    {(item) => (
-                                        <ComboboxItem key={item} value={item}>
-                                            {item}
-                                        </ComboboxItem>
-                                    )}
-                                </ComboboxList>
-                            </ComboboxContent>
-                        </Combobox>
                     </div>
-                </CardDescription>
-            </CardHeader>
-            <CardContent>
-                <ChartContainer config={chartConfig}>
-                    <LineChart
-                        accessibilityLayer
-                        data={chartData}
-                        margin={{
-                            left: 12,
-                            right: 12,
-                        }}
-                    >
-                        <CartesianGrid vertical={false}/>
-                        <XAxis
-                            dataKey="date"
-                            tickLine={true}
-                            axisLine={true}
-                            tickMargin={8}
-                        />
-                        <ChartTooltip cursor={true} content={<ChartTooltipContent/>}/>
-                        <Line
-                            dataKey="TBL"
-                            type={lineType}
-                            stroke="var(--chart-3)"
-                            strokeWidth={2}
-                            dot={false}
-                        />
-                        <Line
-                            dataKey="BUF"
-                            type={lineType}
-                            stroke="var(--chart-2)"
-                            strokeWidth={2}
-                            dot={false}
-                        />
-                        <Line
-                            dataKey="DET"
-                            type={lineType}
-                            stroke="var(--chart-1)"
-                            strokeWidth={2}
-                            dot={false}
-                        />
-                        <Line
-                            dataKey="MTL"
-                            type={lineType}
-                            stroke="var(--chart-4)"
-                            strokeWidth={2}
-                            dot={false}
-                        />
-                        <Line
-                            dataKey="BOS"
-                            type={lineType}
-                            stroke="var(--chart-5)"
-                            strokeWidth={2}
-                            dot={false}
-                        />
-                        <Line
-                            dataKey="OTT"
-                            type={lineType}
-                            stroke="var(--chart-6)"
-                            strokeWidth={2}
-                            dot={false}
-                        />
-                        <Line
-                            dataKey="FLA"
-                            type={lineType}
-                            stroke="var(--chart-7)"
-                            strokeWidth={2}
-                            dot={false}
-                        />
-                        <Line
-                            dataKey="TOR"
-                            type={lineType}
-                            stroke="var(--chart-8)"
-                            strokeWidth={2}
-                            dot={false}
-                        />
-                    </LineChart>
-                </ChartContainer>
-            </CardContent>
-            <CardFooter>
-                <div className="flex w-full items-start gap-2 text-sm">
-                    <div className="grid gap-2">
-                        <div className="flex items-center gap-2 leading-none font-medium">
-                            THIS IS THE FOOTER <TrendingUp className="h-4 w-4"/>
-                        </div>
-                    </div>
-                </div>
-            </CardFooter>
-        </Card>
+                </CardFooter>
+            </Card>
+        </DateRangeContext>
     );
 }
