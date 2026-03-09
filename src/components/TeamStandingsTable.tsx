@@ -1,6 +1,5 @@
 import * as React from "react";
 import {useEffect, useState} from "react";
-import DateRangePicker from '@wojtekmaj/react-daterange-picker';
 import '@wojtekmaj/react-daterange-picker/dist/DateRangePicker.css';
 import 'react-calendar/dist/Calendar.css';
 import type TeamStatEntry from "@/components/TeamStatEntry.tsx";
@@ -10,6 +9,9 @@ import type TeamStatEntry from "@/components/TeamStatEntry.tsx";
 //        IDEA is giving me, even though the code itself *can* find that module
 // @ts-ignore
 import type {Value} from "react-calendar/dist/shared/types";
+import type {DateRange, OnSelectHandler} from "react-day-picker";
+import {DateRangeContext} from "@/state/DateRangeContext.tsx";
+import DatePickerWithRange from "@/components/DatePickerWithRange.tsx";
 
 const SERVER = 'localhost:8000'
 
@@ -36,17 +38,25 @@ const TeamStat: React.FC<TeamStatEntry> = ({date, goal_diff, goals_against, goal
     </tr>
 );
 
-type DateValuePiece = Date | null;
 
 export default function TeamStandingsTable() {
     const [teamStats, setTeamStats] = useState<TeamStatEntry[]>([]);
-    const [dateRange, setDateRange] = useState<Value>([new Date(), new Date()]);
+    const [date, setDate] = React.useState<DateRange | undefined>({from: new Date(), to: new Date()})
+
+    const handleDateSelect: OnSelectHandler<DateRange | undefined> = (selected) => {
+        setDate(selected);
+    };
+
+    const dateRangeContextValue = {
+        dateRange: date,
+        setDateRange: handleDateSelect
+    };
 
     // this method fetches the NHL stats from the database.
     useEffect(() => {
         async function getTeamStats() {
-            const prettyStartDate = changeDateToMyPreferredStringFormat(dateRange[0]);
-            const prettyEndDate = changeDateToMyPreferredStringFormat(dateRange[1]);
+            const prettyStartDate: string|undefined = changeDateToMyPreferredStringFormat(date?.from);
+            const prettyEndDate: string|undefined = changeDateToMyPreferredStringFormat(date?.to);
 
             const response = await fetch(`http://${SERVER}/api/nhl_standings/?start_date=${prettyStartDate}&end_date=${prettyEndDate}`);
             if (!response.ok) {
@@ -59,7 +69,7 @@ export default function TeamStandingsTable() {
         }
 
         getTeamStats();
-    }, dateRange);
+    }, [dateRangeContextValue.dateRange]);
 
     // this method will map out the team stats on the table
     function teamStatsList() {
@@ -69,8 +79,8 @@ export default function TeamStandingsTable() {
             return (
                 <TeamStat
                     date={team_stat.date}
-                    goal_diff= {team_stat.goal_diff}
-                    goals_against= {team_stat.goals_against}
+                    goal_diff={team_stat.goal_diff}
+                    goals_against={team_stat.goals_against}
                     goals_for={team_stat.goals_for}
                     logo={team_stat.logo}
                     losses={team_stat.losses}
@@ -86,16 +96,17 @@ export default function TeamStandingsTable() {
         });
     }
 
-    function changeDateToMyPreferredStringFormat(originalDate: DateValuePiece) {
+    function changeDateToMyPreferredStringFormat(originalDate: Date|undefined) {
         function join(date: Date, options: any[], separator: string) {
             function format(option: Intl.DateTimeFormatOptions | undefined) {
                 let formatter = new Intl.DateTimeFormat('en', option);
                 return formatter.format(date);
             }
+
             return options.map(format).join(separator);
         }
 
-        if(originalDate === null) {
+        if (originalDate === null) {
             return;
         }
 
@@ -117,15 +128,10 @@ export default function TeamStandingsTable() {
     const CLASS_TH_CENTER = "h-12 px-4 text-center align-middle font-medium text-muted-foreground";
 
     return (
-        <>
+        <DateRangeContext value={dateRangeContextValue}>
             <h3 className="text-lg font-semibold p-4">Team Standings TABLE</h3>
             <div className="flex justify-start">
-                <div>
-                    <div className="text-blue-800 bg-blue-200 font-bold p-1">
-                        <span className="pr-2">Date Range:</span>
-                        <DateRangePicker onChange={setDateRange} value={dateRange} format="yyyy-MM-dd"/>
-                    </div>
-                </div>
+                <DatePickerWithRange/>
             </div>
             <div className="border rounded-lg overflow-hidden">
                 <div className="relative w-full overflow-auto">
@@ -149,6 +155,6 @@ export default function TeamStandingsTable() {
                     </table>
                 </div>
             </div>
-        </>
+        </DateRangeContext>
     );
 }

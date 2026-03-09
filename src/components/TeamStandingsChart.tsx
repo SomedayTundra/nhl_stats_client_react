@@ -97,7 +97,6 @@ export default function TeamStandingsChart() {
             }
             const teamStats = await response.json();
 
-            // setTeamStats(teamStats);
 
             // clear out any old data
             let newChartData: Record<string, string | number>[] = []
