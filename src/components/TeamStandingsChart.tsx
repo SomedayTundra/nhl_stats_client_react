@@ -11,7 +11,7 @@ import type TeamStatEntry from "@/components/TeamStatEntry.tsx";
 // @ts-ignore
 import type {Value} from "react-calendar/dist/shared/types";
 import {TrendingUp} from "lucide-react"
-import {CartesianGrid, Line, LineChart, XAxis, YAxis} from "recharts"
+import {CartesianGrid, Line, LineChart, XAxis} from "recharts"
 import {Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle,} from "./ui/card"
 import {type ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent,} from "./ui/chart"
 
@@ -26,6 +26,8 @@ import {
 import type {DateRange, OnSelectHandler} from "react-day-picker";
 import {DateRangeContext} from "@/state/DateRangeContext.tsx";
 import DatePickerWithRange from "@/components/DatePickerWithRange.tsx";
+import { Checkbox } from "@/components/ui/checkbox";
+import {Field, FieldGroup, FieldLabel} from "@/components/ui/field.tsx";
 
 const lineTypes = [
     'basis', 'bump', 'linear', 'natural', 'monotone', 'step',
@@ -71,8 +73,9 @@ let chartConfig = {
 export default function TeamStandingsChart() {
     // const [teamStats, setTeamStats] = useState<TeamStatEntry[]>([]);
     const [chartData, setChartData] = useState<Record<string, string | number>[]>([]);
-    const [lineType, setLineType] = useState("monotone")
-    const [date, setDate] = React.useState<DateRange | undefined>({from: new Date(), to: new Date()})
+    const [lineType, setLineType] = useState("monotone");
+    const [showDots, setShowDots] = React.useState<boolean>(true);
+    const [date, setDate] = React.useState<DateRange | undefined>({from: new Date(), to: new Date()});
 
     const handleDateSelect: OnSelectHandler<DateRange | undefined> = (selected) => {
         setDate(selected);
@@ -171,6 +174,15 @@ export default function TeamStandingsChart() {
                         </ComboboxList>
                     </ComboboxContent>
                 </Combobox>
+                <FieldGroup className="mx-auto w-56">
+                    <Field orientation="horizontal">
+                        <Checkbox id="show-dots-checkbox-basic" name="show-dots-checkbox-basic" checked={showDots} onCheckedChange={setShowDots}/>
+                        <FieldLabel htmlFor="terms-checkbox-basic">
+                            Show Dots
+                        </FieldLabel>
+                    </Field>
+                </FieldGroup>
+
             </div>
             <Card className="h-9/12 w-9/12">
                 <CardHeader>
@@ -201,56 +213,56 @@ export default function TeamStandingsChart() {
                                 type={lineType}
                                 stroke="var(--chart-3)"
                                 strokeWidth={2}
-                                dot={false}
+                                dot={showDots}
                             />
                             <Line
                                 dataKey="BUF"
                                 type={lineType}
                                 stroke="var(--chart-2)"
                                 strokeWidth={2}
-                                dot={false}
+                                dot={showDots}
                             />
                             <Line
                                 dataKey="DET"
                                 type={lineType}
                                 stroke="var(--chart-1)"
                                 strokeWidth={2}
-                                dot={false}
+                                dot={showDots}
                             />
                             <Line
                                 dataKey="MTL"
                                 type={lineType}
                                 stroke="var(--chart-4)"
                                 strokeWidth={2}
-                                dot={false}
+                                dot={showDots}
                             />
                             <Line
                                 dataKey="BOS"
                                 type={lineType}
                                 stroke="var(--chart-5)"
                                 strokeWidth={2}
-                                dot={false}
+                                dot={showDots}
                             />
                             <Line
                                 dataKey="OTT"
                                 type={lineType}
                                 stroke="var(--chart-6)"
                                 strokeWidth={2}
-                                dot={false}
+                                dot={showDots}
                             />
                             <Line
                                 dataKey="FLA"
                                 type={lineType}
                                 stroke="var(--chart-7)"
                                 strokeWidth={2}
-                                dot={false}
+                                dot={showDots}
                             />
                             <Line
                                 dataKey="TOR"
                                 type={lineType}
                                 stroke="var(--chart-8)"
                                 strokeWidth={2}
-                                dot={false}
+                                dot={showDots}
                             />
                         </LineChart>
                     </ChartContainer>
