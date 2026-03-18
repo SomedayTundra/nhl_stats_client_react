@@ -207,7 +207,10 @@ export default function TeamStandingsChart() {
                                 axisLine={true}
                                 tickMargin={8}
                             />
-                            <ChartTooltip cursor={true} content={<ChartTooltipContent/>}/>
+                            <ChartTooltip cursor={true}
+                                          itemSorter={(item) => {return (200 - (item.value as number)) as number;} }
+                                          // content={<ChartTooltipContent />}
+                            />
                             <Line
                                 dataKey="TBL"
                                 type={lineType}
