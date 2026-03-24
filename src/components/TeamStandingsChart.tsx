@@ -196,6 +196,8 @@ export default function TeamStandingsChart() {
                             accessibilityLayer
                             data={chartData}
                             margin={{
+                                top: 12,
+                                bottom: 12,
                                 left: 12,
                                 right: 12,
                             }}
