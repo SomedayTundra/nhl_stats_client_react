@@ -75,9 +75,24 @@ export default function TeamStandingsChart() {
     const [chartData, setChartData] = useState<Record<string, string | number>[]>([]);
     const [lineType, setLineType] = useState("monotone");
     const [showDots, setShowDots] = React.useState<boolean>(true);
-    const [date, setDate] = React.useState<DateRange | undefined>({from: new Date(), to: new Date()});
+    const [date, setDate] = React.useState<DateRange>({from: new Date(), to: new Date()});
 
-    const handleDateSelect: OnSelectHandler<DateRange | undefined> = (selected) => {
+    const handleDateSelect: OnSelectHandler<DateRange> = (selected) => {
+        if(selected === undefined) {
+            selected = {
+                from: new Date(),
+                to: new Date(),
+            }
+        }
+
+        if(selected.from === undefined) {
+            selected.from = new Date();
+        }
+
+        if(selected.to === undefined) {
+            selected.to = new Date();
+        }
+
         setDate(selected);
     };
 
@@ -89,8 +104,8 @@ export default function TeamStandingsChart() {
     // this method fetches the NHL stats from the database.
     useEffect(() => {
         async function getTeamStats() {
-            const prettyStartDate: string|undefined = changeDateToMyPreferredStringFormat(date?.from);
-            const prettyEndDate: string|undefined = changeDateToMyPreferredStringFormat(date?.to);
+            const prettyStartDate: string | undefined = changeDateToMyPreferredStringFormat(date.from as Date);
+            const prettyEndDate: string | undefined = changeDateToMyPreferredStringFormat(date.to as Date);
 
             const response = await fetch(`http://${SERVER}/api/nhl_standings/?start_date=${prettyStartDate}&end_date=${prettyEndDate}`);
             if (!response.ok) {
@@ -130,7 +145,7 @@ export default function TeamStandingsChart() {
         getTeamStats();
     }, [dateRangeContextValue.dateRange]);
 
-    function changeDateToMyPreferredStringFormat(originalDate: Date|undefined) {
+    function changeDateToMyPreferredStringFormat(originalDate: Date) {
         function join(date: Date, options: any[], separator: string) {
             function format(option: Intl.DateTimeFormatOptions | undefined) {
                 let formatter = new Intl.DateTimeFormat('en', option);
