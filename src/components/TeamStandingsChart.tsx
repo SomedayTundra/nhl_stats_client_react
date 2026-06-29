@@ -13,7 +13,7 @@ import type {Value} from "react-calendar/dist/shared/types";
 import {TrendingUp} from "lucide-react"
 import {CartesianGrid, Line, LineChart, XAxis} from "recharts"
 import {Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle,} from "./ui/card"
-import {type ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent,} from "./ui/chart"
+import {type ChartConfig, ChartContainer, ChartTooltip} from "./ui/chart"
 
 import {
     Combobox,
@@ -105,16 +105,16 @@ export default function TeamStandingsChart() {
             let newChartData: Record<string, string | number>[] = []
             // chartConfig.clear()
 
-            teamStats.map((team_stat: TeamStatEntry) => {
+            teamStats.map((teamStatEntry: TeamStatEntry) => {
                 // get data entry for the given date
-                let existingDate = newChartData.find((entry) => entry["date"] == team_stat.date);
+                let existingDate = newChartData.find((entry) => entry["date"] == teamStatEntry.date);
                 if (!existingDate) {
-                    existingDate = {date: team_stat.date}
+                    existingDate = {date: teamStatEntry.date}
                     newChartData.push(existingDate);
                 }
 
                 // add an entry associating this team's abbreviation with this team's points
-                existingDate[team_stat.team_abbrev] = team_stat.points
+                existingDate[teamStatEntry.teamAbbrev] = teamStatEntry.points
 
                 // make sure there is a chart config entry for this team's abbreviation
                 // const existingConfig = chartConfig.get(team_stat.team_abbrev)

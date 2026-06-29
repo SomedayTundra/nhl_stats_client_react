@@ -21,20 +21,20 @@ const CLASS_TD_CENTER = `${CLASS_TD} text-center`;
 
 
 // TODO: FIGURE OUT IF IMAGES FETCHED VIA localhost:8000/.../logos/{name} ARE DEFINITELY CACHED BY THE BROWSER
-const TeamStat: React.FC<TeamStatEntry> = ({date, goal_diff, goals_against, goals_for, logo, losses, team_name, team_common_name, team_abbrev, ot_losses, points, wins}: TeamStatEntry) => (
+const TeamStat: React.FC<TeamStatEntry> = ({date, goalDiff, goalsAgainst, goalsFor, logo, losses, teamName, teamCommonName, teamAbbrev, otLosses, points, wins}: TeamStatEntry) => (
     <tr className="p-0 transition-colors data-[state=selected]:bg-muted">
         <td className={CLASS_TD_LEFT}>{date}</td>
         <td className={`flex`}>
             <img className="h-16 w-16 align-middle justify-center" src={`http://localhost:8000/api/nhl_standings/logos?logo_filename=${logo}`} alt="logo"></img>
-            <p className={CLASS_TD}>{team_name} ({team_common_name}) [{team_abbrev}]</p>
+            <p className={CLASS_TD}>{teamName} ({teamCommonName}) [{teamAbbrev}]</p>
         </td>
         <td className={CLASS_TD_CENTER}>{wins}</td>
         <td className={CLASS_TD_CENTER}>{losses}</td>
-        <td className={CLASS_TD_CENTER}>{ot_losses}</td>
+        <td className={CLASS_TD_CENTER}>{otLosses}</td>
         <td className={CLASS_TD_CENTER}>{points}</td>
-        <td className={CLASS_TD_CENTER}>{goals_for}</td>
-        <td className={CLASS_TD_CENTER}>{goals_against}</td>
-        <td className={CLASS_TD_CENTER}>{goal_diff}</td>
+        <td className={CLASS_TD_CENTER}>{goalsFor}</td>
+        <td className={CLASS_TD_CENTER}>{goalsAgainst}</td>
+        <td className={CLASS_TD_CENTER}>{goalDiff}</td>
     </tr>
 );
 
@@ -64,8 +64,8 @@ export default function TeamStandingsTable() {
                 console.error(message);
                 return;
             }
-            const team_stats = await response.json();
-            setTeamStats(team_stats);
+            const teamStats = await response.json();
+            setTeamStats(teamStats);
         }
 
         getTeamStats();
@@ -73,23 +73,23 @@ export default function TeamStandingsTable() {
 
     // this method will map out the team stats on the table
     function teamStatsList() {
-        return teamStats.map((team_stat) => {
-            console.debug(team_stat);
-            const id_key = team_stat.date + '_' + team_stat.team_name;
+        return teamStats.map((teamStat) => {
+            console.debug(teamStat);
+            const id_key = teamStat.date + '_' + teamStat.teamName;
             return (
                 <TeamStat
-                    date={team_stat.date}
-                    goal_diff={team_stat.goal_diff}
-                    goals_against={team_stat.goals_against}
-                    goals_for={team_stat.goals_for}
-                    logo={team_stat.logo}
-                    losses={team_stat.losses}
-                    team_name={team_stat.team_name}
-                    team_common_name={team_stat.team_common_name}
-                    team_abbrev={team_stat.team_abbrev}
-                    ot_losses={team_stat.ot_losses}
-                    points={team_stat.points}
-                    wins={team_stat.wins}
+                    date={teamStat.date}
+                    goalDiff={teamStat.goalDiff}
+                    goalsAgainst={teamStat.goalsAgainst}
+                    goalsFor={teamStat.goalsFor}
+                    logo={teamStat.logo}
+                    losses={teamStat.losses}
+                    teamName={teamStat.teamName}
+                    teamCommonName={teamStat.teamCommonName}
+                    teamAbbrev={teamStat.teamAbbrev}
+                    otLosses={teamStat.otLosses}
+                    points={teamStat.points}
+                    wins={teamStat.wins}
                     key={id_key}
                 />
             );
