@@ -29,8 +29,8 @@ const NavBar = () => {
                             <NavLink to="/nhl_stats_chart" className={linkClass}>
                                 Chart
                             </NavLink>
-                            <NavLink to="/date_range_test" className={linkClass}>
-                                DateRangeTest
+                            <NavLink to="/league_shape_quiz" className={linkClass}>
+                                Quiz
                             </NavLink>
                         </div>
                     </div>

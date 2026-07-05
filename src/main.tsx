@@ -10,8 +10,7 @@ import App from './App.tsx'
 import NotFound from "./components/NotFound.tsx";
 import TeamStandingsTable from "./components/TeamStandingsTable.tsx"
 import TeamStandingsChart from "./components/TeamStandingsChart.tsx"
-import DateRangeTest from "@/components/DateRangeTest.tsx";
-// import UserContextTest from "@/components/UserContextTest.tsx";
+import LeagueShapeQuiz from '@/components/LeagueShapeQuiz.tsx'
 
 const router = createBrowserRouter([
     {
@@ -33,16 +32,9 @@ const router = createBrowserRouter([
         path: "/",
         element: <App />,
         children: [
-            {path: "/date_range_test", element: <DateRangeTest />},
+            {path: "/league_shape_quiz", element: <LeagueShapeQuiz />},
         ],
     },
-    // {
-    //     path: "/",
-    //     element: <App />,
-    //     children: [
-    //         {path: "/user_context_test", element: <UserContextTest />},
-    //     ],
-    // },
     {
         path: "*",
         element: <NotFound />,
