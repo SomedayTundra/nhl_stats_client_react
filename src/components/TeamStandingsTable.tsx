@@ -144,7 +144,6 @@ export default function TeamStandingsTable() {
 
     return (
         <DateRangeContext value={dateRangeContextValue}>
-            <h3 className="text-lg font-semibold p-4">Team Standings TABLE</h3>
             <div className="flex justify-start">
                 <DatePickerWithRange/>
             </div>

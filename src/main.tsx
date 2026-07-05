@@ -1,48 +1,43 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import {
-    createBrowserRouter,
-    RouterProvider,
-} from "react-router-dom";
+import {StrictMode} from 'react'
+import {createRoot} from 'react-dom/client'
+import {BrowserRouter,} from 'react-router-dom'
 
 import './index.css'
 import App from './App.tsx'
-import NotFound from "./components/NotFound.tsx";
-import TeamStandingsTable from "./components/TeamStandingsTable.tsx"
-import TeamStandingsChart from "./components/TeamStandingsChart.tsx"
-import LeagueShapeQuiz from '@/components/LeagueShapeQuiz.tsx'
 
-const router = createBrowserRouter([
-    {
-        path: "/",
-        element: <App />,
-        children: [
-            {path: "/", element: <TeamStandingsTable />},
-            {path: "/nhl_standings", element: <TeamStandingsTable />},
-        ],
-    },
-    {
-        path: "/",
-        element: <App />,
-        children: [
-            {path: "/nhl_stats_chart", element: <TeamStandingsChart />},
-        ],
-    },
-    {
-        path: "/",
-        element: <App />,
-        children: [
-            {path: "/league_shape_quiz", element: <LeagueShapeQuiz />},
-        ],
-    },
-    {
-        path: "*",
-        element: <NotFound />,
-    },
-]);
+// const router = createBrowserRouter([
+//     {
+//         path: "/",
+//         element: <App />,
+//         children: [
+//             {path: "/", element: <TeamStandingsTable />},
+//             {path: "/nhl_standings", element: <TeamStandingsTable />},
+//         ],
+//     },
+//     {
+//         path: "/",
+//         element: <App />,
+//         children: [
+//             {path: "/nhl_stats_chart", element: <TeamStandingsChart />},
+//         ],
+//     },
+//     {
+//         path: "/",
+//         element: <App />,
+//         children: [
+//             {path: "/league_shape_quiz", element: <LeagueShapeQuiz />},
+//         ],
+//     },
+//     {
+//         path: "*",
+//         element: <NotFound />,
+//     },
+// ]);
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-      <RouterProvider router={router} />
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
   </StrictMode>,
 )

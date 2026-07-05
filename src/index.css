@@ -86,6 +86,9 @@
     --text-h: #08060d;
     --bg: #fff;
 
+    --navbar-bg: #B0CCFF;
+    --navbar-fg: #263D69;
+
     --league-board-bg-dark: #212B3F;
     --league-board-bg-light: #DAE7FF;
     --league-board-text-header: #FADA93;
@@ -155,6 +158,21 @@ p {
     margin: 0;
 }
 
+.navbar {
+    background-color: var(--navbar-bg);
+    color: var(--navbar-fg);
+
+    .label {
+        color: var(--navbar-fg);
+    }
+}
+
+.nhl-page-footer {
+    width: 100%;
+    background-color: var(--navbar-bg);
+    color: var(--navbar-fg);
+    padding: 1rem;
+}
 
 .league-ref-everything {
     margin: 0 0 1rem 0;
@@ -209,7 +227,7 @@ p {
 }
 
 .division-name-row {
-    background: linear-gradient(var(--league-board-bg-dark) 50%, var(--league-board-bg-light) 100%);
+    background: linear-gradient(var(--league-board-bg-dark) 50%, var(--league-board-bg-light));
     color: var(--league-board-text-division);
     text-align: start;
     width: 100%;
