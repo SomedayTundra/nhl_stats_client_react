@@ -189,17 +189,10 @@ export default function TeamStandingsChart() {
                         </ComboboxList>
                     </ComboboxContent>
                 </Combobox>
-<<<<<<< Updated upstream
-                <FieldGroup className="mx-auto w-56">
-                    <Field orientation="horizontal">
-                        <Checkbox id="show-dots-checkbox-basic" name="show-dots-checkbox-basic" checked={showDots} onCheckedChange={setShowDots}/>
-                        <FieldLabel htmlFor="terms-checkbox-basic">
-=======
                 <FieldGroup className='mx-auto w-56'>
                     <Field orientation='horizontal'>
                         <Checkbox id='show-dots-checkbox-basic' name='show-dots-checkbox-basic' checked={showDots} onCheckedChange={setShowDots}/>
                         <FieldLabel htmlFor='show-dots-checkbox-basic'>
->>>>>>> Stashed changes
                             Show Dots
                         </FieldLabel>
                     </Field>
