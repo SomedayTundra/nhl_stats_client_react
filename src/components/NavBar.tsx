@@ -1,4 +1,4 @@
-import {NavLink, type NavLinkRenderProps} from "react-router-dom";
+import {NavLink, type NavLinkRenderProps, Outlet} from 'react-router-dom'
 import logo from "../assets/nhl_logo.png"
 
 const NavBar = () => {
@@ -9,7 +9,7 @@ const NavBar = () => {
 
     return (
         <div>
-            <nav className="bg-indigo-700 border-b border-indigo-500">
+            <nav className="navbar">
                 <div className="mx-auto px-2 sm:px-6 lg:px-8">
                     <div className="flex h-20 items-center justify-start">
                         <div className="flex flex-1 items-start justify-left md:items-stretch md:justify-start">
@@ -19,23 +19,18 @@ const NavBar = () => {
                                     src={logo}
                                     alt="NHL Stats"
                                 />
-                                <span className="hidden md:block text-white text-2xl font-bold ml-2">
+                                <span className="navbar-label hidden md:block text-2xl font-bold ml-2">
                                     NHL Stats
                                 </span>
                             </NavLink>
-                            <NavLink to="/nhl_standings" className={linkClass}>
-                                Table
-                            </NavLink>
-                            <NavLink to="/nhl_stats_chart" className={linkClass}>
-                                Chart
-                            </NavLink>
-                            <NavLink to="/league_shape_quiz" className={linkClass}>
-                                Quiz
-                            </NavLink>
+                            <NavLink className={linkClass} to="/nhl_standings">Table</NavLink>
+                            <NavLink className={linkClass} to="/nhl_stats_chart">Chart</NavLink>
+                            <NavLink className={linkClass} to="/league_shape_quiz">Quiz</NavLink>
                         </div>
                     </div>
                 </div>
             </nav>
+            <Outlet/>
         </div>
     );
 };
