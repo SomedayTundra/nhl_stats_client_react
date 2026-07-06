@@ -28,7 +28,7 @@ export function LeagueBoard() {
                                     <h2 className='division-name-row'>{divisionInfo[0]} Division</h2>
                                     <div className='team-info-card-row'>
                                         {[...divisionInfo[1].teams.map((teamInfo) => (
-                                            <TeamInfoCard key={teamInfo.teamAbbrev} data={teamInfo}/>
+                                            <TeamInfoCard key={teamInfo.teamAbbrev} info={teamInfo}/>
                                         ))]}
                                     </div>
                                 </div>

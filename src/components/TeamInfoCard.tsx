@@ -1,19 +1,33 @@
-import type {TeamInfo} from '@state/useLeagueInfo';
+import type {TeamInfo} from '@/state/useLeagueInfo';
+import {useQuery} from '@tanstack/react-query'
 
 type TeamInfoCardProps = {
-    data: TeamInfo
+    info: TeamInfo
 }
 
-export function TeamInfoCard({data}: TeamInfoCardProps) {
+const BASE_URL = 'http://localhost:8000/api'
+
+export function TeamInfoCard({info}: TeamInfoCardProps) {
     const verbose = false;
 
+    const {data: imageURL} = useQuery({
+        queryKey: [info.teamAbbrev],
+        queryFn: async () => {
+            const fetchURL = `${BASE_URL}/nhl_team_info/logo?logo_filename=${info.logo}`
+            const response = await fetch(fetchURL)
+            const imageBlob = await response.blob()
+            const imageObjectURL = URL.createObjectURL(imageBlob)
+            return (imageObjectURL)
+        },
+    })
+
     return (
-        <div key={data.teamAbbrev} className='team-info-card'>
-            <div className='team-logo-and-name'><img src={`http://localhost:8000/api/nhl_team_info/logo?logo_filename=${data.logo}`} alt='logo'/>{data.teamName}</div>
+        <div key={info.teamAbbrev} className='team-info-card'>
+            <div className='team-logo-and-name'><img src={imageURL} alt='logo'/>{info.teamName}</div>
             {verbose &&
                 <div className='team-conf-and-division'>
-                  <p>{data.conferenceName} Conference</p>
-                  <p>{data.divisionName} Division</p>
+                  <p>{info.conferenceName} Conference</p>
+                  <p>{info.divisionName} Division</p>
                 </div>
             }
         </div>
