@@ -1,33 +1,26 @@
-"use client"
+'use client'
 
-import * as React from "react";
-import {useEffect, useState} from "react";
-import 'react-calendar/dist/Calendar.css';
-import type TeamStatEntry from "@/components/TeamStatEntry.tsx";
+import * as React from 'react'
+import {useState} from 'react'
+import 'react-calendar/dist/Calendar.css'
+import type TeamStatEntry from '@/components/TeamStatEntry.tsx'
 
 // FIXME: sort out what isn't configured properly so i can stop ignoring the
 //        'cannot find module react-calender/dist/shared/types' error that
 //        IDEA is giving me, even though the code itself *can* find that module
 // @ts-ignore
-import type {Value} from "react-calendar/dist/shared/types";
-import {TrendingUp} from "lucide-react"
-import {CartesianGrid, Line, LineChart, XAxis} from "recharts"
-import {Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle,} from "./ui/card"
-import {type ChartConfig, ChartContainer, ChartTooltip} from "./ui/chart"
+import type {Value} from 'react-calendar/dist/shared/types'
+import {CartesianGrid, Line, LineChart, XAxis} from 'recharts'
+import {Card, CardContent, CardDescription, CardHeader, CardTitle,} from './ui/card'
+import {type ChartConfig, ChartContainer, ChartTooltip} from './ui/chart'
 
-import {
-    Combobox,
-    ComboboxContent,
-    ComboboxEmpty,
-    ComboboxInput,
-    ComboboxItem,
-    ComboboxList,
-} from "./ui/combobox"
-import type {DateRange, OnSelectHandler} from "react-day-picker";
-import {DateRangeContext} from "@/state/DateRangeContext.tsx";
-import DatePickerWithRange from "@/components/DatePickerWithRange.tsx";
-import { Checkbox } from "@/components/ui/checkbox";
-import {Field, FieldGroup, FieldLabel} from "@/components/ui/field.tsx";
+import {Combobox, ComboboxContent, ComboboxEmpty, ComboboxInput, ComboboxItem, ComboboxList,} from './ui/combobox'
+import type {DateRange, OnSelectHandler} from 'react-day-picker'
+import {DateRangeContext} from '@/state/DateRangeContext.tsx'
+import DatePickerWithRange from '@/components/DatePickerWithRange.tsx'
+import {Checkbox} from '@/components/ui/checkbox'
+import {Field, FieldGroup, FieldLabel} from '@/components/ui/field.tsx'
+import {useQuery} from '@tanstack/react-query'
 
 const lineTypes = [
     'basis', 'bump', 'linear', 'natural', 'monotone', 'step',
@@ -71,8 +64,6 @@ let chartConfig = {
 } satisfies ChartConfig
 
 export default function TeamStandingsChart() {
-    // const [teamStats, setTeamStats] = useState<TeamStatEntry[]>([]);
-    const [chartData, setChartData] = useState<Record<string, string | number>[]>([]);
     const [lineType, setLineType] = useState("monotone");
     const [showDots, setShowDots] = React.useState<boolean>(true);
     const [date, setDate] = React.useState<DateRange>({from: new Date(), to: new Date()});
@@ -101,50 +92,6 @@ export default function TeamStandingsChart() {
         setDateRange: handleDateSelect
     };
 
-    // this method fetches the NHL stats from the database.
-    useEffect(() => {
-        async function getTeamStats() {
-            const prettyStartDate: string | undefined = changeDateToMyPreferredStringFormat(date.from as Date);
-            const prettyEndDate: string | undefined = changeDateToMyPreferredStringFormat(date.to as Date);
-
-            const response = await fetch(`http://${SERVER}/api/nhl_standings/?start_date=${prettyStartDate}&end_date=${prettyEndDate}`);
-            if (!response.ok) {
-                const message = `An error occurred: ${response.statusText}`;
-                console.error(message);
-                return;
-            }
-            const teamStats = await response.json();
-
-
-            // clear out any old data
-            let newChartData: Record<string, string | number>[] = []
-            // chartConfig.clear()
-
-            teamStats.map((teamStatEntry: TeamStatEntry) => {
-                // get data entry for the given date
-                let existingDate = newChartData.find((entry) => entry["date"] == teamStatEntry.date);
-                if (!existingDate) {
-                    existingDate = {date: teamStatEntry.date}
-                    newChartData.push(existingDate);
-                }
-
-                // add an entry associating this team's abbreviation with this team's points
-                existingDate[teamStatEntry.teamAbbrev] = teamStatEntry.points
-
-                // make sure there is a chart config entry for this team's abbreviation
-                // const existingConfig = chartConfig.get(team_stat.team_abbrev)
-                // if(!existingConfig) {
-                //     const configEntry: LineDescriptor = {label: team_stat.team_common_name, color: "var(--chart-1)"};
-                //     chartConfig.set(team_stat.team_abbrev, configEntry)
-                // }
-            });
-
-            setChartData(newChartData);
-        }
-
-        getTeamStats();
-    }, [dateRangeContextValue.dateRange]);
-
     function changeDateToMyPreferredStringFormat(originalDate: Date) {
         function join(date: Date, options: any[], separator: string) {
             function format(option: Intl.DateTimeFormatOptions | undefined) {
@@ -171,6 +118,50 @@ export default function TeamStandingsChart() {
             </div>
         );
     }
+
+    // this method fetches the NHL stats from the database.
+    const {data: teamStats, isPending, error} = useQuery({
+        queryKey: ['teamStats', dateRangeContextValue.dateRange],
+        queryFn: async() => {
+            const prettyStartDate: string | undefined = changeDateToMyPreferredStringFormat(date.from as Date);
+            const prettyEndDate: string | undefined = changeDateToMyPreferredStringFormat(date.to as Date);
+
+            const response = await fetch(`http://${SERVER}/api/nhl_standings/?start_date=${prettyStartDate}&end_date=${prettyEndDate}`);
+            if (!response.ok) {
+                const message = `An error occurred: ${response.statusText}`;
+                console.error(message);
+                return;
+            }
+            return await response.json();
+        }
+    })
+
+    if(isPending) return 'Loading...'
+
+    if(error) return 'An error occurred: ' + error.message
+
+    // clear out any old data
+    const chartData: Record<string, string | number>[] = []
+    // chartConfig.clear()
+
+    teamStats.map((teamStatEntry: TeamStatEntry) => {
+        // get data entry for the given date
+        let existingDate = chartData.find((entry) => entry["date"] == teamStatEntry.date);
+        if (!existingDate) {
+            existingDate = {date: teamStatEntry.date}
+            chartData.push(existingDate);
+        }
+
+        // add an entry associating this team's abbreviation with this team's points
+        existingDate[teamStatEntry.teamAbbrev] = teamStatEntry.points
+
+        // make sure there is a chart config entry for this team's abbreviation
+        // const existingConfig = chartConfig.get(team_stat.team_abbrev)
+        // if(!existingConfig) {
+        //     const configEntry: LineDescriptor = {label: team_stat.team_common_name, color: "var(--chart-1)"};
+        //     chartConfig.set(team_stat.team_abbrev, configEntry)
+        // }
+    });
 
     return (
         <DateRangeContext value={dateRangeContextValue}>
@@ -287,15 +278,15 @@ export default function TeamStandingsChart() {
                         </LineChart>
                     </ChartContainer>
                 </CardContent>
-                <CardFooter>
-                    <div className="flex w-full items-start gap-2 text-sm">
-                        <div className="grid gap-2">
-                            <div className="flex items-center gap-2 leading-none font-medium">
-                                THIS IS THE FOOTER <TrendingUp className="h-4 w-4"/>
-                            </div>
-                        </div>
-                    </div>
-                </CardFooter>
+                {/*<CardFooter>*/}
+                {/*    <div className="flex w-full items-start gap-2 text-sm">*/}
+                {/*        <div className="grid gap-2">*/}
+                {/*            <div className="flex items-center gap-2 leading-none font-medium">*/}
+                {/*                THIS IS THE FOOTER <TrendingUp className="h-4 w-4"/>*/}
+                {/*            </div>*/}
+                {/*        </div>*/}
+                {/*    </div>*/}
+                {/*</CardFooter>*/}
             </Card>
         </DateRangeContext>
     );

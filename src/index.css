@@ -215,6 +215,7 @@ p {
     color: var(--league-board-text-conference);
     text-align: start;
     padding: 1.5rem 0 0.5rem 0;
+    border-bottom: 1px solid var(--league-board-text-conference);
 }
 
 .league-ref-one-division-container {

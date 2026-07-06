@@ -1,17 +1,17 @@
-import * as React from "react";
-import {useEffect, useState} from "react";
-import '@wojtekmaj/react-daterange-picker/dist/DateRangePicker.css';
-import 'react-calendar/dist/Calendar.css';
-import type TeamStatEntry from "@/components/TeamStatEntry.tsx";
+import * as React from 'react'
+import '@wojtekmaj/react-daterange-picker/dist/DateRangePicker.css'
+import 'react-calendar/dist/Calendar.css'
+import type TeamStatEntry from '@/components/TeamStatEntry.tsx'
 
 // FIXME: sort out what isn't configured properly so i can stop ignoring the
 //        'cannot find module react-calender/dist/shared/types' error that
 //        IDEA is giving me, even though the code itself *can* find that module
 // @ts-ignore
-import type {Value} from "react-calendar/dist/shared/types";
-import type {DateRange, OnSelectHandler} from "react-day-picker";
-import {DateRangeContext} from "@/state/DateRangeContext.tsx";
-import DatePickerWithRange from "@/components/DatePickerWithRange.tsx";
+import type {Value} from 'react-calendar/dist/shared/types'
+import type {DateRange, OnSelectHandler} from 'react-day-picker'
+import {DateRangeContext} from '@/state/DateRangeContext.tsx'
+import DatePickerWithRange from '@/components/DatePickerWithRange.tsx'
+import {useQuery} from '@tanstack/react-query'
 
 const SERVER = 'localhost:8000'
 
@@ -20,7 +20,6 @@ const CLASS_TD_LEFT = `${CLASS_TD} text-left`;
 const CLASS_TD_CENTER = `${CLASS_TD} text-center`;
 
 
-// TODO: FIGURE OUT IF IMAGES FETCHED VIA localhost:8000/.../logos/{name} ARE DEFINITELY CACHED BY THE BROWSER
 const TeamStat: React.FC<TeamStatEntry> = ({date, goalDiff, goalsAgainst, goalsFor, logo, losses, teamName, teamCommonName, teamAbbrev, otLosses, points, wins}: TeamStatEntry) => (
     <tr className="p-0 transition-colors data-[state=selected]:bg-muted">
         <td className={CLASS_TD_LEFT}>{date}</td>
@@ -40,7 +39,7 @@ const TeamStat: React.FC<TeamStatEntry> = ({date, goalDiff, goalsAgainst, goalsF
 
 
 export default function TeamStandingsTable() {
-    const [teamStats, setTeamStats] = useState<TeamStatEntry[]>([]);
+    // const [teamStats, setTeamStats] = useState<TeamStatEntry[]>([]);
     const [date, setDate] = React.useState<DateRange>({from: new Date(), to: new Date()})
 
     const handleDateSelect: OnSelectHandler<DateRange> = (selected) => {
@@ -68,27 +67,24 @@ export default function TeamStandingsTable() {
     };
 
     // this method fetches the NHL stats from the database.
-    useEffect(() => {
-        async function getTeamStats() {
+    const {data: teamStats, isPending, error} = useQuery({
+        queryKey: ['teamStats', dateRangeContextValue.dateRange],
+        queryFn: async() => {
             const prettyStartDate: string|undefined = changeDateToMyPreferredStringFormat(date.from as Date);
             const prettyEndDate: string|undefined = changeDateToMyPreferredStringFormat(date.to as Date);
 
             const response = await fetch(`http://${SERVER}/api/nhl_standings/?start_date=${prettyStartDate}&end_date=${prettyEndDate}`);
-            if (!response.ok) {
-                const message = `An error occurred: ${response.statusText}`;
-                console.error(message);
-                return;
-            }
-            const teamStats = await response.json();
-            setTeamStats(teamStats);
+            return await response.json();
         }
+    })
 
-        getTeamStats();
-    }, [dateRangeContextValue.dateRange]);
+    if(isPending) return 'Loading...'
+
+    if(error) return 'An error occurred: ' + error.message
 
     // this method will map out the team stats on the table
     function teamStatsList() {
-        return teamStats.map((teamStat) => {
+        return teamStats.map((teamStat: TeamStatEntry) => {
             console.debug(teamStat);
             const id_key = teamStat.date + '_' + teamStat.teamName;
             return (

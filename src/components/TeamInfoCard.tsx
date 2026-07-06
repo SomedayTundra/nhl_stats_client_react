@@ -1,4 +1,4 @@
-import type {TeamInfo} from '@/state/useLeagueInfo';
+import type {TeamInfo} from '@/state/types';
 import {useQuery} from '@tanstack/react-query'
 
 type TeamInfoCardProps = {
