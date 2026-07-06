@@ -1,5 +1,6 @@
 import {NavLink, type NavLinkRenderProps, Outlet} from 'react-router-dom'
 import logo from "../assets/nhl_logo.png"
+import {ReactQueryDevtools} from '@tanstack/react-query-devtools'
 
 const NavBar = () => {
 
@@ -26,6 +27,7 @@ const NavBar = () => {
                             <NavLink className={linkClass} to="/nhl_standings">Table</NavLink>
                             <NavLink className={linkClass} to="/nhl_stats_chart">Chart</NavLink>
                             <NavLink className={linkClass} to="/league_shape_quiz">Quiz</NavLink>
+                            <ReactQueryDevtools/>
                         </div>
                     </div>
                 </div>
