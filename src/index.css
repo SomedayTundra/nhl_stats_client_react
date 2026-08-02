@@ -90,9 +90,9 @@
     --navbar-fg: #263D69;
 
     --league-board-bg-dark: #212B3F;
-    --league-board-bg-light: #DAE7FF;
+    --league-board-bg-light: rgb(33 43 63 / 0.75);
     --league-board-text-header: #FADA93;
-    --league-board-text-conference: #B0CCFF;
+    --league-board-text-conference: #ffffff;
     --league-board-text-division: #B0CCFF;
 
     --unplaced-team-bucket-bg-dark: #614E26;
@@ -176,7 +176,9 @@ p {
 
 .league-ref-everything {
     margin: 0 0 1rem 0;
-    border: 1rem solid var(--league-board-bg-dark);
+    /*border: 1rem solid var(--league-board-bg-dark);*/
+    border-top: 1rem solid var(--league-board-bg-dark);
+    border-left: 1rem solid var(--league-board-bg-dark);
     font-weight: bold;
 }
 
@@ -215,7 +217,6 @@ p {
     color: var(--league-board-text-conference);
     text-align: start;
     padding: 1.5rem 0 0.5rem 0;
-    border-bottom: 1px solid var(--league-board-text-conference);
 }
 
 .league-ref-one-division-container {
@@ -229,6 +230,7 @@ p {
 
 .division-name-row {
     background: linear-gradient(var(--league-board-bg-dark) 50%, var(--league-board-bg-light));
+    border-right: 1rem solid var(--league-board-bg-dark);
     color: var(--league-board-text-division);
     text-align: start;
     width: 100%;
