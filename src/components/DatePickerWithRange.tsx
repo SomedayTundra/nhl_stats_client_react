@@ -19,8 +19,8 @@ export default function DatePickerWithRange() {
 
     const drc = use(DateRangeContext);
 
-    // customize the way clicks are handled here!
-    // to wit, double-click to reset the `from` date is not intuitive
+    // FIXME: customize the way clicks are handled here!
+    //        to wit, double-click to reset the `from` date is not intuitive at all
     //
     // const handleDayClick = (day: Date) => {
     //     setDate((prev) => {
@@ -44,7 +44,7 @@ export default function DatePickerWithRange() {
     // }
 
     return (
-        <Field className="w-60" orientation="horizontal">
+        <Field className="w-80" orientation="horizontal">
             <FieldLabel htmlFor="date-picker-range" className="justify-start">Date Range:</FieldLabel>
             <Popover>
                 <PopoverTrigger asChild>

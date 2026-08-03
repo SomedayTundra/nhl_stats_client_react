@@ -66,7 +66,7 @@ let chartConfig = {
 export default function TeamStandingsChart() {
     const [lineType, setLineType] = useState("monotone");
     const [showDots, setShowDots] = React.useState<boolean>(true);
-    const [date, setDate] = React.useState<DateRange>({from: new Date(), to: new Date()});
+    const [date, setDate] = React.useState<DateRange>({from: new Date('2025-10-08'), to: new Date('2026-04-18')});
 
     const handleDateSelect: OnSelectHandler<DateRange> = (selected) => {
         if(selected === undefined) {
@@ -165,7 +165,7 @@ export default function TeamStandingsChart() {
 
     return (
         <DateRangeContext value={dateRangeContextValue}>
-            <div className="flex">
+            <div className="flex flex-row items-center">
                 <DatePickerWithRange/>
                 <Combobox items={lineTypes} defaultValue={lineTypes[4]} onInputValueChange={setLineType} autoHighlight>
                     <ComboboxInput placeholder="Select a line type"/>

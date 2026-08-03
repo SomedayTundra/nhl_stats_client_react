@@ -40,7 +40,7 @@ const TeamStat: React.FC<TeamStatEntry> = ({date, goalDiff, goalsAgainst, goalsF
 
 export default function TeamStandingsTable() {
     // const [teamStats, setTeamStats] = useState<TeamStatEntry[]>([]);
-    const [date, setDate] = React.useState<DateRange>({from: new Date(), to: new Date()})
+    const [date, setDate] = React.useState<DateRange>({from: new Date('2025-12-02'), to: new Date('2025-12-02')})
 
     const handleDateSelect: OnSelectHandler<DateRange> = (selected) => {
         if(selected === undefined) {
