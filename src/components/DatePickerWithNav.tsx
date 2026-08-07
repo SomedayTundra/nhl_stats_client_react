@@ -8,16 +8,27 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import {addDays, format, subDays} from "date-fns"
-import { CalendarIcon, ChevronLeftIcon, ChevronRightIcon } from "lucide-react"
+import { CalendarIcon, ChevronLeftIcon, ChevronRightIcon, ChevronsLeftIcon, ChevronsRightIcon } from "lucide-react"
 
 import { use } from 'react';
 import {DateContext} from "@/state/DateContext.tsx";
 
-export default function DatePickerWithNav() {
+type DatePickerWithNavProps = {
+    id: string
+    tooltip: string
+    label?: string
+}
+
+export default function DatePickerWithNav({id, tooltip, label}: DatePickerWithNavProps) {
     const dateFormat = "MM-dd-yyyy";
 
     const dc = use(DateContext);
+
+    function goToPreviousWeek() {
+        dc.setDate(subDays(dc.date, 7))
+    }
 
     function goToPreviousDay() {
         dc.setDate(subDays(dc.date, 1))
@@ -27,28 +38,52 @@ export default function DatePickerWithNav() {
         dc.setDate(addDays(dc.date, 1))
     }
 
+    function goToNextWeek() {
+        dc.setDate(addDays(dc.date, 7))
+    }
+
     return (
         <Field className="w-auto flex-row items-center" orientation="horizontal">
-            <FieldLabel htmlFor="date-picker" className="justify-start shrink-0">Date:</FieldLabel>
+            {label && (
+                <FieldLabel htmlFor={id} className="justify-start shrink-0">{label}:</FieldLabel>
+            )}
             <div className="flex items-center gap-0">
-                <Button variant="outline" size="icon" className="rounded-r-none" onClick={goToPreviousDay} aria-label="Previous day">
-                    <ChevronLeftIcon />
-                </Button>
-                <Popover>
-                    <PopoverTrigger asChild>
-                        <Button
-                            variant="outline"
-                            id="date-picker"
-                            className="justify-start rounded-none px-2.5 font-normal"
-                        >
-                            <CalendarIcon />
-                            {dc.date ? (
-                                format(dc.date, dateFormat)
-                            ) : (
-                                <span>Pick a date</span>
-                            )}
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Button variant="outline" size="icon" className="rounded-r-none" onClick={goToPreviousWeek} aria-label="Previous week">
+                            <ChevronsLeftIcon />
                         </Button>
-                    </PopoverTrigger>
+                    </TooltipTrigger>
+                    <TooltipContent>-1 week</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Button variant="outline" size="icon" className="rounded-none" onClick={goToPreviousDay} aria-label="Previous day">
+                            <ChevronLeftIcon />
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>-1 day</TooltipContent>
+                </Tooltip>
+                <Popover>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <PopoverTrigger asChild>
+                                <Button
+                                    variant="outline"
+                                    id={id}
+                                    className="justify-start rounded-none px-2.5 font-normal"
+                                >
+                                    <CalendarIcon />
+                                    {dc.date ? (
+                                        format(dc.date, dateFormat)
+                                    ) : (
+                                        <span>Pick a date</span>
+                                    )}
+                                </Button>
+                            </PopoverTrigger>
+                        </TooltipTrigger>
+                        <TooltipContent>{tooltip}</TooltipContent>
+                    </Tooltip>
                     <PopoverContent className="w-auto p-0" align="start">
                         <Calendar
                             mode="single"
@@ -59,9 +94,22 @@ export default function DatePickerWithNav() {
                         />
                     </PopoverContent>
                 </Popover>
-                <Button variant="outline" size="icon" className="rounded-l-none" onClick={goToNextDay} aria-label="Next day">
-                    <ChevronRightIcon />
-                </Button>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Button variant="outline" size="icon" className="rounded-none" onClick={goToNextDay} aria-label="Next day">
+                            <ChevronRightIcon />
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>+1 day</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Button variant="outline" size="icon" className="rounded-l-none" onClick={goToNextWeek} aria-label="Next week">
+                            <ChevronsRightIcon />
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>+1 week</TooltipContent>
+                </Tooltip>
             </div>
         </Field>
     )

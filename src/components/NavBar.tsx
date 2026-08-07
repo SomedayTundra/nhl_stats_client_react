@@ -6,7 +6,7 @@ const NavBar = () => {
 
     const linkClass = ({isActive}: NavLinkRenderProps) => isActive ?
         'text-white bg-black hover:bg-gray-900 hover:text-white rounded-md px-3 py-2' :
-        'text-white hover:bg-gray-900 hover:text-white rounded-md px-3 py-2';
+        'text-[var(--navbar-fg)] hover:bg-gray-900 hover:text-white rounded-md px-3 py-2';
 
     return (
         <div className="flex flex-col h-full min-h-0">

@@ -177,7 +177,7 @@ export default function TeamStandingsTable() {
         <DateContext value={dateContextValue}>
             <div className='w-9/12 mx-auto flex flex-row items-center gap-4 top-controls-container'>
                 <div className='flex justify-start items-center'>
-                    <DatePickerWithNav/>
+                    <DatePickerWithNav id="date-picker" label="Date" tooltip="Date"/>
                 </div>
                 <div className='flex justify-start'>
                     <TeamChooser selected={selectedTeams} onChange={setSelectedTeams}/>

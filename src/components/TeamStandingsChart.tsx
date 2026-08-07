@@ -3,19 +3,20 @@
 import * as React from 'react'
 import 'react-calendar/dist/Calendar.css'
 import type TeamStatEntry from '@/components/TeamStatEntry.tsx'
-import {CartesianGrid, Line, LineChart, XAxis} from 'recharts'
+import {CartesianGrid, Line, LineChart, XAxis, YAxis} from 'recharts'
 import {Card, CardContent, CardDescription, CardHeader, CardTitle,} from './ui/card'
 import {type ChartConfig, ChartContainer, ChartTooltip} from './ui/chart'
 
 import {Combobox, ComboboxContent, ComboboxEmpty, ComboboxInput, ComboboxItem, ComboboxList,} from './ui/combobox'
-import type {DateRange, OnSelectHandler} from 'react-day-picker'
-import {DateRangeContext} from '@/state/DateRangeContext.tsx'
-import DatePickerWithRange from '@/components/DatePickerWithRange.tsx'
+import type {OnSelectHandler} from 'react-day-picker'
+import {ArrowRightLeftIcon} from 'lucide-react'
+import {DateContext} from '@/state/DateContext.tsx'
+import DatePickerWithNav from '@/components/DatePickerWithNav.tsx'
 import TeamChooser from '@/components/TeamChooser.tsx'
 import {Checkbox} from '@/components/ui/checkbox'
 import {Field, FieldGroup, FieldLabel} from '@/components/ui/field.tsx'
 import {useQuery} from '@tanstack/react-query'
-import {formatDateForApi} from '@/lib/date.ts'
+import {deserializeDate, formatDateForApi, serializeDate} from '@/lib/date.ts'
 import {useLocalStorageState} from '@/lib/useLocalStorageState.ts'
 
 const lineTypes = [
@@ -29,11 +30,6 @@ function isLineType(value: string): value is LineType {
 }
 
 const SERVER = 'localhost:8000'
-
-type ResolvedDateRange = {
-    from: Date;
-    to: Date;
-}
 
 // colors below were picked the same way as the rest of this map: rendering each team's logo
 // and measuring which non-white color covers the most pixel area, nudging a couple of teams
@@ -256,17 +252,14 @@ export default function TeamStandingsChart() {
     })
     const [showDots, setShowDots] = useLocalStorageState<boolean>('nhlStats.chart.showDots', false)
     const [selectedTeams, setSelectedTeams] = useLocalStorageState<string[]>('nhlStats.chart.selectedTeams', [])
-    const [date, setDate] = useLocalStorageState<ResolvedDateRange>(
-        'nhlStats.chart.dateRange',
-        {from: new Date('2025-10-08'), to: new Date('2026-04-18')},
-        {
-            serialize: (range) => JSON.stringify({from: range.from.toISOString(), to: range.to.toISOString()}),
-            deserialize: (raw) => {
-                const parsed = JSON.parse(raw) as {from: string; to: string}
-                return {from: new Date(parsed.from), to: new Date(parsed.to)}
-            },
-        }
-    )
+    const [fromDate, setFromDate] = useLocalStorageState<Date>('nhlStats.chart.dateRange.from', new Date('2025-10-08'), {
+        serialize: serializeDate,
+        deserialize: deserializeDate,
+    })
+    const [toDate, setToDate] = useLocalStorageState<Date>('nhlStats.chart.dateRange.to', new Date('2026-04-18'), {
+        serialize: serializeDate,
+        deserialize: deserializeDate,
+    })
 
     // tracks the chart area's actual rendered height so the tooltip knows how much
     // vertical space it has before it needs to split its team list into columns
@@ -285,11 +278,12 @@ export default function TeamStandingsChart() {
         return () => observer.disconnect()
     }, [])
 
-    const handleDateSelect: OnSelectHandler<DateRange | undefined> = (selected) => {
-        setDate({
-            from: selected?.from ?? new Date(),
-            to: selected?.to ?? new Date(),
-        });
+    const handleFromDateSelect: OnSelectHandler<Date | undefined> = (selected) => {
+        setFromDate(selected ?? new Date());
+    };
+
+    const handleToDateSelect: OnSelectHandler<Date | undefined> = (selected) => {
+        setToDate(selected ?? new Date());
     };
 
     const handleLineTypeChange = (value: string) => {
@@ -298,19 +292,24 @@ export default function TeamStandingsChart() {
         }
     };
 
-    const dateRangeContextValue = {
-        dateRange: date,
-        setDateRange: handleDateSelect
+    const fromDateContextValue = {
+        date: fromDate,
+        setDate: handleFromDateSelect
+    };
+
+    const toDateContextValue = {
+        date: toDate,
+        setDate: handleToDateSelect
     };
 
     // this method fetches the NHL stats from the database.
     const {data: teamStats, isPending, error} = useQuery<TeamStatEntry[]>({
-        queryKey: ['teamStats', dateRangeContextValue.dateRange],
-        queryFn: async() => {
-            const prettyStartDate: string = formatDateForApi(date.from);
-            const prettyEndDate: string = formatDateForApi(date.to);
+        queryKey: ['teamStats', fromDate, toDate],
+        queryFn: async({signal}) => {
+            const prettyStartDate: string = formatDateForApi(fromDate);
+            const prettyEndDate: string = formatDateForApi(toDate);
 
-            const response = await fetch(`http://${SERVER}/api/nhl_standings/?start_date=${prettyStartDate}&end_date=${prettyEndDate}`);
+            const response = await fetch(`http://${SERVER}/api/nhl_standings/?start_date=${prettyStartDate}&end_date=${prettyEndDate}`, {signal});
             if (!response.ok) {
                 throw new Error(`An error occurred: ${response.statusText}`);
             }
@@ -366,17 +365,24 @@ export default function TeamStandingsChart() {
                     margin={{
                         top: 12,
                         bottom: 12,
-                        left: 12,
+                        left: 24,
                         right: 12,
                     }}
                 >
-                    <CartesianGrid vertical={false}/>
+                    <CartesianGrid vertical={false} stroke="var(--navbar-bg)"/>
                     <XAxis
                         dataKey="date"
                         tickLine={true}
                         axisLine={true}
                         tickMargin={8}
+                        interval={Math.max(Math.ceil(chartData.length / 11) - 1, 0)}
                         tickFormatter={(value: string) => value.slice(5)}
+                    />
+                    <YAxis
+                        tickLine={true}
+                        axisLine={true}
+                        tickMargin={8}
+                        label={{value: 'Points', angle: -90, position: 'insideLeft'}}
                     />
                     <ChartTooltip cursor={true}
                                   content={<MultiColumnTooltipContent maxHeight={chartAreaHeight}/>}
@@ -397,46 +403,53 @@ export default function TeamStandingsChart() {
     }
 
     return (
-        <DateRangeContext value={dateRangeContextValue}>
-            <div className="h-full flex flex-col">
-                <div className="w-9/12 mx-auto flex flex-row items-center gap-4 shrink-0">
-                    <DatePickerWithRange/>
-                    <TeamChooser selected={selectedTeams} onChange={setSelectedTeams}/>
-                    <Combobox items={lineTypes} value={lineType} onInputValueChange={handleLineTypeChange} autoHighlight>
-                        <ComboboxInput placeholder="Select a line type"/>
-                        <ComboboxContent>
-                            <ComboboxEmpty>No items found.</ComboboxEmpty>
-                            <ComboboxList>
-                                {(item) => (
-                                    <ComboboxItem key={item} value={item}>
-                                        {item}
-                                    </ComboboxItem>
-                                )}
-                            </ComboboxList>
-                        </ComboboxContent>
-                    </Combobox>
-                    <FieldGroup className="w-auto shrink-0">
-                        <Field orientation='horizontal'>
-                            <Checkbox id='show-dots-checkbox-basic' name='show-dots-checkbox-basic' checked={showDots} onCheckedChange={setShowDots}/>
-                            <FieldLabel htmlFor='show-dots-checkbox-basic' className="whitespace-nowrap">
-                                Show Dots
-                            </FieldLabel>
-                        </Field>
-                    </FieldGroup>
+        <div className="h-full flex flex-col">
+            <div className="w-9/12 mx-auto flex flex-row items-center gap-4 shrink-0">
+                <div className="flex flex-row items-center gap-2 shrink-0">
+                    <FieldLabel className="justify-start whitespace-nowrap">Date Range:</FieldLabel>
+                    <DateContext value={fromDateContextValue}>
+                        <DatePickerWithNav id="date-picker-from" tooltip="From"/>
+                    </DateContext>
+                    <ArrowRightLeftIcon className="size-4 shrink-0 text-muted-foreground"/>
+                    <DateContext value={toDateContextValue}>
+                        <DatePickerWithNav id="date-picker-to" tooltip="To"/>
+                    </DateContext>
                 </div>
-                <div className="flex-1 min-h-0 flex justify-center">
-                    <Card className="w-9/12 flex flex-col overflow-hidden">
-                        <CardHeader className="shrink-0">
-                            <CardTitle>Team Standings Over Time</CardTitle>
-                            <CardDescription>
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent ref={chartAreaRef} className="flex-1 min-h-0 overflow-hidden">
-                            {chartArea}
-                        </CardContent>
-                    </Card>
-                </div>
+                <TeamChooser selected={selectedTeams} onChange={setSelectedTeams}/>
+                <Combobox items={lineTypes} value={lineType} onInputValueChange={handleLineTypeChange} autoHighlight>
+                    <ComboboxInput placeholder="Select a line type"/>
+                    <ComboboxContent>
+                        <ComboboxEmpty>No items found.</ComboboxEmpty>
+                        <ComboboxList>
+                            {(item) => (
+                                <ComboboxItem key={item} value={item}>
+                                    {item}
+                                </ComboboxItem>
+                            )}
+                        </ComboboxList>
+                    </ComboboxContent>
+                </Combobox>
+                <FieldGroup className="w-auto shrink-0">
+                    <Field orientation='horizontal'>
+                        <Checkbox id='show-dots-checkbox-basic' name='show-dots-checkbox-basic' checked={showDots} onCheckedChange={setShowDots}/>
+                        <FieldLabel htmlFor='show-dots-checkbox-basic' className="whitespace-nowrap">
+                            Show Dots
+                        </FieldLabel>
+                    </Field>
+                </FieldGroup>
             </div>
-        </DateRangeContext>
+            <div className="flex-1 min-h-0 flex justify-center">
+                <Card className="w-9/12 flex flex-col overflow-hidden">
+                    <CardHeader className="shrink-0">
+                        <CardTitle>Team Standings Over Time</CardTitle>
+                        <CardDescription>
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent ref={chartAreaRef} className="flex-1 min-h-0 overflow-hidden">
+                        {chartArea}
+                    </CardContent>
+                </Card>
+            </div>
+        </div>
     );
 }
