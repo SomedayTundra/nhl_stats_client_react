@@ -5,19 +5,19 @@ import type TeamStatEntry from '@/components/TeamStatEntry.tsx'
 import type {OnSelectHandler} from 'react-day-picker'
 import {DateContext} from '@/state/DateContext.tsx'
 import DatePicker from '@/components/DatePicker.tsx'
+import TeamChooser from '@/components/TeamChooser.tsx'
 import {useQuery} from '@tanstack/react-query'
 import {formatDateForApi} from '@/lib/date.ts'
 
 const SERVER = 'localhost:8000'
 
-const CLASS_TD = "p-4 align-middle"
-const CLASS_TD_LEFT = `${CLASS_TD} text-left`;
-const CLASS_TD_CENTER = `${CLASS_TD} text-center`;
+const CLASS_TD = 'p-4 align-middle'
+const CLASS_TD_CENTER = `${CLASS_TD} text-center`
 
 type SortKey = 'teamName' | 'wins' | 'losses' | 'otLosses' | 'points' | 'goalsFor' | 'goalsAgainst' | 'goalDiff';
 type SortDirection = 'asc' | 'desc';
 
-const COLUMNS: {key: SortKey; label: string; align: 'left' | 'center'}[] = [
+const COLUMNS: { key: SortKey; label: string; align: 'left' | 'center' }[] = [
     {key: 'teamName', label: 'Team', align: 'left'},
     {key: 'wins', label: 'Wins', align: 'center'},
     {key: 'losses', label: 'Losses', align: 'center'},
@@ -26,13 +26,13 @@ const COLUMNS: {key: SortKey; label: string; align: 'left' | 'center'}[] = [
     {key: 'goalsFor', label: 'Goals For', align: 'center'},
     {key: 'goalsAgainst', label: 'Goals Against', align: 'center'},
     {key: 'goalDiff', label: 'Goal Diff', align: 'center'},
-];
+]
 
 
 const TeamStat: React.FC<TeamStatEntry> = ({goalDiff, goalsAgainst, goalsFor, logo, losses, teamName, teamCommonName, teamAbbrev, otLosses, points, wins}: TeamStatEntry) => (
-    <tr className="p-0 transition-colors data-[state=selected]:bg-muted">
+    <tr className='p-0 transition-colors data-[state=selected]:bg-muted'>
         <td className={`flex`}>
-            <img className="h-16 w-16 align-middle justify-center" src={`http://localhost:8000/api/nhl_team_info/logo?logo_filename=${logo}`} alt="logo"></img>
+            <img className='h-16 w-16 align-middle justify-center' src={`http://localhost:8000/api/nhl_team_info/logo?logo_filename=${logo}`} alt='logo'></img>
             <p className={CLASS_TD}>{teamName} ({teamCommonName}) [{teamAbbrev}]</p>
         </td>
         <td className={CLASS_TD_CENTER}>{wins}</td>
@@ -43,73 +43,74 @@ const TeamStat: React.FC<TeamStatEntry> = ({goalDiff, goalsAgainst, goalsFor, lo
         <td className={CLASS_TD_CENTER}>{goalsAgainst}</td>
         <td className={CLASS_TD_CENTER}>{goalDiff}</td>
     </tr>
-);
+)
 
 
 export default function TeamStandingsTable() {
     // const [teamStats, setTeamStats] = useState<TeamStatEntry[]>([]);
     const [date, setDate] = React.useState<Date>(new Date('2025-12-02'))
-    const [sortKey, setSortKey] = React.useState<SortKey | null>('points');
-    const [sortDirection, setSortDirection] = React.useState<SortDirection>('desc');
+    const [selectedTeams, setSelectedTeams] = React.useState<string[]>([])
+    const [sortKey, setSortKey] = React.useState<SortKey | null>('points')
+    const [sortDirection, setSortDirection] = React.useState<SortDirection>('desc')
 
     function handleSort(key: SortKey) {
         if (sortKey === key) {
-            setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+            setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'))
         } else {
-            setSortKey(key);
-            setSortDirection('asc');
+            setSortKey(key)
+            setSortDirection('asc')
         }
     }
 
     const handleDateSelect: OnSelectHandler<Date | undefined> = (selected) => {
-        setDate(selected ?? new Date());
-    };
+        setDate(selected ?? new Date())
+    }
 
     const dateContextValue = {
         date: date,
         setDate: handleDateSelect
-    };
+    }
 
     // this method fetches the NHL stats from the database.
     const {data: teamStats, isPending, error} = useQuery<TeamStatEntry[]>({
         queryKey: ['teamStats', dateContextValue.date],
-        queryFn: async() => {
-            const prettyDate: string = formatDateForApi(date);
+        queryFn: async () => {
+            const prettyDate: string = formatDateForApi(date)
 
-            const response = await fetch(`http://${SERVER}/api/nhl_standings/?start_date=${prettyDate}&end_date=${prettyDate}`);
+            const response = await fetch(`http://${SERVER}/api/nhl_standings/?start_date=${prettyDate}&end_date=${prettyDate}`)
             if (!response.ok) {
-                throw new Error(`An error occurred: ${response.statusText}`);
+                throw new Error(`An error occurred: ${response.statusText}`)
             }
-            return (await response.json()) as TeamStatEntry[];
+            return (await response.json()) as TeamStatEntry[]
         }
     })
 
-    if(isPending) return 'Loading...'
+    if (isPending) return 'Loading...'
 
-    if(error) return 'An error occurred: ' + error.message
+    if (error) return 'An error occurred: ' + error.message
 
     // this method sorts the team stats by the currently selected column, if any
     function sortedTeamStats(): TeamStatEntry[] {
-        if (!sortKey) return teamStats;
+        if (!sortKey) return teamStats
 
         const sorted = [...teamStats].sort((a: TeamStatEntry, b: TeamStatEntry) => {
-            const aValue = a[sortKey];
-            const bValue = b[sortKey];
+            const aValue = a[sortKey]
+            const bValue = b[sortKey]
 
             if (typeof aValue === 'number' && typeof bValue === 'number') {
-                return aValue - bValue;
+                return aValue - bValue
             }
-            return String(aValue).localeCompare(String(bValue));
-        });
+            return String(aValue).localeCompare(String(bValue))
+        })
 
-        return sortDirection === 'asc' ? sorted : sorted.reverse();
+        return sortDirection === 'asc' ? sorted : sorted.reverse()
     }
 
     // this method will map out the team stats on the table
     function teamStatsList() {
         return sortedTeamStats().map((teamStat: TeamStatEntry) => {
-            console.debug(teamStat);
-            const id_key = teamStat.date + '_' + teamStat.teamName;
+            console.debug(teamStat)
+            const id_key = teamStat.date + '_' + teamStat.teamName
             return (
                 <TeamStat
                     date={teamStat.date}
@@ -126,29 +127,34 @@ export default function TeamStandingsTable() {
                     wins={teamStat.wins}
                     key={id_key}
                 />
-            );
-        });
+            )
+        })
     }
 
     // this following section will display the table with the team standings stats
-    const CLASS_TH_LEFT = "h-12 px-4 text-left align-middle font-medium text-muted-foreground cursor-pointer select-none hover:text-foreground";
-    const CLASS_TH_CENTER = "h-12 px-4 text-center align-middle font-medium text-muted-foreground cursor-pointer select-none hover:text-foreground";
+    const CLASS_TH_LEFT = 'h-12 px-4 text-left align-middle font-medium text-muted-foreground cursor-pointer select-none hover:text-foreground'
+    const CLASS_TH_CENTER = 'h-12 px-4 text-center align-middle font-medium text-muted-foreground cursor-pointer select-none hover:text-foreground'
 
     function sortIndicator(key: SortKey) {
-        if (sortKey !== key) return null;
-        return sortDirection === 'asc' ? ' ▲' : ' ▼';
+        if (sortKey !== key) return null
+        return sortDirection === 'asc' ? ' ▲' : ' ▼'
     }
 
     return (
         <DateContext value={dateContextValue}>
-            <div className="flex justify-start">
-                <DatePicker/>
+            <div className='flex flex-row items-center gap-4 top-controls-container'>
+                <div className='flex justify-start'>
+                    <DatePicker/>
+                </div>
+                <div className='flex justify-start'>
+                    <TeamChooser selected={selectedTeams} onChange={setSelectedTeams}/>
+                </div>
             </div>
-            <div className="border rounded-lg overflow-hidden">
-                <div className="relative w-full overflow-auto">
-                    <table className="w-full caption-bottom text-sm">
-                        <thead className="[&amp;_tr]:border-b">
-                        <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
+            <div className='border rounded-lg overflow-hidden'>
+                <div className='relative w-full overflow-auto'>
+                    <table className='w-full caption-bottom text-sm'>
+                        <thead className='[&amp;_tr]:border-b'>
+                        <tr className='border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted'>
                             {COLUMNS.map((column) => (
                                 <th
                                     key={column.key}
@@ -160,12 +166,12 @@ export default function TeamStandingsTable() {
                             ))}
                         </tr>
                         </thead>
-                        <tbody className="[&amp;_tr:last-child]:border-0">
+                        <tbody className='[&amp;_tr:last-child]:border-0'>
                         {teamStatsList()}
                         </tbody>
                     </table>
                 </div>
             </div>
         </DateContext>
-    );
+    )
 }

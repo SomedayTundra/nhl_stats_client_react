@@ -44,8 +44,8 @@ export default function DatePickerWithRange() {
     // }
 
     return (
-        <Field className="w-80" orientation="horizontal">
-            <FieldLabel htmlFor="date-picker-range" className="justify-start">Date Range:</FieldLabel>
+        <Field className="w-80 shrink-0" orientation="horizontal">
+            <FieldLabel htmlFor="date-picker-range" className="justify-start whitespace-nowrap">Date Range:</FieldLabel>
             <Popover>
                 <PopoverTrigger asChild>
                     <Button

@@ -12,6 +12,7 @@ import {Combobox, ComboboxContent, ComboboxEmpty, ComboboxInput, ComboboxItem, C
 import type {DateRange, OnSelectHandler} from 'react-day-picker'
 import {DateRangeContext} from '@/state/DateRangeContext.tsx'
 import DatePickerWithRange from '@/components/DatePickerWithRange.tsx'
+import TeamChooser from '@/components/TeamChooser.tsx'
 import {Checkbox} from '@/components/ui/checkbox'
 import {Field, FieldGroup, FieldLabel} from '@/components/ui/field.tsx'
 import {useQuery} from '@tanstack/react-query'
@@ -72,6 +73,7 @@ let chartConfig = {
 export default function TeamStandingsChart() {
     const [lineType, setLineType] = useState<LineType>("monotone");
     const [showDots, setShowDots] = React.useState<boolean>(false);
+    const [selectedTeams, setSelectedTeams] = React.useState<string[]>([]);
     const [date, setDate] = React.useState<ResolvedDateRange>({from: new Date('2025-10-08'), to: new Date('2026-04-18')});
 
     const handleDateSelect: OnSelectHandler<DateRange | undefined> = (selected) => {
@@ -137,27 +139,26 @@ export default function TeamStandingsChart() {
     return (
         <DateRangeContext value={dateRangeContextValue}>
             <div className="h-full flex flex-col">
-                <div className="w-9/12 mx-auto flex flex-row items-center justify-between shrink-0">
-                    <div className="flex flex-row items-center">
-                        <DatePickerWithRange/>
-                        <Combobox items={lineTypes} defaultValue={lineTypes[4]} onInputValueChange={handleLineTypeChange} autoHighlight>
-                            <ComboboxInput placeholder="Select a line type"/>
-                            <ComboboxContent>
-                                <ComboboxEmpty>No items found.</ComboboxEmpty>
-                                <ComboboxList>
-                                    {(item) => (
-                                        <ComboboxItem key={item} value={item}>
-                                            {item}
-                                        </ComboboxItem>
-                                    )}
-                                </ComboboxList>
-                            </ComboboxContent>
-                        </Combobox>
-                    </div>
-                    <FieldGroup className='w-56'>
+                <div className="w-9/12 mx-auto flex flex-row items-center gap-4 shrink-0">
+                    <DatePickerWithRange/>
+                    <TeamChooser selected={selectedTeams} onChange={setSelectedTeams}/>
+                    <Combobox items={lineTypes} defaultValue={lineTypes[4]} onInputValueChange={handleLineTypeChange} autoHighlight>
+                        <ComboboxInput placeholder="Select a line type"/>
+                        <ComboboxContent>
+                            <ComboboxEmpty>No items found.</ComboboxEmpty>
+                            <ComboboxList>
+                                {(item) => (
+                                    <ComboboxItem key={item} value={item}>
+                                        {item}
+                                    </ComboboxItem>
+                                )}
+                            </ComboboxList>
+                        </ComboboxContent>
+                    </Combobox>
+                    <FieldGroup className="w-auto shrink-0">
                         <Field orientation='horizontal'>
                             <Checkbox id='show-dots-checkbox-basic' name='show-dots-checkbox-basic' checked={showDots} onCheckedChange={setShowDots}/>
-                            <FieldLabel htmlFor='show-dots-checkbox-basic'>
+                            <FieldLabel htmlFor='show-dots-checkbox-basic' className="whitespace-nowrap">
                                 Show Dots
                             </FieldLabel>
                         </Field>
