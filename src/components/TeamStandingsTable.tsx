@@ -100,11 +100,9 @@ export default function TeamStandingsTable() {
         const sorted = [...teamStats].sort((a: TeamStatEntry, b: TeamStatEntry) => {
             const aValue = a[sortKey];
             const bValue = b[sortKey];
-            const aNum = Number(aValue);
-            const bNum = Number(bValue);
 
-            if (!Number.isNaN(aNum) && !Number.isNaN(bNum)) {
-                return aNum - bNum;
+            if (typeof aValue === 'number' && typeof bValue === 'number') {
+                return aValue - bValue;
             }
             return String(aValue).localeCompare(String(bValue));
         });
