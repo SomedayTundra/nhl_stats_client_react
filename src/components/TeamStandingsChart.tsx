@@ -226,7 +226,7 @@ function MultiColumnTooltipContent({active, payload, label, maxHeight}: MultiCol
 
     return (
         <div className="rounded-lg border bg-background px-3 py-2 text-xs shadow-xl" style={{maxHeight}}>
-            <div className="mb-1 font-medium">{label}</div>
+            <div className="mb-1 font-medium">{label && formatApiDateForDisplay(label)}</div>
             <div style={{width: listWidth, columnWidth, columnGap, maxHeight: listMaxHeight, overflow: 'hidden'}}>
                 {sorted.map((item) => (
                     <div
