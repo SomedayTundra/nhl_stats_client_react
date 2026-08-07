@@ -42,14 +42,17 @@ export default function TeamChooser({selected, onChange}: TeamChooserProps) {
         }
     })
 
-    // default to every team selected once the team list first loads
+    // default to every team selected once the team list first loads, but only when nothing was
+    // already selected (e.g. restored from persisted state) - otherwise this would clobber that
+    // restored selection every time the component remounts
     const didInitializeSelection = React.useRef(false)
     React.useEffect(() => {
-        if (teams && !didInitializeSelection.current) {
-            didInitializeSelection.current = true
+        if (!teams || didInitializeSelection.current) return
+        didInitializeSelection.current = true
+        if (selected.length === 0) {
             onChange(teams.map((team) => team.teamAbbrev))
         }
-    }, [teams, onChange])
+    }, [teams, onChange, selected])
 
     // checkbox clicks only edit this draft; it's only pushed to onChange when the popover closes
     const [open, setOpen] = React.useState(false)

@@ -7,7 +7,8 @@ import {DateContext} from '@/state/DateContext.tsx'
 import DatePickerWithNav from '@/components/DatePickerWithNav.tsx'
 import TeamChooser from '@/components/TeamChooser.tsx'
 import {keepPreviousData, useQuery} from '@tanstack/react-query'
-import {formatDateForApi} from '@/lib/date.ts'
+import {deserializeDate, formatDateForApi, serializeDate} from '@/lib/date.ts'
+import {useLocalStorageState} from '@/lib/useLocalStorageState.ts'
 
 const SERVER = 'localhost:8000'
 
@@ -27,6 +28,12 @@ const COLUMNS: { key: SortKey; label: string; align: 'left' | 'center' }[] = [
     {key: 'goalsAgainst', label: 'Goals Against', align: 'center'},
     {key: 'goalDiff', label: 'Goal Diff', align: 'center'},
 ]
+
+const SORT_KEYS = COLUMNS.map((column) => column.key)
+
+function isSortKey(value: unknown): value is SortKey {
+    return typeof value === 'string' && (SORT_KEYS as string[]).includes(value)
+}
 
 
 const TeamStat: React.FC<TeamStatEntry> = ({goalDiff, goalsAgainst, goalsFor, logo, losses, teamName, otLosses, points, wins}: TeamStatEntry) => (
@@ -48,10 +55,20 @@ const TeamStat: React.FC<TeamStatEntry> = ({goalDiff, goalsAgainst, goalsFor, lo
 
 export default function TeamStandingsTable() {
     // const [teamStats, setTeamStats] = useState<TeamStatEntry[]>([]);
-    const [date, setDate] = React.useState<Date>(new Date('2025-12-02'))
-    const [selectedTeams, setSelectedTeams] = React.useState<string[]>([])
-    const [sortKey, setSortKey] = React.useState<SortKey | null>('points')
-    const [sortDirection, setSortDirection] = React.useState<SortDirection>('desc')
+    const [date, setDate] = useLocalStorageState<Date>('nhlStats.table.date', new Date('2025-12-02'), {
+        serialize: serializeDate,
+        deserialize: deserializeDate,
+    })
+    const [selectedTeams, setSelectedTeams] = useLocalStorageState<string[]>('nhlStats.table.selectedTeams', [])
+    const [sortKey, setSortKey] = useLocalStorageState<SortKey | null>('nhlStats.table.sortKey', 'points', {
+        deserialize: (raw) => {
+            const parsed = JSON.parse(raw)
+            return isSortKey(parsed) ? parsed : null
+        },
+    })
+    const [sortDirection, setSortDirection] = useLocalStorageState<SortDirection>('nhlStats.table.sortDirection', 'desc', {
+        deserialize: (raw) => (raw === '"asc"' ? 'asc' : 'desc'),
+    })
 
     function handleSort(key: SortKey) {
         if (sortKey === key) {

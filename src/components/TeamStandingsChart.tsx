@@ -1,7 +1,6 @@
 'use client'
 
 import * as React from 'react'
-import {useState} from 'react'
 import 'react-calendar/dist/Calendar.css'
 import type TeamStatEntry from '@/components/TeamStatEntry.tsx'
 import {CartesianGrid, Line, LineChart, XAxis} from 'recharts'
@@ -17,6 +16,7 @@ import {Checkbox} from '@/components/ui/checkbox'
 import {Field, FieldGroup, FieldLabel} from '@/components/ui/field.tsx'
 import {useQuery} from '@tanstack/react-query'
 import {formatDateForApi} from '@/lib/date.ts'
+import {useLocalStorageState} from '@/lib/useLocalStorageState.ts'
 
 const lineTypes = [
     'basis', 'bump', 'linear', 'natural', 'monotone', 'step',
@@ -248,10 +248,25 @@ function MultiColumnTooltipContent({active, payload, label, maxHeight}: MultiCol
 }
 
 export default function TeamStandingsChart() {
-    const [lineType, setLineType] = useState<LineType>("monotone");
-    const [showDots, setShowDots] = React.useState<boolean>(false);
-    const [selectedTeams, setSelectedTeams] = React.useState<string[]>([]);
-    const [date, setDate] = React.useState<ResolvedDateRange>({from: new Date('2025-10-08'), to: new Date('2026-04-18')});
+    const [lineType, setLineType] = useLocalStorageState<LineType>('nhlStats.chart.lineType', 'monotone', {
+        deserialize: (raw) => {
+            const parsed = JSON.parse(raw)
+            return isLineType(parsed) ? parsed : 'monotone'
+        },
+    })
+    const [showDots, setShowDots] = useLocalStorageState<boolean>('nhlStats.chart.showDots', false)
+    const [selectedTeams, setSelectedTeams] = useLocalStorageState<string[]>('nhlStats.chart.selectedTeams', [])
+    const [date, setDate] = useLocalStorageState<ResolvedDateRange>(
+        'nhlStats.chart.dateRange',
+        {from: new Date('2025-10-08'), to: new Date('2026-04-18')},
+        {
+            serialize: (range) => JSON.stringify({from: range.from.toISOString(), to: range.to.toISOString()}),
+            deserialize: (raw) => {
+                const parsed = JSON.parse(raw) as {from: string; to: string}
+                return {from: new Date(parsed.from), to: new Date(parsed.to)}
+            },
+        }
+    )
 
     // tracks the chart area's actual rendered height so the tooltip knows how much
     // vertical space it has before it needs to split its team list into columns
@@ -387,7 +402,7 @@ export default function TeamStandingsChart() {
                 <div className="w-9/12 mx-auto flex flex-row items-center gap-4 shrink-0">
                     <DatePickerWithRange/>
                     <TeamChooser selected={selectedTeams} onChange={setSelectedTeams}/>
-                    <Combobox items={lineTypes} defaultValue={lineTypes[4]} onInputValueChange={handleLineTypeChange} autoHighlight>
+                    <Combobox items={lineTypes} value={lineType} onInputValueChange={handleLineTypeChange} autoHighlight>
                         <ComboboxInput placeholder="Select a line type"/>
                         <ComboboxContent>
                             <ComboboxEmpty>No items found.</ComboboxEmpty>
