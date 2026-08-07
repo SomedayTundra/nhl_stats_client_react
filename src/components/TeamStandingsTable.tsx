@@ -29,11 +29,11 @@ const COLUMNS: { key: SortKey; label: string; align: 'left' | 'center' }[] = [
 ]
 
 
-const TeamStat: React.FC<TeamStatEntry> = ({goalDiff, goalsAgainst, goalsFor, logo, losses, teamName, teamCommonName, teamAbbrev, otLosses, points, wins}: TeamStatEntry) => (
+const TeamStat: React.FC<TeamStatEntry> = ({goalDiff, goalsAgainst, goalsFor, logo, losses, teamName, otLosses, points, wins}: TeamStatEntry) => (
     <tr className='p-0 transition-colors data-[state=selected]:bg-muted'>
         <td className={`flex`}>
             <img className='h-[48px] w-[48px] align-middle justify-center' src={`http://localhost:8000/api/nhl_team_info/logo?logo_filename=${logo}`} alt='logo'></img>
-            <p className={CLASS_TD}>{teamName} ({teamCommonName}) [{teamAbbrev}]</p>
+            <p className={CLASS_TD}>{teamName}</p>
         </td>
         <td className={CLASS_TD_CENTER}>{wins}</td>
         <td className={CLASS_TD_CENTER}>{losses}</td>
@@ -85,15 +85,19 @@ export default function TeamStandingsTable() {
         }
     })
 
-    if (isPending) return 'Loading...'
-
-    if (error) return 'An error occurred: ' + error.message
+    // this method filters the team stats down to the teams currently selected in the TeamChooser
+    // (an empty selection is treated as "no filter applied yet" rather than "show nothing")
+    function visibleTeamStats(allTeamStats: TeamStatEntry[]): TeamStatEntry[] {
+        if (selectedTeams.length === 0) return allTeamStats
+        return allTeamStats.filter((teamStat) => selectedTeams.includes(teamStat.teamAbbrev))
+    }
 
     // this method sorts the team stats by the currently selected column, if any
-    function sortedTeamStats(): TeamStatEntry[] {
-        if (!sortKey) return teamStats
+    function sortedTeamStats(allTeamStats: TeamStatEntry[]): TeamStatEntry[] {
+        const visible = visibleTeamStats(allTeamStats)
+        if (!sortKey) return visible
 
-        const sorted = [...teamStats].sort((a: TeamStatEntry, b: TeamStatEntry) => {
+        const sorted = [...visible].sort((a: TeamStatEntry, b: TeamStatEntry) => {
             const aValue = a[sortKey]
             const bValue = b[sortKey]
 
@@ -107,8 +111,8 @@ export default function TeamStandingsTable() {
     }
 
     // this method will map out the team stats on the table
-    function teamStatsList() {
-        return sortedTeamStats().map((teamStat: TeamStatEntry) => {
+    function teamStatsList(allTeamStats: TeamStatEntry[]) {
+        return sortedTeamStats(allTeamStats).map((teamStat: TeamStatEntry) => {
             console.debug(teamStat)
             const id_key = teamStat.date + '_' + teamStat.teamName
             return (
@@ -140,6 +144,17 @@ export default function TeamStandingsTable() {
         return sortDirection === 'asc' ? ' ▲' : ' ▼'
     }
 
+    // the table body alone reflects loading/error state; the controls above it stay mounted
+    // regardless, so TeamChooser never remounts (and loses its committed selection) on refetch
+    let tableBody: React.ReactNode
+    if (isPending) {
+        tableBody = <tr><td colSpan={COLUMNS.length} className='p-4 text-center'>Loading...</td></tr>
+    } else if (error) {
+        tableBody = <tr><td colSpan={COLUMNS.length} className='p-4 text-center'>An error occurred: {error.message}</td></tr>
+    } else {
+        tableBody = teamStatsList(teamStats)
+    }
+
     return (
         <DateContext value={dateContextValue}>
             <div className='w-9/12 mx-auto flex flex-row items-center gap-4 top-controls-container'>
@@ -167,7 +182,7 @@ export default function TeamStandingsTable() {
                         </tr>
                         </thead>
                         <tbody className='[&amp;_tr:last-child]:border-0'>
-                        {teamStatsList()}
+                        {tableBody}
                         </tbody>
                     </table>
                 </div>

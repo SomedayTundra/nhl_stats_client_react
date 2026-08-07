@@ -24,6 +24,12 @@ function groupCheckedState(abbrevs: string[], selectedSet: Set<string>): boolean
     return 'indeterminate'
 }
 
+function haveSameElements(a: string[], b: string[]): boolean {
+    if (a.length !== b.length) return false
+    const bSet = new Set(b)
+    return a.every((value) => bSet.has(value))
+}
+
 export default function TeamChooser({selected, onChange}: TeamChooserProps) {
     const {data: teams, isPending, error} = useQuery<TeamInfo[]>({
         queryKey: ['teamInfo'],
@@ -45,25 +51,46 @@ export default function TeamChooser({selected, onChange}: TeamChooserProps) {
         }
     }, [teams, onChange])
 
-    const selectedSet = React.useMemo(() => new Set(selected), [selected])
+    // checkbox clicks only edit this draft; it's only pushed to onChange when the popover closes
+    const [open, setOpen] = React.useState(false)
+    const [draftSelected, setDraftSelected] = React.useState<string[]>(selected)
+
+    // keep the draft in sync with externally-driven changes to `selected` (e.g. the default
+    // select-all above) as long as the popover is closed; while open, edits stay local to the draft
+    React.useEffect(() => {
+        if (!open) {
+            setDraftSelected(selected)
+        }
+    }, [selected, open])
+
+    function handleOpenChange(nextOpen: boolean) {
+        if (nextOpen) {
+            setDraftSelected(selected)
+        } else if (!haveSameElements(draftSelected, selected)) {
+            onChange(draftSelected)
+        }
+        setOpen(nextOpen)
+    }
+
+    const draftSelectedSet = React.useMemo(() => new Set(draftSelected), [draftSelected])
 
     function toggleTeam(abbrev: string) {
-        if (selectedSet.has(abbrev)) {
-            onChange(selected.filter((a) => a !== abbrev))
+        if (draftSelectedSet.has(abbrev)) {
+            setDraftSelected(draftSelected.filter((a) => a !== abbrev))
         } else {
-            onChange([...selected, abbrev])
+            setDraftSelected([...draftSelected, abbrev])
         }
     }
 
     function toggleGroup(abbrevs: string[]) {
-        const allSelected = abbrevs.every((abbrev) => selectedSet.has(abbrev))
+        const allSelected = abbrevs.every((abbrev) => draftSelectedSet.has(abbrev))
         if (allSelected) {
             const toRemove = new Set(abbrevs)
-            onChange(selected.filter((abbrev) => !toRemove.has(abbrev)))
+            setDraftSelected(draftSelected.filter((abbrev) => !toRemove.has(abbrev)))
         } else {
-            const merged = new Set(selected)
+            const merged = new Set(draftSelected)
             abbrevs.forEach((abbrev) => merged.add(abbrev))
-            onChange(Array.from(merged))
+            setDraftSelected(Array.from(merged))
         }
     }
 
@@ -74,17 +101,17 @@ export default function TeamChooser({selected, onChange}: TeamChooserProps) {
     const conferences = groupTeamsByConferenceAndDivision(teams)
 
     return (
-        <Popover>
+        <Popover open={open} onOpenChange={handleOpenChange}>
             <PopoverTrigger asChild>
                 <Button variant="outline" className="justify-between">
-                    Teams ({selected.length}/{teams.length})
+                    Teams ({draftSelected.length}/{teams.length})
                     <ChevronDownIcon/>
                 </Button>
             </PopoverTrigger>
             <PopoverContent className="w-80 max-h-96 overflow-y-auto p-2" align="start">
                 {conferences.map((conference) => {
                     const conferenceAbbrevs = conference.divisions.flatMap((division) => division.teams.map((team) => team.teamAbbrev))
-                    const conferenceChecked = groupCheckedState(conferenceAbbrevs, selectedSet)
+                    const conferenceChecked = groupCheckedState(conferenceAbbrevs, draftSelectedSet)
 
                     return (
                         <div key={conference.conferenceName} className="mb-2">
@@ -97,7 +124,7 @@ export default function TeamChooser({selected, onChange}: TeamChooserProps) {
                             </label>
                             {conference.divisions.map((division) => {
                                 const divisionAbbrevs = division.teams.map((team) => team.teamAbbrev)
-                                const divisionChecked = groupCheckedState(divisionAbbrevs, selectedSet)
+                                const divisionChecked = groupCheckedState(divisionAbbrevs, draftSelectedSet)
 
                                 return (
                                     <div key={division.divisionName} className="ml-4">
@@ -111,7 +138,7 @@ export default function TeamChooser({selected, onChange}: TeamChooserProps) {
                                         {division.teams.map((team) => (
                                             <label key={team.teamAbbrev} className="flex items-center gap-2 py-1 ml-4 cursor-pointer">
                                                 <Checkbox
-                                                    checked={selectedSet.has(team.teamAbbrev)}
+                                                    checked={draftSelectedSet.has(team.teamAbbrev)}
                                                     onCheckedChange={() => toggleTeam(team.teamAbbrev)}
                                                 />
                                                 {team.teamName}
