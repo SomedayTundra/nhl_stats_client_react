@@ -5,7 +5,7 @@ export default interface TeamStatEntry {
     teamCommonName: string,
     teamAbbrev: string,
     logo: string,
-    wins: string,
+    wins: number,
     losses: number,
     otLosses: number,
     points: number,

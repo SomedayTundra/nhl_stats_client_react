@@ -76,13 +76,16 @@ export default function TeamStandingsTable() {
     };
 
     // this method fetches the NHL stats from the database.
-    const {data: teamStats, isPending, error} = useQuery({
+    const {data: teamStats, isPending, error} = useQuery<TeamStatEntry[]>({
         queryKey: ['teamStats', dateContextValue.date],
         queryFn: async() => {
             const prettyDate: string|undefined = changeDateToMyPreferredStringFormat(date);
 
             const response = await fetch(`http://${SERVER}/api/nhl_standings/?start_date=${prettyDate}&end_date=${prettyDate}`);
-            return await response.json();
+            if (!response.ok) {
+                throw new Error(`An error occurred: ${response.statusText}`);
+            }
+            return (await response.json()) as TeamStatEntry[];
         }
     })
 

@@ -18,11 +18,14 @@ type Division = {
  * React component that shows all loaded team info content, one-team-per-TeamInfoCard
  */
 export function LeagueBoard() {
-    const {data: allTeamsInfo, isPending, error} = useQuery({
+    const {data: allTeamsInfo, isPending, error} = useQuery<TeamInfo[]>({
         queryKey: ['leagueInfo'],
         queryFn: async () => {
             // FIXME: SWITCH TO https://
             const response = await fetch(`http://${SERVER}/api/nhl_team_info/`)
+            if (!response.ok) {
+                throw new Error(`An error occurred: ${response.statusText}`);
+            }
             return (await response.json()) as TeamInfo[]
         }
     })
