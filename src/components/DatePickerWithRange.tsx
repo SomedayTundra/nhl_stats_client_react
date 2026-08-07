@@ -15,7 +15,7 @@ import { use } from 'react';
 import {DateRangeContext} from "@/state/DateRangeContext.tsx";
 
 export default function DatePickerWithRange() {
-    const dateFormat = "yyyy-MM-dd";
+    const dateFormat = "MM-dd-yyyy";
 
     const drc = use(DateRangeContext);
 

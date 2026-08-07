@@ -15,7 +15,7 @@ import { use } from 'react';
 import {DateContext} from "@/state/DateContext.tsx";
 
 export default function DatePickerWithNav() {
-    const dateFormat = "yyyy-MM-dd";
+    const dateFormat = "MM-dd-yyyy";
 
     const dc = use(DateContext);
 
