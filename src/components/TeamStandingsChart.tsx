@@ -35,7 +35,7 @@ type ResolvedDateRange = {
     to: Date;
 }
 
-let chartConfig = {
+const HARDCODED_TEAM_COLORS = {
     TBL: {
         label: "Lightning",
         color: "var(--chart-3)",
@@ -69,6 +69,24 @@ let chartConfig = {
         color: "var(--chart-8)",
     },
 } satisfies ChartConfig
+
+// teams without a hardcoded color above get a random one, stable for the life of the page
+// (a placeholder until real colors are picked for every team)
+const randomColorCache = new Map<string, string>()
+
+function randomColorForTeam(abbrev: string): string {
+    let color = randomColorCache.get(abbrev)
+    if (!color) {
+        const hue = Math.floor(Math.random() * 360)
+        color = `hsl(${hue}, 70%, 50%)`
+        randomColorCache.set(abbrev, color)
+    }
+    return color
+}
+
+function colorForTeam(abbrev: string): string {
+    return HARDCODED_TEAM_COLORS[abbrev as keyof typeof HARDCODED_TEAM_COLORS]?.color ?? randomColorForTeam(abbrev)
+}
 
 export default function TeamStandingsChart() {
     const [lineType, setLineType] = useState<LineType>("monotone");
@@ -109,32 +127,84 @@ export default function TeamStandingsChart() {
         }
     })
 
-    if(isPending) return 'Loading...'
+    // the controls below stay mounted regardless of loading/error state, so TeamChooser never
+    // remounts (and loses its committed selection) on refetch; only the chart area swaps out
+    let chartArea: React.ReactNode
+    if (isPending) {
+        chartArea = <p className="p-4 text-center">Loading...</p>
+    } else if (error) {
+        chartArea = <p className="p-4 text-center">An error occurred: {error.message}</p>
+    } else {
+        // clear out any old data
+        const chartData: Record<string, string | number>[] = []
+        const teamNameByAbbrev = new Map<string, string>()
 
-    if(error) return 'An error occurred: ' + error.message
+        teamStats.forEach((teamStatEntry: TeamStatEntry) => {
+            // get data entry for the given date
+            let existingDate = chartData.find((entry) => entry["date"] == teamStatEntry.date)
+            if (!existingDate) {
+                existingDate = {date: teamStatEntry.date}
+                chartData.push(existingDate)
+            }
 
-    // clear out any old data
-    const chartData: Record<string, string | number>[] = []
-    // chartConfig.clear()
+            // add an entry associating this team's abbreviation with this team's points
+            existingDate[teamStatEntry.teamAbbrev] = teamStatEntry.points
+            teamNameByAbbrev.set(teamStatEntry.teamAbbrev, teamStatEntry.teamName)
+        })
 
-    teamStats.map((teamStatEntry: TeamStatEntry) => {
-        // get data entry for the given date
-        let existingDate = chartData.find((entry) => entry["date"] == teamStatEntry.date);
-        if (!existingDate) {
-            existingDate = {date: teamStatEntry.date}
-            chartData.push(existingDate);
-        }
+        // only show teams currently selected in the TeamChooser (an empty selection is
+        // treated as "no filter applied yet" rather than "show nothing")
+        const teamAbbrevsInData = Array.from(teamNameByAbbrev.keys())
+        const visibleTeamAbbrevs = selectedTeams.length === 0
+            ? teamAbbrevsInData
+            : teamAbbrevsInData.filter((abbrev) => selectedTeams.includes(abbrev))
 
-        // add an entry associating this team's abbreviation with this team's points
-        existingDate[teamStatEntry.teamAbbrev] = teamStatEntry.points
+        const chartConfig: ChartConfig = {}
+        visibleTeamAbbrevs.forEach((abbrev) => {
+            chartConfig[abbrev] = HARDCODED_TEAM_COLORS[abbrev as keyof typeof HARDCODED_TEAM_COLORS] ?? {
+                label: teamNameByAbbrev.get(abbrev) ?? abbrev,
+                color: colorForTeam(abbrev),
+            }
+        })
 
-        // make sure there is a chart config entry for this team's abbreviation
-        // const existingConfig = chartConfig.get(team_stat.team_abbrev)
-        // if(!existingConfig) {
-        //     const configEntry: LineDescriptor = {label: team_stat.team_common_name, color: "var(--chart-1)"};
-        //     chartConfig.set(team_stat.team_abbrev, configEntry)
-        // }
-    });
+        chartArea = (
+            <ChartContainer config={chartConfig} className="h-full w-full aspect-auto">
+                <LineChart
+                    accessibilityLayer
+                    data={chartData}
+                    margin={{
+                        top: 12,
+                        bottom: 12,
+                        left: 12,
+                        right: 12,
+                    }}
+                >
+                    <CartesianGrid vertical={false}/>
+                    <XAxis
+                        dataKey="date"
+                        tickLine={true}
+                        axisLine={true}
+                        tickMargin={8}
+                        tickFormatter={(value: string) => value.slice(5)}
+                    />
+                    <ChartTooltip cursor={true}
+                                  itemSorter={(item) => {return (200 - (item.value as number)) as number;} }
+                                  // content={<ChartTooltipContent />}
+                    />
+                    {visibleTeamAbbrevs.map((abbrev) => (
+                        <Line
+                            key={abbrev}
+                            dataKey={abbrev}
+                            type={lineType}
+                            stroke={colorForTeam(abbrev)}
+                            strokeWidth={2}
+                            dot={showDots}
+                        />
+                    ))}
+                </LineChart>
+            </ChartContainer>
+        )
+    }
 
     return (
         <DateRangeContext value={dateRangeContextValue}>
@@ -172,87 +242,7 @@ export default function TeamStandingsChart() {
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="flex-1 min-h-0 overflow-hidden">
-                            <ChartContainer config={chartConfig} className="h-full w-full aspect-auto">
-                                <LineChart
-                                    accessibilityLayer
-                                    data={chartData}
-                                    margin={{
-                                        top: 12,
-                                        bottom: 12,
-                                        left: 12,
-                                        right: 12,
-                                    }}
-                                >
-                                    <CartesianGrid vertical={false}/>
-                                    <XAxis
-                                        dataKey="date"
-                                        tickLine={true}
-                                        axisLine={true}
-                                        tickMargin={8}
-                                        tickFormatter={(value: string) => value.slice(5)}
-                                    />
-                                    <ChartTooltip cursor={true}
-                                                  itemSorter={(item) => {return (200 - (item.value as number)) as number;} }
-                                                  // content={<ChartTooltipContent />}
-                                    />
-                                    <Line
-                                        dataKey="TBL"
-                                        type={lineType}
-                                        stroke="var(--chart-3)"
-                                        strokeWidth={2}
-                                        dot={showDots}
-                                    />
-                                    <Line
-                                        dataKey="BUF"
-                                        type={lineType}
-                                        stroke="var(--chart-2)"
-                                        strokeWidth={2}
-                                        dot={showDots}
-                                    />
-                                    <Line
-                                        dataKey="DET"
-                                        type={lineType}
-                                        stroke="var(--chart-1)"
-                                        strokeWidth={2}
-                                        dot={showDots}
-                                    />
-                                    <Line
-                                        dataKey="MTL"
-                                        type={lineType}
-                                        stroke="var(--chart-4)"
-                                        strokeWidth={2}
-                                        dot={showDots}
-                                    />
-                                    <Line
-                                        dataKey="BOS"
-                                        type={lineType}
-                                        stroke="var(--chart-5)"
-                                        strokeWidth={2}
-                                        dot={showDots}
-                                    />
-                                    <Line
-                                        dataKey="OTT"
-                                        type={lineType}
-                                        stroke="var(--chart-6)"
-                                        strokeWidth={2}
-                                        dot={showDots}
-                                    />
-                                    <Line
-                                        dataKey="FLA"
-                                        type={lineType}
-                                        stroke="var(--chart-7)"
-                                        strokeWidth={2}
-                                        dot={showDots}
-                                    />
-                                    <Line
-                                        dataKey="TOR"
-                                        type={lineType}
-                                        stroke="var(--chart-8)"
-                                        strokeWidth={2}
-                                        dot={showDots}
-                                    />
-                                </LineChart>
-                            </ChartContainer>
+                            {chartArea}
                         </CardContent>
                     </Card>
                 </div>
