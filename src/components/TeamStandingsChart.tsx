@@ -16,7 +16,7 @@ import TeamChooser from '@/components/TeamChooser.tsx'
 import {Checkbox} from '@/components/ui/checkbox'
 import {Field, FieldGroup, FieldLabel} from '@/components/ui/field.tsx'
 import {useQuery} from '@tanstack/react-query'
-import {deserializeDate, formatDateForApi, serializeDate} from '@/lib/date.ts'
+import {deserializeDate, formatApiDateForDisplay, formatDateForApi, serializeDate} from '@/lib/date.ts'
 import {useLocalStorageState} from '@/lib/useLocalStorageState.ts'
 
 const lineTypes = [
@@ -382,6 +382,10 @@ export default function TeamStandingsChart() {
                         tickLine={true}
                         axisLine={true}
                         tickMargin={8}
+                        domain={([dataMin, dataMax]: [number, number]) => {
+                            const padding = Math.max((dataMax - dataMin) * 0.1, 1)
+                            return [Math.floor(dataMin - padding), Math.ceil(dataMax + padding)]
+                        }}
                         label={{value: 'Points', angle: -90, position: 'insideLeft'}}
                     />
                     <ChartTooltip cursor={true}
