@@ -23,7 +23,7 @@ const App = () => {
 
             <ToastContainer/>
             <div className='nhl-page-footer w-'>
-                <img alt='SomedayTundra logo' className='h-10 mx-auto' src={logo_full}></img>
+                <img alt='SomedayTundra logo' className='h-[1.875rem] mx-auto' src={logo_full}></img>
             </div>
         </div>
     )

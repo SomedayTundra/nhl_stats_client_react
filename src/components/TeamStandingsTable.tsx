@@ -4,7 +4,7 @@ import 'react-calendar/dist/Calendar.css'
 import type TeamStatEntry from '@/components/TeamStatEntry.tsx'
 import type {OnSelectHandler} from 'react-day-picker'
 import {DateContext} from '@/state/DateContext.tsx'
-import DatePicker from '@/components/DatePicker.tsx'
+import DatePickerWithNav from '@/components/DatePickerWithNav.tsx'
 import TeamChooser from '@/components/TeamChooser.tsx'
 import {useQuery} from '@tanstack/react-query'
 import {formatDateForApi} from '@/lib/date.ts'
@@ -31,7 +31,7 @@ const COLUMNS: { key: SortKey; label: string; align: 'left' | 'center' }[] = [
 
 const TeamStat: React.FC<TeamStatEntry> = ({goalDiff, goalsAgainst, goalsFor, logo, losses, teamName, otLosses, points, wins}: TeamStatEntry) => (
     <tr className='p-0 transition-colors data-[state=selected]:bg-muted'>
-        <td className={`flex`}>
+        <td className='flex items-center'>
             <img className='h-[48px] w-[48px] align-middle justify-center' src={`http://localhost:8000/api/nhl_team_info/logo?logo_filename=${logo}`} alt='logo'></img>
             <p className={CLASS_TD}>{teamName}</p>
         </td>
@@ -136,8 +136,8 @@ export default function TeamStandingsTable() {
     }
 
     // this following section will display the table with the team standings stats
-    const CLASS_TH_LEFT = 'h-12 px-4 text-left align-middle font-medium text-muted-foreground cursor-pointer select-none hover:text-foreground'
-    const CLASS_TH_CENTER = 'h-12 px-4 text-center align-middle font-medium text-muted-foreground cursor-pointer select-none hover:text-foreground'
+    const CLASS_TH_LEFT = 'h-8 px-4 text-left align-middle font-medium text-muted-foreground cursor-pointer select-none hover:text-foreground'
+    const CLASS_TH_CENTER = 'h-8 px-4 text-center align-middle font-medium text-muted-foreground cursor-pointer select-none hover:text-foreground'
 
     function sortIndicator(key: SortKey) {
         if (sortKey !== key) return null
@@ -158,8 +158,8 @@ export default function TeamStandingsTable() {
     return (
         <DateContext value={dateContextValue}>
             <div className='w-9/12 mx-auto flex flex-row items-center gap-4 top-controls-container'>
-                <div className='flex justify-start'>
-                    <DatePicker/>
+                <div className='flex justify-start items-center'>
+                    <DatePickerWithNav/>
                 </div>
                 <div className='flex justify-start'>
                     <TeamChooser selected={selectedTeams} onChange={setSelectedTeams}/>

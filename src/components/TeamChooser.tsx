@@ -99,6 +99,8 @@ export default function TeamChooser({selected, onChange}: TeamChooserProps) {
     if (error) return <Button variant="outline" disabled>Failed to load teams</Button>
 
     const conferences = groupTeamsByConferenceAndDivision(teams)
+    const allAbbrevs = teams.map((team) => team.teamAbbrev)
+    const leagueChecked = groupCheckedState(allAbbrevs, draftSelectedSet)
 
     return (
         <Popover open={open} onOpenChange={handleOpenChange}>
@@ -109,6 +111,13 @@ export default function TeamChooser({selected, onChange}: TeamChooserProps) {
                 </Button>
             </PopoverTrigger>
             <PopoverContent className="w-80 max-h-96 overflow-y-auto p-2" align="start">
+                <label className="flex items-center gap-2 py-1 mb-2 pb-2 border-b font-bold cursor-pointer">
+                    <Checkbox
+                        checked={leagueChecked}
+                        onCheckedChange={() => toggleGroup(allAbbrevs)}
+                    />
+                    League
+                </label>
                 {conferences.map((conference) => {
                     const conferenceAbbrevs = conference.divisions.flatMap((division) => division.teams.map((team) => team.teamAbbrev))
                     const conferenceChecked = groupCheckedState(conferenceAbbrevs, draftSelectedSet)

@@ -172,7 +172,7 @@ p {
     width: 100%;
     background-color: var(--navbar-bg);
     color: var(--navbar-fg);
-    padding: 1rem;
+    padding: 0.1875rem 1rem;
 }
 
 .league-ref-everything {
