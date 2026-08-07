@@ -191,11 +191,84 @@ function colorForTeam(abbrev: string): string {
     return HARDCODED_TEAM_COLORS[abbrev as keyof typeof HARDCODED_TEAM_COLORS]?.color ?? randomColorForTeam(abbrev)
 }
 
+type ChartTooltipPayloadItem = {
+    dataKey?: string | number
+    value?: number | string
+    color?: string
+    name?: string | number
+}
+
+type MultiColumnTooltipContentProps = {
+    active?: boolean
+    payload?: ChartTooltipPayloadItem[]
+    label?: string
+    maxHeight: number
+}
+
+// a plain vertical list of every visible team gets unreadably tall once most of the league is
+// selected; constraining height and letting CSS columns reflow keeps it within the chart's
+// actual available space instead of spilling past it
+function MultiColumnTooltipContent({active, payload, label, maxHeight}: MultiColumnTooltipContentProps) {
+    if (!active || !payload || payload.length === 0) return null
+
+    const sorted = [...payload].sort((a, b) => (Number(b.value) || 0) - (Number(a.value) || 0))
+    // measured from the rendered tooltip (text-xs row with py-0.5, header with mb-1, px-3 py-2
+    // container padding) with a little headroom so rounding doesn't clip the last row
+    const containerPaddingY = 20
+    const headerBlockHeight = 24
+    const rowHeight = 24
+    const columnWidth = 100
+    const columnGap = 16
+
+    // CSS columns only reflow into extra columns if the container is wide enough to hold them -
+    // a shrink-to-fit container never grows itself to make room, so figure out how many columns
+    // this list actually needs to fit within the available height, and size the width for that
+    const listMaxHeight = Math.max(maxHeight - containerPaddingY - headerBlockHeight, rowHeight)
+    const rowsPerColumn = Math.max(Math.floor(listMaxHeight / rowHeight), 1)
+    const columnCount = Math.max(Math.ceil(sorted.length / rowsPerColumn), 1)
+    const listWidth = columnCount * columnWidth + (columnCount - 1) * columnGap
+
+    return (
+        <div className="rounded-lg border bg-background px-3 py-2 text-xs shadow-xl" style={{maxHeight}}>
+            <div className="mb-1 font-medium">{label}</div>
+            <div style={{width: listWidth, columnWidth, columnGap, maxHeight: listMaxHeight, overflow: 'hidden'}}>
+                {sorted.map((item) => (
+                    <div
+                        key={item.dataKey}
+                        className="flex items-center gap-1.5 whitespace-nowrap py-0.5"
+                        style={{breakInside: 'avoid'}}
+                    >
+                        <span className="inline-block size-2 shrink-0 rounded-[2px]" style={{backgroundColor: item.color}}/>
+                        <span>{item.name ?? item.dataKey}: {item.value}</span>
+                    </div>
+                ))}
+            </div>
+        </div>
+    )
+}
+
 export default function TeamStandingsChart() {
     const [lineType, setLineType] = useState<LineType>("monotone");
     const [showDots, setShowDots] = React.useState<boolean>(false);
     const [selectedTeams, setSelectedTeams] = React.useState<string[]>([]);
     const [date, setDate] = React.useState<ResolvedDateRange>({from: new Date('2025-10-08'), to: new Date('2026-04-18')});
+
+    // tracks the chart area's actual rendered height so the tooltip knows how much
+    // vertical space it has before it needs to split its team list into columns
+    const chartAreaRef = React.useRef<HTMLDivElement>(null)
+    const [chartAreaHeight, setChartAreaHeight] = React.useState<number>(300)
+
+    React.useEffect(() => {
+        const element = chartAreaRef.current
+        if (!element) return
+
+        const observer = new ResizeObserver((entries) => {
+            const height = entries[0]?.contentRect.height
+            if (height) setChartAreaHeight(height)
+        })
+        observer.observe(element)
+        return () => observer.disconnect()
+    }, [])
 
     const handleDateSelect: OnSelectHandler<DateRange | undefined> = (selected) => {
         setDate({
@@ -291,8 +364,7 @@ export default function TeamStandingsChart() {
                         tickFormatter={(value: string) => value.slice(5)}
                     />
                     <ChartTooltip cursor={true}
-                                  itemSorter={(item) => {return (200 - (item.value as number)) as number;} }
-                                  // content={<ChartTooltipContent />}
+                                  content={<MultiColumnTooltipContent maxHeight={chartAreaHeight}/>}
                     />
                     {visibleTeamAbbrevs.map((abbrev) => (
                         <Line
@@ -344,7 +416,7 @@ export default function TeamStandingsChart() {
                             <CardDescription>
                             </CardDescription>
                         </CardHeader>
-                        <CardContent className="flex-1 min-h-0 overflow-hidden">
+                        <CardContent ref={chartAreaRef} className="flex-1 min-h-0 overflow-hidden">
                             {chartArea}
                         </CardContent>
                     </Card>
