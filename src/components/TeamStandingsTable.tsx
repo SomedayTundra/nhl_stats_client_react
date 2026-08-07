@@ -19,10 +19,23 @@ const CLASS_TD = "p-4 align-middle"
 const CLASS_TD_LEFT = `${CLASS_TD} text-left`;
 const CLASS_TD_CENTER = `${CLASS_TD} text-center`;
 
+type SortKey = 'teamName' | 'wins' | 'losses' | 'otLosses' | 'points' | 'goalsFor' | 'goalsAgainst' | 'goalDiff';
+type SortDirection = 'asc' | 'desc';
 
-const TeamStat: React.FC<TeamStatEntry> = ({date, goalDiff, goalsAgainst, goalsFor, logo, losses, teamName, teamCommonName, teamAbbrev, otLosses, points, wins}: TeamStatEntry) => (
+const COLUMNS: {key: SortKey; label: string; align: 'left' | 'center'}[] = [
+    {key: 'teamName', label: 'Team', align: 'left'},
+    {key: 'wins', label: 'Wins', align: 'center'},
+    {key: 'losses', label: 'Losses', align: 'center'},
+    {key: 'otLosses', label: 'OT Losses', align: 'center'},
+    {key: 'points', label: 'Points', align: 'center'},
+    {key: 'goalsFor', label: 'Goals For', align: 'center'},
+    {key: 'goalsAgainst', label: 'Goals Against', align: 'center'},
+    {key: 'goalDiff', label: 'Goal Diff', align: 'center'},
+];
+
+
+const TeamStat: React.FC<TeamStatEntry> = ({goalDiff, goalsAgainst, goalsFor, logo, losses, teamName, teamCommonName, teamAbbrev, otLosses, points, wins}: TeamStatEntry) => (
     <tr className="p-0 transition-colors data-[state=selected]:bg-muted">
-        <td className={CLASS_TD_LEFT}>{date}</td>
         <td className={`flex`}>
             <img className="h-16 w-16 align-middle justify-center" src={`http://localhost:8000/api/nhl_team_info/logo?logo_filename=${logo}`} alt="logo"></img>
             <p className={CLASS_TD}>{teamName} ({teamCommonName}) [{teamAbbrev}]</p>
@@ -41,6 +54,17 @@ const TeamStat: React.FC<TeamStatEntry> = ({date, goalDiff, goalsAgainst, goalsF
 export default function TeamStandingsTable() {
     // const [teamStats, setTeamStats] = useState<TeamStatEntry[]>([]);
     const [date, setDate] = React.useState<Date>(new Date('2025-12-02'))
+    const [sortKey, setSortKey] = React.useState<SortKey | null>(null);
+    const [sortDirection, setSortDirection] = React.useState<SortDirection>('asc');
+
+    function handleSort(key: SortKey) {
+        if (sortKey === key) {
+            setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+        } else {
+            setSortKey(key);
+            setSortDirection('asc');
+        }
+    }
 
     const handleDateSelect: OnSelectHandler<Date | undefined> = (selected) => {
         setDate(selected ?? new Date());
@@ -66,9 +90,28 @@ export default function TeamStandingsTable() {
 
     if(error) return 'An error occurred: ' + error.message
 
+    // this method sorts the team stats by the currently selected column, if any
+    function sortedTeamStats(): TeamStatEntry[] {
+        if (!sortKey) return teamStats;
+
+        const sorted = [...teamStats].sort((a: TeamStatEntry, b: TeamStatEntry) => {
+            const aValue = a[sortKey];
+            const bValue = b[sortKey];
+            const aNum = Number(aValue);
+            const bNum = Number(bValue);
+
+            if (!Number.isNaN(aNum) && !Number.isNaN(bNum)) {
+                return aNum - bNum;
+            }
+            return String(aValue).localeCompare(String(bValue));
+        });
+
+        return sortDirection === 'asc' ? sorted : sorted.reverse();
+    }
+
     // this method will map out the team stats on the table
     function teamStatsList() {
-        return teamStats.map((teamStat: TeamStatEntry) => {
+        return sortedTeamStats().map((teamStat: TeamStatEntry) => {
             console.debug(teamStat);
             const id_key = teamStat.date + '_' + teamStat.teamName;
             return (
@@ -119,8 +162,13 @@ export default function TeamStandingsTable() {
     }
 
     // this following section will display the table with the team standings stats
-    const CLASS_TH_LEFT = "h-12 px-4 text-left align-middle font-medium text-muted-foreground";
-    const CLASS_TH_CENTER = "h-12 px-4 text-center align-middle font-medium text-muted-foreground";
+    const CLASS_TH_LEFT = "h-12 px-4 text-left align-middle font-medium text-muted-foreground cursor-pointer select-none hover:text-foreground";
+    const CLASS_TH_CENTER = "h-12 px-4 text-center align-middle font-medium text-muted-foreground cursor-pointer select-none hover:text-foreground";
+
+    function sortIndicator(key: SortKey) {
+        if (sortKey !== key) return null;
+        return sortDirection === 'asc' ? ' ▲' : ' ▼';
+    }
 
     return (
         <DateContext value={dateContextValue}>
@@ -132,15 +180,15 @@ export default function TeamStandingsTable() {
                     <table className="w-full caption-bottom text-sm">
                         <thead className="[&amp;_tr]:border-b">
                         <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
-                            <th className={CLASS_TH_LEFT}>Date</th>
-                            <th className={CLASS_TH_LEFT}>Team</th>
-                            <th className={CLASS_TH_CENTER}>Wins</th>
-                            <th className={CLASS_TH_CENTER}>Losses</th>
-                            <th className={CLASS_TH_CENTER}>OT Losses</th>
-                            <th className={CLASS_TH_CENTER}>Points</th>
-                            <th className={CLASS_TH_CENTER}>Goals For</th>
-                            <th className={CLASS_TH_CENTER}>Goals Against</th>
-                            <th className={CLASS_TH_CENTER}>Goal Diff</th>
+                            {COLUMNS.map((column) => (
+                                <th
+                                    key={column.key}
+                                    className={column.align === 'left' ? CLASS_TH_LEFT : CLASS_TH_CENTER}
+                                    onClick={() => handleSort(column.key)}
+                                >
+                                    {column.label}{sortIndicator(column.key)}
+                                </th>
+                            ))}
                         </tr>
                         </thead>
                         <tbody className="[&amp;_tr:last-child]:border-0">
