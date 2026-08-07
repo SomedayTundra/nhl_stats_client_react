@@ -1,17 +1,9 @@
 import {TeamInfoCard} from '@/components/TeamInfoCard.tsx'
-import {type TeamInfo} from '@/state/types'
+import {type Conference, type Division, type TeamInfo} from '@/state/types'
 import {useQuery} from '@tanstack/react-query'
 
 
 const SERVER = 'localhost:8000'
-
-type Conference = {
-    divisions: Map<string, Division>;
-}
-
-type Division = {
-    teams: Array<TeamInfo>;
-}
 
 
 /**

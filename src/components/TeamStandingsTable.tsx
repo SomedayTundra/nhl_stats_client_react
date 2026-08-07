@@ -12,6 +12,7 @@ import type {OnSelectHandler} from 'react-day-picker'
 import {DateContext} from '@/state/DateContext.tsx'
 import DatePicker from '@/components/DatePicker.tsx'
 import {useQuery} from '@tanstack/react-query'
+import {formatDateForApi} from '@/lib/date.ts'
 
 const SERVER = 'localhost:8000'
 
@@ -79,7 +80,7 @@ export default function TeamStandingsTable() {
     const {data: teamStats, isPending, error} = useQuery<TeamStatEntry[]>({
         queryKey: ['teamStats', dateContextValue.date],
         queryFn: async() => {
-            const prettyDate: string|undefined = changeDateToMyPreferredStringFormat(date);
+            const prettyDate: string = formatDateForApi(date);
 
             const response = await fetch(`http://${SERVER}/api/nhl_standings/?start_date=${prettyDate}&end_date=${prettyDate}`);
             if (!response.ok) {
@@ -133,24 +134,6 @@ export default function TeamStandingsTable() {
                 />
             );
         });
-    }
-
-    function changeDateToMyPreferredStringFormat(originalDate: Date) {
-        function join(date: Date, options: any[], separator: string) {
-            function format(option: Intl.DateTimeFormatOptions | undefined) {
-                let formatter = new Intl.DateTimeFormat('en', option);
-                return formatter.format(date);
-            }
-
-            return options.map(format).join(separator);
-        }
-
-        if (originalDate === null) {
-            return;
-        }
-
-        const options = [{year: 'numeric'}, {month: '2-digit'}, {day: '2-digit'}];
-        return join(originalDate, options, '-');
     }
 
     // @ts-ignore

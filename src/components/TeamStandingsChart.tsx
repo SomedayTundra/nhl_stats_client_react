@@ -21,6 +21,7 @@ import DatePickerWithRange from '@/components/DatePickerWithRange.tsx'
 import {Checkbox} from '@/components/ui/checkbox'
 import {Field, FieldGroup, FieldLabel} from '@/components/ui/field.tsx'
 import {useQuery} from '@tanstack/react-query'
+import {formatDateForApi} from '@/lib/date.ts'
 
 const lineTypes = [
     'basis', 'bump', 'linear', 'natural', 'monotone', 'step',
@@ -92,24 +93,6 @@ export default function TeamStandingsChart() {
         setDateRange: handleDateSelect
     };
 
-    function changeDateToMyPreferredStringFormat(originalDate: Date) {
-        function join(date: Date, options: any[], separator: string) {
-            function format(option: Intl.DateTimeFormatOptions | undefined) {
-                let formatter = new Intl.DateTimeFormat('en', option);
-                return formatter.format(date);
-            }
-            return options.map(format).join(separator);
-        }
-
-        if(originalDate === null) {
-            return;
-        }
-        else {
-            const options = [{year: 'numeric'}, {month: '2-digit'}, {day: '2-digit'}];
-            return join(originalDate, options, '-');
-        }
-    }
-
     // @ts-ignore
     function ShowToast(msg: String) {
         return (
@@ -123,8 +106,8 @@ export default function TeamStandingsChart() {
     const {data: teamStats, isPending, error} = useQuery<TeamStatEntry[]>({
         queryKey: ['teamStats', dateRangeContextValue.dateRange],
         queryFn: async() => {
-            const prettyStartDate: string | undefined = changeDateToMyPreferredStringFormat(date.from as Date);
-            const prettyEndDate: string | undefined = changeDateToMyPreferredStringFormat(date.to as Date);
+            const prettyStartDate: string = formatDateForApi(date.from as Date);
+            const prettyEndDate: string = formatDateForApi(date.to as Date);
 
             const response = await fetch(`http://${SERVER}/api/nhl_standings/?start_date=${prettyStartDate}&end_date=${prettyEndDate}`);
             if (!response.ok) {
