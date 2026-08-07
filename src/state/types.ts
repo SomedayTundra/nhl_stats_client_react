@@ -6,6 +6,11 @@ export type DateRangeState = {
     setDateRange: OnSelectHandler<DateRange | undefined>;
 }
 
+export type DateState = {
+    date: Date;
+    setDate: OnSelectHandler<Date | undefined>;
+}
+
 export type TeamInfo = {
     teamAbbrev: string
     teamName: string

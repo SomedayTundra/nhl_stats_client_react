@@ -8,9 +8,9 @@ import type TeamStatEntry from '@/components/TeamStatEntry.tsx'
 //        IDEA is giving me, even though the code itself *can* find that module
 // @ts-ignore
 import type {Value} from 'react-calendar/dist/shared/types'
-import type {DateRange, OnSelectHandler} from 'react-day-picker'
-import {DateRangeContext} from '@/state/DateRangeContext.tsx'
-import DatePickerWithRange from '@/components/DatePickerWithRange.tsx'
+import type {OnSelectHandler} from 'react-day-picker'
+import {DateContext} from '@/state/DateContext.tsx'
+import DatePicker from '@/components/DatePicker.tsx'
 import {useQuery} from '@tanstack/react-query'
 
 const SERVER = 'localhost:8000'
@@ -40,40 +40,24 @@ const TeamStat: React.FC<TeamStatEntry> = ({date, goalDiff, goalsAgainst, goalsF
 
 export default function TeamStandingsTable() {
     // const [teamStats, setTeamStats] = useState<TeamStatEntry[]>([]);
-    const [date, setDate] = React.useState<DateRange>({from: new Date('2025-12-02'), to: new Date('2025-12-02')})
+    const [date, setDate] = React.useState<Date>(new Date('2025-12-02'))
 
-    const handleDateSelect: OnSelectHandler<DateRange> = (selected) => {
-        if(selected === undefined) {
-            selected = {
-                from: new Date(),
-                to: new Date(),
-            }
-        }
-
-        if(selected.from === undefined) {
-            selected.from = new Date();
-        }
-
-        if(selected.to === undefined) {
-            selected.to = new Date();
-        }
-
-        setDate(selected);
+    const handleDateSelect: OnSelectHandler<Date | undefined> = (selected) => {
+        setDate(selected ?? new Date());
     };
 
-    const dateRangeContextValue = {
-        dateRange: date,
-        setDateRange: handleDateSelect
+    const dateContextValue = {
+        date: date,
+        setDate: handleDateSelect
     };
 
     // this method fetches the NHL stats from the database.
     const {data: teamStats, isPending, error} = useQuery({
-        queryKey: ['teamStats', dateRangeContextValue.dateRange],
+        queryKey: ['teamStats', dateContextValue.date],
         queryFn: async() => {
-            const prettyStartDate: string|undefined = changeDateToMyPreferredStringFormat(date.from as Date);
-            const prettyEndDate: string|undefined = changeDateToMyPreferredStringFormat(date.to as Date);
+            const prettyDate: string|undefined = changeDateToMyPreferredStringFormat(date);
 
-            const response = await fetch(`http://${SERVER}/api/nhl_standings/?start_date=${prettyStartDate}&end_date=${prettyEndDate}`);
+            const response = await fetch(`http://${SERVER}/api/nhl_standings/?start_date=${prettyDate}&end_date=${prettyDate}`);
             return await response.json();
         }
     })
@@ -139,9 +123,9 @@ export default function TeamStandingsTable() {
     const CLASS_TH_CENTER = "h-12 px-4 text-center align-middle font-medium text-muted-foreground";
 
     return (
-        <DateRangeContext value={dateRangeContextValue}>
+        <DateContext value={dateContextValue}>
             <div className="flex justify-start">
-                <DatePickerWithRange/>
+                <DatePicker/>
             </div>
             <div className="border rounded-lg overflow-hidden">
                 <div className="relative w-full overflow-auto">
@@ -165,6 +149,6 @@ export default function TeamStandingsTable() {
                     </table>
                 </div>
             </div>
-        </DateRangeContext>
+        </DateContext>
     );
 }

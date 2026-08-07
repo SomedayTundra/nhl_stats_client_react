@@ -23,7 +23,7 @@ export function TeamInfoCard({info}: TeamInfoCardProps) {
 
     return (
         <div key={info.teamAbbrev} className='team-info-card'>
-            <div className='team-logo-and-name text-sm font-normal'><img src={imageURL} alt='logo'/>{info.teamName}</div>
+            <div className='team-logo-and-name text-sm font-normal'><img src={imageURL} alt='logo' loading='eager'/>{info.teamName}</div>
             {verbose &&
                 <div className='team-conf-and-division'>
                   <p>{info.conferenceName} Conference</p>
