@@ -6,7 +6,7 @@ import type {OnSelectHandler} from 'react-day-picker'
 import {DateContext} from '@/state/DateContext.tsx'
 import DatePickerWithNav from '@/components/DatePickerWithNav.tsx'
 import TeamChooser from '@/components/TeamChooser.tsx'
-import {useQuery} from '@tanstack/react-query'
+import {keepPreviousData, useQuery} from '@tanstack/react-query'
 import {formatDateForApi} from '@/lib/date.ts'
 
 const SERVER = 'localhost:8000'
@@ -82,7 +82,8 @@ export default function TeamStandingsTable() {
                 throw new Error(`An error occurred: ${response.statusText}`)
             }
             return (await response.json()) as TeamStatEntry[]
-        }
+        },
+        placeholderData: keepPreviousData
     })
 
     // this method filters the team stats down to the teams currently selected in the TeamChooser
