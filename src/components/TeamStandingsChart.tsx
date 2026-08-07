@@ -29,6 +29,11 @@ const lineTypes = [
 
 const SERVER = 'localhost:8000'
 
+type ResolvedDateRange = {
+    from: Date;
+    to: Date;
+}
+
 let chartConfig = {
     TBL: {
         label: "Lightning",
@@ -67,25 +72,13 @@ let chartConfig = {
 export default function TeamStandingsChart() {
     const [lineType, setLineType] = useState("monotone");
     const [showDots, setShowDots] = React.useState<boolean>(true);
-    const [date, setDate] = React.useState<DateRange>({from: new Date('2025-10-08'), to: new Date('2026-04-18')});
+    const [date, setDate] = React.useState<ResolvedDateRange>({from: new Date('2025-10-08'), to: new Date('2026-04-18')});
 
-    const handleDateSelect: OnSelectHandler<DateRange> = (selected) => {
-        if(selected === undefined) {
-            selected = {
-                from: new Date(),
-                to: new Date(),
-            }
-        }
-
-        if(selected.from === undefined) {
-            selected.from = new Date();
-        }
-
-        if(selected.to === undefined) {
-            selected.to = new Date();
-        }
-
-        setDate(selected);
+    const handleDateSelect: OnSelectHandler<DateRange | undefined> = (selected) => {
+        setDate({
+            from: selected?.from ?? new Date(),
+            to: selected?.to ?? new Date(),
+        });
     };
 
     const dateRangeContextValue = {
@@ -106,8 +99,8 @@ export default function TeamStandingsChart() {
     const {data: teamStats, isPending, error} = useQuery<TeamStatEntry[]>({
         queryKey: ['teamStats', dateRangeContextValue.dateRange],
         queryFn: async() => {
-            const prettyStartDate: string = formatDateForApi(date.from as Date);
-            const prettyEndDate: string = formatDateForApi(date.to as Date);
+            const prettyStartDate: string = formatDateForApi(date.from);
+            const prettyEndDate: string = formatDateForApi(date.to);
 
             const response = await fetch(`http://${SERVER}/api/nhl_standings/?start_date=${prettyStartDate}&end_date=${prettyEndDate}`);
             if (!response.ok) {
