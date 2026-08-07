@@ -4,12 +4,6 @@ import * as React from 'react'
 import {useState} from 'react'
 import 'react-calendar/dist/Calendar.css'
 import type TeamStatEntry from '@/components/TeamStatEntry.tsx'
-
-// FIXME: sort out what isn't configured properly so i can stop ignoring the
-//        'cannot find module react-calender/dist/shared/types' error that
-//        IDEA is giving me, even though the code itself *can* find that module
-// @ts-ignore
-import type {Value} from 'react-calendar/dist/shared/types'
 import {CartesianGrid, Line, LineChart, XAxis} from 'recharts'
 import {Card, CardContent, CardDescription, CardHeader, CardTitle,} from './ui/card'
 import {type ChartConfig, ChartContainer, ChartTooltip} from './ui/chart'
@@ -26,6 +20,12 @@ import {formatDateForApi} from '@/lib/date.ts'
 const lineTypes = [
     'basis', 'bump', 'linear', 'natural', 'monotone', 'step',
 ] as const
+
+type LineType = typeof lineTypes[number]
+
+function isLineType(value: string): value is LineType {
+    return (lineTypes as readonly string[]).includes(value)
+}
 
 const SERVER = 'localhost:8000'
 
@@ -70,7 +70,7 @@ let chartConfig = {
 } satisfies ChartConfig
 
 export default function TeamStandingsChart() {
-    const [lineType, setLineType] = useState("monotone");
+    const [lineType, setLineType] = useState<LineType>("monotone");
     const [showDots, setShowDots] = React.useState<boolean>(true);
     const [date, setDate] = React.useState<ResolvedDateRange>({from: new Date('2025-10-08'), to: new Date('2026-04-18')});
 
@@ -81,19 +81,16 @@ export default function TeamStandingsChart() {
         });
     };
 
+    const handleLineTypeChange = (value: string) => {
+        if (isLineType(value)) {
+            setLineType(value);
+        }
+    };
+
     const dateRangeContextValue = {
         dateRange: date,
         setDateRange: handleDateSelect
     };
-
-    // @ts-ignore
-    function ShowToast(msg: String) {
-        return (
-            <div className="grid grid-cols-2 w-full">
-                <h3 className="text-zinc-800 text-sm font-bold col-span-2">{msg}</h3>
-            </div>
-        );
-    }
 
     // this method fetches the NHL stats from the database.
     const {data: teamStats, isPending, error} = useQuery<TeamStatEntry[]>({
@@ -141,7 +138,7 @@ export default function TeamStandingsChart() {
         <DateRangeContext value={dateRangeContextValue}>
             <div className="flex flex-row items-center">
                 <DatePickerWithRange/>
-                <Combobox items={lineTypes} defaultValue={lineTypes[4]} onInputValueChange={setLineType} autoHighlight>
+                <Combobox items={lineTypes} defaultValue={lineTypes[4]} onInputValueChange={handleLineTypeChange} autoHighlight>
                     <ComboboxInput placeholder="Select a line type"/>
                     <ComboboxContent>
                         <ComboboxEmpty>No items found.</ComboboxEmpty>

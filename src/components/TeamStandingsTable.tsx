@@ -2,12 +2,6 @@ import * as React from 'react'
 import '@wojtekmaj/react-daterange-picker/dist/DateRangePicker.css'
 import 'react-calendar/dist/Calendar.css'
 import type TeamStatEntry from '@/components/TeamStatEntry.tsx'
-
-// FIXME: sort out what isn't configured properly so i can stop ignoring the
-//        'cannot find module react-calender/dist/shared/types' error that
-//        IDEA is giving me, even though the code itself *can* find that module
-// @ts-ignore
-import type {Value} from 'react-calendar/dist/shared/types'
 import type {OnSelectHandler} from 'react-day-picker'
 import {DateContext} from '@/state/DateContext.tsx'
 import DatePicker from '@/components/DatePicker.tsx'
@@ -134,15 +128,6 @@ export default function TeamStandingsTable() {
                 />
             );
         });
-    }
-
-    // @ts-ignore
-    function ShowToast(msg: String) {
-        return (
-            <div className="grid grid-cols-2 w-full">
-                <h3 className="text-zinc-800 text-sm font-bold col-span-2">{msg}</h3>
-            </div>
-        );
     }
 
     // this following section will display the table with the team standings stats
