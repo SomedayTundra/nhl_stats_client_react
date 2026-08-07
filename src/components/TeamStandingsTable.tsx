@@ -11,7 +11,7 @@ import {formatDateForApi} from '@/lib/date.ts'
 
 const SERVER = 'localhost:8000'
 
-const CLASS_TD = 'p-4 align-middle'
+const CLASS_TD = 'p-2 align-middle'
 const CLASS_TD_CENTER = `${CLASS_TD} text-center`
 
 type SortKey = 'teamName' | 'wins' | 'losses' | 'otLosses' | 'points' | 'goalsFor' | 'goalsAgainst' | 'goalDiff';
@@ -32,7 +32,7 @@ const COLUMNS: { key: SortKey; label: string; align: 'left' | 'center' }[] = [
 const TeamStat: React.FC<TeamStatEntry> = ({goalDiff, goalsAgainst, goalsFor, logo, losses, teamName, teamCommonName, teamAbbrev, otLosses, points, wins}: TeamStatEntry) => (
     <tr className='p-0 transition-colors data-[state=selected]:bg-muted'>
         <td className={`flex`}>
-            <img className='h-16 w-16 align-middle justify-center' src={`http://localhost:8000/api/nhl_team_info/logo?logo_filename=${logo}`} alt='logo'></img>
+            <img className='h-[48px] w-[48px] align-middle justify-center' src={`http://localhost:8000/api/nhl_team_info/logo?logo_filename=${logo}`} alt='logo'></img>
             <p className={CLASS_TD}>{teamName} ({teamCommonName}) [{teamAbbrev}]</p>
         </td>
         <td className={CLASS_TD_CENTER}>{wins}</td>
