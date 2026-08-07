@@ -35,43 +35,146 @@ type ResolvedDateRange = {
     to: Date;
 }
 
+// colors below were picked the same way as the rest of this map: rendering each team's logo
+// and measuring which non-white color covers the most pixel area, nudging a couple of teams
+// slightly apart from a very close sibling so lines stay readable on the chart
 const HARDCODED_TEAM_COLORS = {
     TBL: {
         label: "Lightning",
-        color: "var(--chart-3)",
+        color: "#1E5AA8",
     },
     BUF: {
         label: "Sabres",
-        color: "var(--chart-2)",
+        color: "#003088",
     },
     DET: {
         label: "Red Wings",
-        color: "var(--chart-1)",
+        color: "#9E1B32",
     },
     MTL: {
         label: "Canadiens",
-        color: "var(--chart-4)",
+        color: "#A81830",
     },
     BOS: {
         label: "Bruins",
-        color: "var(--chart-5)",
+        color: "#FFB820",
     },
     OTT: {
         label: "Senators",
-        color: "var(--chart-6)",
+        color: "#D2232C",
     },
     FLA: {
         label: "Panthers",
-        color: "var(--chart-7)",
+        color: "#C9A227",
     },
     TOR: {
         label: "Maple Leafs",
-        color: "var(--chart-8)",
+        color: "#003E7E",
+    },
+    // colors below were picked by rendering each team's logo and measuring which non-white
+    // color covers the most pixel area (a couple were nudged slightly apart from a very close
+    // sibling team so lines stay readable on the chart; LAK's logo has no color at all, so it
+    // gets their well-known "Forum Blue" instead)
+    CAR: {
+        label: "Hurricanes",
+        color: "#D00018",
+    },
+    NJD: {
+        label: "Devils",
+        color: "#B8001C",
+    },
+    CBJ: {
+        label: "Blue Jackets",
+        color: "#002654",
+    },
+    NYI: {
+        label: "Islanders",
+        color: "#003087",
+    },
+    NYR: {
+        label: "Rangers",
+        color: "#0038A8",
+    },
+    PHI: {
+        label: "Flyers",
+        color: "#F74902",
+    },
+    PIT: {
+        label: "Penguins",
+        color: "#FFB81C",
+    },
+    WSH: {
+        label: "Capitals",
+        color: "#041E42",
+    },
+    CHI: {
+        label: "Blackhawks",
+        color: "#D8A810",
+    },
+    COL: {
+        label: "Avalanche",
+        color: "#206090",
+    },
+    DAL: {
+        label: "Stars",
+        color: "#008840",
+    },
+    MIN: {
+        label: "Wild",
+        color: "#184838",
+    },
+    NSH: {
+        label: "Predators",
+        color: "#E8A415",
+    },
+    STL: {
+        label: "Blues",
+        color: "#0068C8",
+    },
+    UTA: {
+        label: "Mammoth",
+        color: "#70B0E8",
+    },
+    WPG: {
+        label: "Jets",
+        color: "#10284B",
+    },
+    ANA: {
+        label: "Ducks",
+        color: "#886050",
+    },
+    CGY: {
+        label: "Flames",
+        color: "#C81030",
+    },
+    EDM: {
+        label: "Oilers",
+        color: "#002058",
+    },
+    LAK: {
+        label: "Kings",
+        color: "#6F9BD1",
+    },
+    SJS: {
+        label: "Sharks",
+        color: "#007888",
+    },
+    SEA: {
+        label: "Kraken",
+        color: "#68A8B8",
+    },
+    VAN: {
+        label: "Canucks",
+        color: "#143C64",
+    },
+    VGK: {
+        label: "Golden Knights",
+        color: "#B89858",
     },
 } satisfies ChartConfig
 
-// teams without a hardcoded color above get a random one, stable for the life of the page
-// (a placeholder until real colors are picked for every team)
+// safety net only: every team above now has a real color, so this should never actually run
+// unless a new team appears in the API before this map is updated for it
 const randomColorCache = new Map<string, string>()
 
 function randomColorForTeam(abbrev: string): string {
