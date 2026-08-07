@@ -49,8 +49,8 @@ const TeamStat: React.FC<TeamStatEntry> = ({goalDiff, goalsAgainst, goalsFor, lo
 export default function TeamStandingsTable() {
     // const [teamStats, setTeamStats] = useState<TeamStatEntry[]>([]);
     const [date, setDate] = React.useState<Date>(new Date('2025-12-02'))
-    const [sortKey, setSortKey] = React.useState<SortKey | null>(null);
-    const [sortDirection, setSortDirection] = React.useState<SortDirection>('asc');
+    const [sortKey, setSortKey] = React.useState<SortKey | null>('points');
+    const [sortDirection, setSortDirection] = React.useState<SortDirection>('desc');
 
     function handleSort(key: SortKey) {
         if (sortKey === key) {

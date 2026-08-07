@@ -9,8 +9,8 @@ const NavBar = () => {
         'text-white hover:bg-gray-900 hover:text-white rounded-md px-3 py-2';
 
     return (
-        <div>
-            <nav className="navbar">
+        <div className="flex flex-col h-full min-h-0">
+            <nav className="navbar shrink-0">
                 <div className="mx-auto px-2 sm:px-6 lg:px-8">
                     <div className="flex h-20 items-center justify-start">
                         <div className="flex flex-1 items-start justify-left md:items-stretch md:justify-start">
@@ -32,7 +32,9 @@ const NavBar = () => {
                     </div>
                 </div>
             </nav>
-            <Outlet/>
+            <div className="flex-1 min-h-0 overflow-y-auto">
+                <Outlet/>
+            </div>
         </div>
     );
 };

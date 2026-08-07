@@ -71,7 +71,7 @@ let chartConfig = {
 
 export default function TeamStandingsChart() {
     const [lineType, setLineType] = useState<LineType>("monotone");
-    const [showDots, setShowDots] = React.useState<boolean>(true);
+    const [showDots, setShowDots] = React.useState<boolean>(false);
     const [date, setDate] = React.useState<ResolvedDateRange>({from: new Date('2025-10-08'), to: new Date('2026-04-18')});
 
     const handleDateSelect: OnSelectHandler<DateRange | undefined> = (selected) => {
@@ -136,129 +136,126 @@ export default function TeamStandingsChart() {
 
     return (
         <DateRangeContext value={dateRangeContextValue}>
-            <div className="flex flex-row items-center">
-                <DatePickerWithRange/>
-                <Combobox items={lineTypes} defaultValue={lineTypes[4]} onInputValueChange={handleLineTypeChange} autoHighlight>
-                    <ComboboxInput placeholder="Select a line type"/>
-                    <ComboboxContent>
-                        <ComboboxEmpty>No items found.</ComboboxEmpty>
-                        <ComboboxList>
-                            {(item) => (
-                                <ComboboxItem key={item} value={item}>
-                                    {item}
-                                </ComboboxItem>
-                            )}
-                        </ComboboxList>
-                    </ComboboxContent>
-                </Combobox>
-                <FieldGroup className='mx-auto w-56'>
-                    <Field orientation='horizontal'>
-                        <Checkbox id='show-dots-checkbox-basic' name='show-dots-checkbox-basic' checked={showDots} onCheckedChange={setShowDots}/>
-                        <FieldLabel htmlFor='show-dots-checkbox-basic'>
-                            Show Dots
-                        </FieldLabel>
-                    </Field>
-                </FieldGroup>
-
+            <div className="h-full flex flex-col">
+                <div className="w-9/12 mx-auto flex flex-row items-center justify-between shrink-0">
+                    <div className="flex flex-row items-center">
+                        <DatePickerWithRange/>
+                        <Combobox items={lineTypes} defaultValue={lineTypes[4]} onInputValueChange={handleLineTypeChange} autoHighlight>
+                            <ComboboxInput placeholder="Select a line type"/>
+                            <ComboboxContent>
+                                <ComboboxEmpty>No items found.</ComboboxEmpty>
+                                <ComboboxList>
+                                    {(item) => (
+                                        <ComboboxItem key={item} value={item}>
+                                            {item}
+                                        </ComboboxItem>
+                                    )}
+                                </ComboboxList>
+                            </ComboboxContent>
+                        </Combobox>
+                    </div>
+                    <FieldGroup className='w-56'>
+                        <Field orientation='horizontal'>
+                            <Checkbox id='show-dots-checkbox-basic' name='show-dots-checkbox-basic' checked={showDots} onCheckedChange={setShowDots}/>
+                            <FieldLabel htmlFor='show-dots-checkbox-basic'>
+                                Show Dots
+                            </FieldLabel>
+                        </Field>
+                    </FieldGroup>
+                </div>
+                <div className="flex-1 min-h-0 flex justify-center">
+                    <Card className="w-9/12 flex flex-col overflow-hidden">
+                        <CardHeader className="shrink-0">
+                            <CardTitle>Team Standings Over Time</CardTitle>
+                            <CardDescription>
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="flex-1 min-h-0 overflow-hidden">
+                            <ChartContainer config={chartConfig} className="h-full w-full aspect-auto">
+                                <LineChart
+                                    accessibilityLayer
+                                    data={chartData}
+                                    margin={{
+                                        top: 12,
+                                        bottom: 12,
+                                        left: 12,
+                                        right: 12,
+                                    }}
+                                >
+                                    <CartesianGrid vertical={false}/>
+                                    <XAxis
+                                        dataKey="date"
+                                        tickLine={true}
+                                        axisLine={true}
+                                        tickMargin={8}
+                                        tickFormatter={(value: string) => value.slice(5)}
+                                    />
+                                    <ChartTooltip cursor={true}
+                                                  itemSorter={(item) => {return (200 - (item.value as number)) as number;} }
+                                                  // content={<ChartTooltipContent />}
+                                    />
+                                    <Line
+                                        dataKey="TBL"
+                                        type={lineType}
+                                        stroke="var(--chart-3)"
+                                        strokeWidth={2}
+                                        dot={showDots}
+                                    />
+                                    <Line
+                                        dataKey="BUF"
+                                        type={lineType}
+                                        stroke="var(--chart-2)"
+                                        strokeWidth={2}
+                                        dot={showDots}
+                                    />
+                                    <Line
+                                        dataKey="DET"
+                                        type={lineType}
+                                        stroke="var(--chart-1)"
+                                        strokeWidth={2}
+                                        dot={showDots}
+                                    />
+                                    <Line
+                                        dataKey="MTL"
+                                        type={lineType}
+                                        stroke="var(--chart-4)"
+                                        strokeWidth={2}
+                                        dot={showDots}
+                                    />
+                                    <Line
+                                        dataKey="BOS"
+                                        type={lineType}
+                                        stroke="var(--chart-5)"
+                                        strokeWidth={2}
+                                        dot={showDots}
+                                    />
+                                    <Line
+                                        dataKey="OTT"
+                                        type={lineType}
+                                        stroke="var(--chart-6)"
+                                        strokeWidth={2}
+                                        dot={showDots}
+                                    />
+                                    <Line
+                                        dataKey="FLA"
+                                        type={lineType}
+                                        stroke="var(--chart-7)"
+                                        strokeWidth={2}
+                                        dot={showDots}
+                                    />
+                                    <Line
+                                        dataKey="TOR"
+                                        type={lineType}
+                                        stroke="var(--chart-8)"
+                                        strokeWidth={2}
+                                        dot={showDots}
+                                    />
+                                </LineChart>
+                            </ChartContainer>
+                        </CardContent>
+                    </Card>
+                </div>
             </div>
-            <Card className="h-9/12 w-9/12">
-                <CardHeader>
-                    <CardTitle>Team Standings Over Time</CardTitle>
-                    <CardDescription>
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <ChartContainer config={chartConfig}>
-                        <LineChart
-                            accessibilityLayer
-                            data={chartData}
-                            margin={{
-                                top: 12,
-                                bottom: 12,
-                                left: 12,
-                                right: 12,
-                            }}
-                        >
-                            <CartesianGrid vertical={false}/>
-                            <XAxis
-                                dataKey="date"
-                                tickLine={true}
-                                axisLine={true}
-                                tickMargin={8}
-                            />
-                            <ChartTooltip cursor={true}
-                                          itemSorter={(item) => {return (200 - (item.value as number)) as number;} }
-                                          // content={<ChartTooltipContent />}
-                            />
-                            <Line
-                                dataKey="TBL"
-                                type={lineType}
-                                stroke="var(--chart-3)"
-                                strokeWidth={2}
-                                dot={showDots}
-                            />
-                            <Line
-                                dataKey="BUF"
-                                type={lineType}
-                                stroke="var(--chart-2)"
-                                strokeWidth={2}
-                                dot={showDots}
-                            />
-                            <Line
-                                dataKey="DET"
-                                type={lineType}
-                                stroke="var(--chart-1)"
-                                strokeWidth={2}
-                                dot={showDots}
-                            />
-                            <Line
-                                dataKey="MTL"
-                                type={lineType}
-                                stroke="var(--chart-4)"
-                                strokeWidth={2}
-                                dot={showDots}
-                            />
-                            <Line
-                                dataKey="BOS"
-                                type={lineType}
-                                stroke="var(--chart-5)"
-                                strokeWidth={2}
-                                dot={showDots}
-                            />
-                            <Line
-                                dataKey="OTT"
-                                type={lineType}
-                                stroke="var(--chart-6)"
-                                strokeWidth={2}
-                                dot={showDots}
-                            />
-                            <Line
-                                dataKey="FLA"
-                                type={lineType}
-                                stroke="var(--chart-7)"
-                                strokeWidth={2}
-                                dot={showDots}
-                            />
-                            <Line
-                                dataKey="TOR"
-                                type={lineType}
-                                stroke="var(--chart-8)"
-                                strokeWidth={2}
-                                dot={showDots}
-                            />
-                        </LineChart>
-                    </ChartContainer>
-                </CardContent>
-                {/*<CardFooter>*/}
-                {/*    <div className="flex w-full items-start gap-2 text-sm">*/}
-                {/*        <div className="grid gap-2">*/}
-                {/*            <div className="flex items-center gap-2 leading-none font-medium">*/}
-                {/*                THIS IS THE FOOTER <TrendingUp className="h-4 w-4"/>*/}
-                {/*            </div>*/}
-                {/*        </div>*/}
-                {/*    </div>*/}
-                {/*</CardFooter>*/}
-            </Card>
         </DateRangeContext>
     );
 }
