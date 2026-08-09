@@ -56,7 +56,7 @@ export default function DatePickerWithNav({id, tooltip, label}: DatePickerWithNa
             <div className="flex items-center gap-0">
                 <Tooltip>
                     <TooltipTrigger asChild>
-                        <Button variant="outline" size="icon" className="rounded-r-none bg-gray-100 hover:bg-accent hover:text-accent-foreground" onClick={goToPreviousWeek} aria-label="Previous week">
+                        <Button variant="outline" size="icon" className="rounded-r-none bg-blue-100 hover:bg-accent hover:text-accent-foreground" onClick={goToPreviousWeek} aria-label="Previous week">
                             <ChevronsLeftIcon />
                         </Button>
                     </TooltipTrigger>
@@ -64,7 +64,7 @@ export default function DatePickerWithNav({id, tooltip, label}: DatePickerWithNa
                 </Tooltip>
                 <Tooltip>
                     <TooltipTrigger asChild>
-                        <Button variant="outline" size="icon" className="rounded-none bg-gray-100 hover:bg-accent hover:text-accent-foreground" onClick={goToPreviousDay} aria-label="Previous day">
+                        <Button variant="outline" size="icon" className="rounded-none bg-blue-100 hover:bg-accent hover:text-accent-foreground" onClick={goToPreviousDay} aria-label="Previous day">
                             <ChevronLeftIcon />
                         </Button>
                     </TooltipTrigger>
@@ -102,7 +102,7 @@ export default function DatePickerWithNav({id, tooltip, label}: DatePickerWithNa
                 </Popover>
                 <Tooltip>
                     <TooltipTrigger asChild>
-                        <Button variant="outline" size="icon" className="rounded-none bg-gray-100 hover:bg-accent hover:text-accent-foreground" onClick={goToNextDay} aria-label="Next day">
+                        <Button variant="outline" size="icon" className="rounded-none bg-blue-100 hover:bg-accent hover:text-accent-foreground" onClick={goToNextDay} aria-label="Next day">
                             <ChevronRightIcon />
                         </Button>
                     </TooltipTrigger>
@@ -110,7 +110,7 @@ export default function DatePickerWithNav({id, tooltip, label}: DatePickerWithNa
                 </Tooltip>
                 <Tooltip>
                     <TooltipTrigger asChild>
-                        <Button variant="outline" size="icon" className="rounded-l-none bg-gray-100 hover:bg-accent hover:text-accent-foreground" onClick={goToNextWeek} aria-label="Next week">
+                        <Button variant="outline" size="icon" className="rounded-l-none bg-blue-100 hover:bg-accent hover:text-accent-foreground" onClick={goToNextWeek} aria-label="Next week">
                             <ChevronsRightIcon />
                         </Button>
                     </TooltipTrigger>
