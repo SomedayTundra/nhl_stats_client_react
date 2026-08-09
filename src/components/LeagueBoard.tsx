@@ -48,9 +48,9 @@ export function LeagueBoard() {
     //        REFERENCES LIKE "conferenceInfo[1]" SEEM RIDICULOUS
     return (
         <>
-            <div className='league-ref-everything'>
+            <div className='league-ref-everything h-full flex flex-col'>
                 <h1 className='league-ref-header'>LEAGUE</h1>
-                <div className='league-ref-all-conferences-container'>
+                <div className='league-ref-all-conferences-container flex-1 min-h-0'>
                     {[...newConferences.entries()].map((conferenceInfo) => (
                         <div key={conferenceInfo[0]} className='league-ref-one-conference-container'>
                             <h2 className='conference-name-row'>{conferenceInfo[0]} Conference</h2>

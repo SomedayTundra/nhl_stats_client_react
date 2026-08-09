@@ -176,18 +176,20 @@ p {
 }
 
 .league-ref-everything {
-    margin: 0 0 1rem 0;
-    /*border: 1rem solid var(--league-board-bg-dark);*/
-    border-top: 1rem solid var(--league-board-bg-dark);
-    border-left: 1rem solid var(--league-board-bg-dark);
+    margin: 0 0 clamp(0.15rem, 0.8cqh, 0.5rem) 0;
+    border-top: clamp(0.15rem, 1cqh, 0.5rem) solid var(--league-board-bg-dark);
+    border-left: clamp(0.15rem, 1cqh, 0.5rem) solid var(--league-board-bg-dark);
+    border-radius: 0.75rem;
+    overflow: hidden;
     font-weight: bold;
 }
 
 .league-ref-header {
     color: var(--league-board-text-header);
     background: var(--league-board-bg-dark);
-    padding: 1rem 0 1rem 0;
+    padding: clamp(0.1rem, 1cqh, 0.4rem) 0 clamp(0.1rem, 1cqh, 0.4rem) clamp(0.4rem, 1.5cqh, 0.75rem);
     width: 100%;
+    font-size: clamp(0.75rem, 3cqh, 1rem);
     border-bottom: 2px solid var(--league-board-text-header);
     display: flex;
     justify-content: start;
@@ -196,19 +198,16 @@ p {
 
 .league-ref-all-conferences-container {
     width: 100%;
-    height: 100%;
     display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
+    flex-direction: column;
+    gap: 2rem;
     color: #333;
 }
 
 .league-ref-one-conference-container {
-    height: 100%;
     width: 100%;
     display: flex;
     flex-direction: column;
-    flex-wrap: wrap;
     color: #333;
 }
 
@@ -217,33 +216,35 @@ p {
     background: var(--league-board-bg-dark);
     color: var(--league-board-text-conference);
     text-align: start;
-    padding: 1.5rem 0 0.5rem 0;
+    padding: clamp(0.15rem, 1.2cqh, 0.6rem) 0 clamp(0.05rem, 0.5cqh, 0.25rem) clamp(0.25rem, 1cqh, 0.5rem);
+    font-size: clamp(0.7rem, 2.5cqh, 1rem);
 }
 
 .league-ref-one-division-container {
-    height: 100%;
     width: 100%;
     display: flex;
     flex-direction: column;
-    flex-wrap: wrap;
     color: #333;
 }
 
 .division-name-row {
     background: linear-gradient(var(--league-board-bg-dark) 50%, var(--league-board-bg-light));
-    border-right: 1rem solid var(--league-board-bg-dark);
+    border-right: clamp(0.15rem, 1cqh, 0.5rem) solid var(--league-board-bg-dark);
     color: var(--league-board-text-division);
     text-align: start;
     width: 100%;
-    padding: 0.5rem 0 0.5rem 1.5rem;
+    padding: clamp(0.1rem, 0.8cqh, 0.35rem) 0 clamp(0.1rem, 0.8cqh, 0.35rem) calc(clamp(0.4rem, 1.5cqh, 1rem) + 2rem);
+    font-size: clamp(0.65rem, 2cqh, 0.9rem);
     border-radius: 0 0 0 50vh;
 }
 
 .unplaced-team-bucket-content {
-    margin: 0 0 1rem 0;
+    margin: 0 0 clamp(0.25rem, 1.5cqh, 1rem) 0;
     font-weight: bold;
-    border: 1rem solid var(--unplaced-team-bucket-bg-dark);
+    border: clamp(0.15rem, 1cqh, 0.5rem) solid var(--unplaced-team-bucket-bg-dark);
     background: var(--unplaced-team-bucket-bg-dark);
+    border-radius: 0.75rem;
+    overflow: hidden;
     height: 100%;
 
     h1 {
@@ -254,8 +255,9 @@ p {
 .unplaced-team-bucket-header {
     color: var(--unplaced-team-bucket-text-color);
     background: var(--unplaced-team-bucket-bg-dark);
-    padding: 1rem 0 1rem 0;
+    padding: clamp(0.1rem, 1cqh, 0.4rem) 0;
     width: 100%;
+    font-size: clamp(0.75rem, 3cqh, 1rem);
     border-bottom: 2px solid var(--unplaced-team-bucket-text-color);
     display: flex;
     justify-content: center;
@@ -267,21 +269,21 @@ p {
     display: flex;
     flex-direction: row;
     flex-wrap: nowrap;
-    padding: 1rem 0;
+    padding: clamp(0.05rem, 0.5cqh, 0.4rem) 0;
 }
 
 .team-info-card {
     background: white;
-    font-size: clamp(0.66rem, -1rem + 2vw, 1.25rem);
+    font-size: clamp(0.45rem, 1.2cqh, 0.7rem);
     font-style: normal;
-    width: 10vw;
+    width: clamp(3.5rem, 11cqw, 9rem);
 }
 
 .team-info-card img {
     display: block;
     justify-self: center;
-    max-width: 128px;
-    max-height: 128px;
-    padding: 0.5rem 0.5rem 0.5rem 0.5rem;
-    border-radius: 0.5rem 0.5rem 0.5rem 0.5rem;
+    max-width: clamp(34px, 10.1cqh, 161px);
+    max-height: clamp(34px, 10.1cqh, 161px);
+    padding: clamp(0.05rem, 0.6cqh, 0.35rem);
+    border-radius: 0.5rem;
 }
