@@ -1,31 +1,51 @@
 import {TeamInfoCard} from '@/components/TeamInfoCard.tsx'
 import {type Conference, type Division, type TeamInfo} from '@/state/types'
-import {useQuery} from '@tanstack/react-query'
+import {useDroppable} from '@dnd-kit/core'
 
+// a team is only considered "placed" when dropped on the division droppable whose id matches its
+// own conference/division - any other drop target (or a miss) leaves it unplaced
+export function divisionDroppableId(conferenceName: string, divisionName: string): string {
+    return `division:${conferenceName}:${divisionName}`
+}
 
-const SERVER = 'localhost:8000'
+type DivisionDropZoneProps = {
+    conferenceName: string
+    divisionName: string
+    children: React.ReactNode
+}
 
+function DivisionDropZone({conferenceName, divisionName, children}: DivisionDropZoneProps) {
+    const {setNodeRef, isOver} = useDroppable({id: divisionDroppableId(conferenceName, divisionName)})
+
+    return (
+        <div
+            ref={setNodeRef}
+            className={`league-ref-one-division-container${isOver ? ' league-ref-one-division-container-drag-over' : ''}`}
+        >
+            {children}
+        </div>
+    )
+}
+
+type LeagueBoardProps = {
+    teams: TeamInfo[]
+    unplacedAbbrevs: Set<string>
+    showTeamNames: boolean
+    isPending: boolean
+    error: Error | null
+}
 
 /**
- * React component that shows all loaded team info content, one-team-per-TeamInfoCard
+ * React component that shows all placed team info content, one-team-per-TeamInfoCard
  */
-export function LeagueBoard() {
-    const {data: allTeamsInfo, isPending, error} = useQuery<TeamInfo[]>({
-        queryKey: ['leagueInfo'],
-        queryFn: async () => {
-            // FIXME: SWITCH TO https://
-            const response = await fetch(`http://${SERVER}/api/nhl_team_info/`)
-            if (!response.ok) {
-                throw new Error(`An error occurred: ${response.statusText}`);
-            }
-            return (await response.json()) as TeamInfo[]
-        }
-    })
-
+export function LeagueBoard({teams, unplacedAbbrevs, showTeamNames, isPending, error}: LeagueBoardProps) {
+    // built from every team, placed or not, so a division that's been fully emptied out into the
+    // bucket still renders its (empty) drop zone - otherwise there'd be no way to drop a team back
+    // into a division with nothing currently placed in it
     let newConferences: Map<string, Conference> = new Map()
 
     if (!isPending && !error) {
-        allTeamsInfo.forEach((teamInfo) => {
+        teams.forEach((teamInfo) => {
             const conferenceName = teamInfo.conferenceName
             let conferenceForThisTeam = newConferences.get(conferenceName)
             if (conferenceForThisTeam === undefined) {
@@ -49,20 +69,22 @@ export function LeagueBoard() {
     return (
         <>
             <div className='league-ref-everything h-full flex flex-col'>
-                <h1 className='league-ref-header'>LEAGUE</h1>
+                <h1 className='league-ref-header'>NATIONAL HOCKEY LEAGUE</h1>
                 <div className='league-ref-all-conferences-container flex-1 min-h-0'>
                     {[...newConferences.entries()].map((conferenceInfo) => (
                         <div key={conferenceInfo[0]} className='league-ref-one-conference-container'>
                             <h2 className='conference-name-row'>{conferenceInfo[0]} Conference</h2>
                             {[...conferenceInfo[1].divisions.entries()].map((divisionInfo) => (
-                                <div key={divisionInfo[0]} className='league-ref-one-division-container'>
+                                <DivisionDropZone key={divisionInfo[0]} conferenceName={conferenceInfo[0]} divisionName={divisionInfo[0]}>
                                     <h2 className='division-name-row'>{divisionInfo[0]} Division</h2>
                                     <div className='team-info-card-row'>
-                                        {[...divisionInfo[1].teams.map((teamInfo) => (
-                                            <TeamInfoCard key={teamInfo.teamAbbrev} info={teamInfo}/>
-                                        ))]}
+                                        {divisionInfo[1].teams
+                                            .filter((teamInfo) => !unplacedAbbrevs.has(teamInfo.teamAbbrev))
+                                            .map((teamInfo) => (
+                                                <TeamInfoCard key={teamInfo.teamAbbrev} info={teamInfo} showTeamNames={showTeamNames}/>
+                                            ))}
                                     </div>
-                                </div>
+                                </DivisionDropZone>
                             ))}
                         </div>
                     ))}
