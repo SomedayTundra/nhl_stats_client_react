@@ -12,7 +12,12 @@ type UnplacedTeamBucketProps = {
 
 export function UnplacedTeamBucket({teams, unplacedAbbrevs, showTeamNames}: UnplacedTeamBucketProps) {
     const {setNodeRef, isOver} = useDroppable({id: UNPLACED_TEAM_BUCKET_DROPPABLE_ID})
-    const unplacedTeams = teams.filter((team) => unplacedAbbrevs.has(team.teamAbbrev))
+    // rendered in `unplacedAbbrevs`'s own (insertion) order rather than `teams`' original order,
+    // so a round's shuffled team set actually looks shuffled in the bucket instead of reverting
+    // to whatever order the API returned them in
+    const teamByAbbrev = new Map(teams.map((team) => [team.teamAbbrev, team]))
+    const unplacedTeams = Array.from(unplacedAbbrevs, (abbrev) => teamByAbbrev.get(abbrev))
+        .filter((team): team is TeamInfo => team !== undefined)
 
     return (
         <div className='unplaced-team-bucket-container h-full'>

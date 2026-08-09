@@ -109,7 +109,9 @@ export default function TeamChooser({selected, onChange}: TeamChooserProps) {
         <Popover open={open} onOpenChange={handleOpenChange}>
             <PopoverTrigger asChild>
                 <Button variant="outline" className="justify-between">
-                    Teams ({draftSelected.length}/{teams.length})
+                    <span className={draftSelected.length === 0 ? 'text-red-600' : undefined}>
+                        Teams ({draftSelected.length}/{teams.length})
+                    </span>
                     <ChevronDownIcon/>
                 </Button>
             </PopoverTrigger>
