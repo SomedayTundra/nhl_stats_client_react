@@ -291,6 +291,10 @@ p {
     flex-direction: row;
     flex-wrap: nowrap;
     padding: clamp(0.05rem, 0.5cqh, 0.4rem) 0;
+    /* keeps the row's height constant whether it holds 32 cards or 0, so a division emptied into
+       the bucket doesn't collapse and shift everything below it - matches a populated row's height:
+       the card's own height (aspect-ratio:1 off its cqh-based width) plus this row's own padding */
+    min-height: calc(clamp(2.625rem, 11cqh, 6.75rem) + 2 * clamp(0.05rem, 0.5cqh, 0.4rem));
 }
 
 /* sized off cqh (not cqw) so the card comes out the same absolute size in both panels: the

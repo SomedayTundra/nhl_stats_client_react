@@ -7,10 +7,20 @@ import {UnplacedTeamBucket, UNPLACED_TEAM_BUCKET_DROPPABLE_ID} from '@/component
 import {LeagueBoard, divisionDroppableId} from '@/components/LeagueBoard.tsx'
 import {TeamInfoCardView} from '@/components/TeamInfoCard.tsx'
 import QuizToolbar from '@/components/QuizToolbar.tsx'
+import {WinOverlay} from '@/components/WinOverlay.tsx'
 import type {TeamInfo} from '@/state/types'
 import {useLocalStorageState} from '@/lib/useLocalStorageState.ts'
 
 const SERVER = 'localhost:8000'
+
+function pickRandomTeams(allTeams: TeamInfo[], count: number): TeamInfo[] {
+    const shuffled = [...allTeams]
+    for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1))
+        ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+    }
+    return shuffled.slice(0, count)
+}
 
 export default function LeagueShapeQuiz() {
     const {data: teams, isPending, error} = useQuery<TeamInfo[]>({
@@ -29,6 +39,25 @@ export default function LeagueShapeQuiz() {
     const [unplacedAbbrevs, setUnplacedAbbrevs] = React.useState<Set<string>>(new Set())
     const [activeTeamAbbrev, setActiveTeamAbbrev] = React.useState<string | null>(null)
     const [showTeamNames, setShowTeamNames] = useLocalStorageState<boolean>('nhlStats.quiz.showTeamNames', true)
+    const [correctGuesses, setCorrectGuesses] = React.useState(0)
+    const [incorrectGuesses, setIncorrectGuesses] = React.useState(0)
+    const [isRunning, setIsRunning] = React.useState(false)
+    const [showWinOverlay, setShowWinOverlay] = React.useState(false)
+    // how many teams the current/most recently finished round started with - used for the win
+    // screen's "you correctly sorted X teams" summary, since that's a round-scoped fact rather
+    // than something derivable from the (ongoing) correct/incorrect guess counters
+    const [roundTeamCount, setRoundTeamCount] = React.useState(0)
+
+    // once every team the round started with has been correctly placed, the bucket empties out -
+    // end the round (re-enable Go) and celebrate
+    React.useEffect(() => {
+        if (isRunning && unplacedAbbrevs.size === 0) {
+            setIsRunning(false)
+            setShowWinOverlay(true)
+        }
+    }, [isRunning, unplacedAbbrevs])
+
+    const handleDismissWinOverlay = React.useCallback(() => setShowWinOverlay(false), [])
 
     function handleDragStart(event: DragStartEvent) {
         setActiveTeamAbbrev(String(event.active.id))
@@ -52,6 +81,12 @@ export default function LeagueShapeQuiz() {
         const team = teams?.find((candidate) => candidate.teamAbbrev === abbrev)
         const isCorrectSlot = team !== undefined && overId === divisionDroppableId(team.conferenceName, team.divisionName)
 
+        if (isCorrectSlot) {
+            setCorrectGuesses((current) => current + 1)
+        } else {
+            setIncorrectGuesses((current) => current + 1)
+        }
+
         setUnplacedAbbrevs((current) => {
             const next = new Set(current)
             if (isCorrectSlot) {
@@ -65,9 +100,33 @@ export default function LeagueShapeQuiz() {
 
     const activeTeam = teams?.find((team) => team.teamAbbrev === activeTeamAbbrev) ?? null
 
+    function handleGo(teamCount: number) {
+        if (!teams) return
+        const chosenTeams = pickRandomTeams(teams, teamCount)
+        setUnplacedAbbrevs(new Set(chosenTeams.map((team) => team.teamAbbrev)))
+        setRoundTeamCount(teamCount)
+        setCorrectGuesses(0)
+        setIncorrectGuesses(0)
+        setIsRunning(true)
+    }
+
     return (
         <div className='h-full min-h-0 flex flex-col'>
-            <QuizToolbar showTeamNames={showTeamNames} onShowTeamNamesChange={setShowTeamNames}/>
+            <QuizToolbar
+                showTeamNames={showTeamNames}
+                onShowTeamNamesChange={setShowTeamNames}
+                onGo={handleGo}
+                correctGuesses={correctGuesses}
+                incorrectGuesses={incorrectGuesses}
+            />
+            {showWinOverlay && (
+                <WinOverlay
+                    teamsSorted={roundTeamCount}
+                    correctGuesses={correctGuesses}
+                    incorrectGuesses={incorrectGuesses}
+                    onDismiss={handleDismissWinOverlay}
+                />
+            )}
             <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
                 <div className='flex flex-row flex-1 min-h-0'>
                     <div className='w-1/3 align-top justify-end mx-4 min-h-0 overflow-hidden [container-type:size]'>
