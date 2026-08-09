@@ -18,6 +18,7 @@ import {Field, FieldGroup, FieldLabel} from '@/components/ui/field.tsx'
 import {useQuery} from '@tanstack/react-query'
 import {deserializeDate, formatApiDateForDisplay, formatDateForApi, serializeDate} from '@/lib/date.ts'
 import {useLocalStorageState} from '@/lib/useLocalStorageState.ts'
+import {addDays, isAfter, isBefore, isSameDay, subDays} from 'date-fns'
 
 const lineTypes = [
     'basis', 'bump', 'linear', 'natural', 'monotone', 'step',
@@ -278,12 +279,22 @@ export default function TeamStandingsChart() {
         return () => observer.disconnect()
     }, [])
 
+    // the "from" and "to" dates are never allowed to cross (from after to) or land on the same
+    // day - whichever end the user just moved "wins", and the other end gets nudged out of the way
     const handleFromDateSelect: OnSelectHandler<Date | undefined> = (selected) => {
-        setFromDate(selected ?? new Date());
+        const newFrom = selected ?? new Date();
+        setFromDate(newFrom);
+        if (isAfter(newFrom, toDate) || isSameDay(newFrom, toDate)) {
+            setToDate(addDays(newFrom, 7));
+        }
     };
 
     const handleToDateSelect: OnSelectHandler<Date | undefined> = (selected) => {
-        setToDate(selected ?? new Date());
+        const newTo = selected ?? new Date();
+        setToDate(newTo);
+        if (isBefore(newTo, fromDate) || isSameDay(newTo, fromDate)) {
+            setFromDate(subDays(newTo, 7));
+        }
     };
 
     const handleLineTypeChange = (value: string) => {
@@ -317,10 +328,12 @@ export default function TeamStandingsChart() {
         }
     })
 
-    // the controls below stay mounted regardless of loading/error state, so TeamChooser never
-    // remounts (and loses its committed selection) on refetch; only the chart area swaps out
+    // the controls below stay mounted regardless of loading/error/selection state, so TeamChooser
+    // never remounts (and loses its committed selection) on refetch; only the chart area swaps out
     let chartArea: React.ReactNode
-    if (isPending) {
+    if (selectedTeams.length === 0) {
+        chartArea = <p className="p-4 text-center">No teams selected</p>
+    } else if (isPending) {
         chartArea = <p className="p-4 text-center">Loading...</p>
     } else if (error) {
         chartArea = <p className="p-4 text-center">An error occurred: {error.message}</p>
@@ -342,12 +355,9 @@ export default function TeamStandingsChart() {
             teamNameByAbbrev.set(teamStatEntry.teamAbbrev, teamStatEntry.teamName)
         })
 
-        // only show teams currently selected in the TeamChooser (an empty selection is
-        // treated as "no filter applied yet" rather than "show nothing")
+        // only show teams currently selected in the TeamChooser (guaranteed non-empty here)
         const teamAbbrevsInData = Array.from(teamNameByAbbrev.keys())
-        const visibleTeamAbbrevs = selectedTeams.length === 0
-            ? teamAbbrevsInData
-            : teamAbbrevsInData.filter((abbrev) => selectedTeams.includes(abbrev))
+        const visibleTeamAbbrevs = teamAbbrevsInData.filter((abbrev) => selectedTeams.includes(abbrev))
 
         const chartConfig: ChartConfig = {}
         visibleTeamAbbrevs.forEach((abbrev) => {

@@ -1,5 +1,4 @@
 import * as React from 'react'
-import '@wojtekmaj/react-daterange-picker/dist/DateRangePicker.css'
 import 'react-calendar/dist/Calendar.css'
 import type TeamStatEntry from '@/components/TeamStatEntry.tsx'
 import type {OnSelectHandler} from 'react-day-picker'
@@ -75,7 +74,7 @@ export default function TeamStandingsTable() {
             setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'))
         } else {
             setSortKey(key)
-            setSortDirection('asc')
+            setSortDirection(key === 'teamName' ? 'asc' : 'desc')
         }
     }
 
@@ -103,10 +102,9 @@ export default function TeamStandingsTable() {
         placeholderData: keepPreviousData
     })
 
-    // this method filters the team stats down to the teams currently selected in the TeamChooser
-    // (an empty selection is treated as "no filter applied yet" rather than "show nothing")
+    // this method filters the team stats down to the teams currently selected in the TeamChooser;
+    // an empty selection is handled separately, in `tableBody`, before this is ever called
     function visibleTeamStats(allTeamStats: TeamStatEntry[]): TeamStatEntry[] {
-        if (selectedTeams.length === 0) return allTeamStats
         return allTeamStats.filter((teamStat) => selectedTeams.includes(teamStat.teamAbbrev))
     }
 
@@ -162,10 +160,12 @@ export default function TeamStandingsTable() {
         return sortDirection === 'asc' ? ' ▲' : ' ▼'
     }
 
-    // the table body alone reflects loading/error state; the controls above it stay mounted
-    // regardless, so TeamChooser never remounts (and loses its committed selection) on refetch
+    // the table body alone reflects loading/error/selection state; the controls above it stay
+    // mounted regardless, so TeamChooser never remounts (and loses its committed selection) on refetch
     let tableBody: React.ReactNode
-    if (isPending) {
+    if (selectedTeams.length === 0) {
+        tableBody = <tr><td colSpan={COLUMNS.length} className='p-4 text-center'>No teams selected</td></tr>
+    } else if (isPending) {
         tableBody = <tr><td colSpan={COLUMNS.length} className='p-4 text-center'>Loading...</td></tr>
     } else if (error) {
         tableBody = <tr><td colSpan={COLUMNS.length} className='p-4 text-center'>An error occurred: {error.message}</td></tr>

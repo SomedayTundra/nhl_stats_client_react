@@ -12,7 +12,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import {addDays, format, subDays} from "date-fns"
 import { CalendarIcon, ChevronLeftIcon, ChevronRightIcon, ChevronsLeftIcon, ChevronsRightIcon } from "lucide-react"
 
-import { use } from 'react';
+import { use, useState } from 'react';
 import {DateContext} from "@/state/DateContext.tsx";
 
 type DatePickerWithNavProps = {
@@ -25,6 +25,12 @@ export default function DatePickerWithNav({id, tooltip, label}: DatePickerWithNa
     const dateFormat = "MM-dd-yyyy";
 
     const dc = use(DateContext);
+    const [open, setOpen] = useState(false);
+
+    const handleCalendarSelect: typeof dc.setDate = (...args) => {
+        dc.setDate(...args);
+        setOpen(false);
+    };
 
     function goToPreviousWeek() {
         dc.setDate(subDays(dc.date, 7))
@@ -64,7 +70,7 @@ export default function DatePickerWithNav({id, tooltip, label}: DatePickerWithNa
                     </TooltipTrigger>
                     <TooltipContent>-1 day</TooltipContent>
                 </Tooltip>
-                <Popover>
+                <Popover open={open} onOpenChange={setOpen}>
                     <Tooltip>
                         <TooltipTrigger asChild>
                             <PopoverTrigger asChild>
@@ -89,7 +95,7 @@ export default function DatePickerWithNav({id, tooltip, label}: DatePickerWithNa
                             mode="single"
                             defaultMonth={dc.date}
                             selected={dc.date}
-                            onSelect={dc.setDate}
+                            onSelect={handleCalendarSelect}
                             numberOfMonths={1}
                         />
                     </PopoverContent>
