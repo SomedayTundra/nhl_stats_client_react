@@ -14,7 +14,7 @@ const NavBar = () => {
                 <div className="mx-auto px-2 sm:px-6 lg:px-8">
                     <div className="flex h-[3.75rem] items-center justify-start">
                         <div className="flex flex-1 items-start justify-left md:items-stretch md:justify-start">
-                            <NavLink to="/" className="flex shrink-0 items-center mr-4">
+                            <NavLink to="/" className="flex shrink-0 items-center mr-8">
                                 <img
                                     className="h-10 w-auto"
                                     src={logo}
