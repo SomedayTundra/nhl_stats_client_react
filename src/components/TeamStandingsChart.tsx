@@ -381,8 +381,11 @@ export default function TeamStandingsChart() {
         // the logo itself is portaled into the shared top-most overlay layer (see logoOverlayNode)
         // rather than rendered inline here, so it always paints on top of every line
         function renderActiveDot(abbrev: string) {
-            return (dotProps: {key?: string, cx?: number, cy?: number, index?: number, value?: number}) => {
-                const {key, cx, cy, index, value} = dotProps
+            // the (props:unknown) and 'props as...' bits are a little loosey-goosey, but the fact is
+            // Recharts' activeDot type only accepts (props: unknown) => JSX.Element here - its own
+            // DotProps type doesn't even declare the index/value fields it actually passes at runtime
+            return (props: unknown) => {
+                const {key, cx, cy, index, value} = props as {key?: string, cx?: number, cy?: number, index?: number, value?: number}
                 const logoFilename = teamLogoByAbbrev.get(abbrev)
 
                 if (typeof value === 'number' && typeof index === 'number' && logoFilename) {
