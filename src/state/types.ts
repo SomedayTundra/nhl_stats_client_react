@@ -1,9 +1,6 @@
-import {type OnSelectHandler} from "react-day-picker"
-
-
 export type DateState = {
     date: Date;
-    setDate: OnSelectHandler<Date | undefined>;
+    setDate: (date: Date) => void;
 }
 
 export type TeamInfo = {

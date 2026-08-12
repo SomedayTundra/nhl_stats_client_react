@@ -9,7 +9,6 @@ import {Card, CardContent, CardDescription, CardHeader, CardTitle,} from './ui/c
 import {type ChartConfig, ChartContainer, ChartTooltip} from './ui/chart'
 
 import {Combobox, ComboboxContent, ComboboxEmpty, ComboboxInput, ComboboxItem, ComboboxList,} from './ui/combobox'
-import type {OnSelectHandler} from 'react-day-picker'
 import {ArrowRightLeftIcon} from 'lucide-react'
 import {DateContext} from '@/state/DateContext.tsx'
 import DatePickerWithNav from '@/components/DatePickerWithNav.tsx'
@@ -278,7 +277,7 @@ export default function TeamStandingsChart() {
 
     // the "from" and "to" dates are never allowed to cross (from after to) or land on the same
     // day - whichever end the user just moved "wins", and the other end gets nudged out of the way
-    const handleFromDateSelect: OnSelectHandler<Date | undefined> = (selected) => {
+    const handleFromDateSelect = (selected: Date | undefined) => {
         const newFrom = selected ?? new Date();
         setFromDate(newFrom);
         if (isAfter(newFrom, toDate) || isSameDay(newFrom, toDate)) {
@@ -286,7 +285,7 @@ export default function TeamStandingsChart() {
         }
     };
 
-    const handleToDateSelect: OnSelectHandler<Date | undefined> = (selected) => {
+    const handleToDateSelect = (selected: Date | undefined) => {
         const newTo = selected ?? new Date();
         setToDate(newTo);
         if (isBefore(newTo, fromDate) || isSameDay(newTo, fromDate)) {

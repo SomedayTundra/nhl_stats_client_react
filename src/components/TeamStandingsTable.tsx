@@ -1,7 +1,6 @@
 import * as React from 'react'
 import 'react-calendar/dist/Calendar.css'
 import type TeamStatEntry from '@/components/TeamStatEntry.tsx'
-import type {OnSelectHandler} from 'react-day-picker'
 import {DateContext} from '@/state/DateContext.tsx'
 import DatePickerWithNav from '@/components/DatePickerWithNav.tsx'
 import TeamChooser from '@/components/TeamChooser.tsx'
@@ -78,7 +77,7 @@ export default function TeamStandingsTable() {
         }
     }
 
-    const handleDateSelect: OnSelectHandler<Date | undefined> = (selected) => {
+    const handleDateSelect = (selected: Date | undefined) => {
         setDate(selected ?? new Date())
     }
 

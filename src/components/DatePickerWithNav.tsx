@@ -11,6 +11,7 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import {addDays, format, subDays} from "date-fns"
 import { CalendarIcon, ChevronLeftIcon, ChevronRightIcon, ChevronsLeftIcon, ChevronsRightIcon } from "lucide-react"
+import type {OnSelectHandler} from "react-day-picker"
 
 import { use, useState } from 'react';
 import {DateContext} from "@/state/DateContext.tsx";
@@ -27,8 +28,8 @@ export default function DatePickerWithNav({id, tooltip, label}: DatePickerWithNa
     const dc = use(DateContext);
     const [open, setOpen] = useState(false);
 
-    const handleCalendarSelect: typeof dc.setDate = (...args) => {
-        dc.setDate(...args);
+    const handleCalendarSelect: OnSelectHandler<Date | undefined> = (selected) => {
+        dc.setDate(selected ?? new Date());
         setOpen(false);
     };
 
