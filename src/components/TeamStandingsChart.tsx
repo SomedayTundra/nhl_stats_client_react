@@ -490,7 +490,7 @@ export default function TeamStandingsChart() {
                 </Combobox>
                 <FieldGroup className="w-auto shrink-0">
                     <Field orientation='horizontal'>
-                        <Checkbox id='show-dots-checkbox-basic' name='show-dots-checkbox-basic' checked={showDots} onCheckedChange={setShowDots}/>
+                        <Checkbox id='show-dots-checkbox-basic' name='show-dots-checkbox-basic' checked={showDots} onCheckedChange={(checked) => setShowDots(checked === true)}/>
                         <FieldLabel htmlFor='show-dots-checkbox-basic' className="whitespace-nowrap">
                             Show Dots
                         </FieldLabel>
