@@ -1,6 +1,7 @@
 import {TeamInfoCard} from '@/components/TeamInfoCard.tsx'
-import {type Conference, type Division, type TeamInfo} from '@/state/types'
+import {type Conference, type TeamInfo} from '@/state/types'
 import {useDroppable} from '@dnd-kit/core'
+import * as React from 'react'
 
 // a team is only considered "placed" when dropped on the division droppable whose id matches its
 // own conference/division - any other drop target (or a miss) leaves it unplaced
@@ -81,7 +82,7 @@ export function LeagueBoard({teams, unplacedAbbrevs, showTeamNames, isPending, e
                                         {divisionInfo[1].teams
                                             .filter((teamInfo) => !unplacedAbbrevs.has(teamInfo.teamAbbrev))
                                             .map((teamInfo) => (
-                                                <TeamInfoCard key={teamInfo.teamAbbrev} info={teamInfo} showTeamNames={showTeamNames}/>
+                                                <TeamInfoCard key={teamInfo.teamAbbrev} info={teamInfo} showTeamNames={showTeamNames} disabled/>
                                             ))}
                                     </div>
                                 </DivisionDropZone>

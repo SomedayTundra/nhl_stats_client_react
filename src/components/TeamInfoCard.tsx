@@ -5,6 +5,7 @@ import type {TeamInfo} from '@/state/types';
 type TeamInfoCardProps = {
     info: TeamInfo
     showTeamNames?: boolean
+    disabled?: boolean
 }
 
 const BASE_URL = 'http://localhost:8000/api'
@@ -30,8 +31,8 @@ export function TeamInfoCardView({info, showTeamNames = true, dragOverlay = fals
     );
 }
 
-export function TeamInfoCard({info, showTeamNames = true}: TeamInfoCardProps) {
-    const {attributes, listeners, setNodeRef, transform, isDragging} = useDraggable({id: info.teamAbbrev})
+export function TeamInfoCard({info, showTeamNames = true, disabled = false}: TeamInfoCardProps) {
+    const {attributes, listeners, setNodeRef, transform, isDragging} = useDraggable({id: info.teamAbbrev, disabled})
 
     return (
         <div
@@ -41,7 +42,7 @@ export function TeamInfoCard({info, showTeamNames = true}: TeamInfoCardProps) {
             style={{
                 transform: CSS.Translate.toString(transform),
                 opacity: isDragging ? 0.4 : 1,
-                cursor: 'grab',
+                cursor: disabled ? 'default' : 'grab',
                 touchAction: 'none',
             }}
         >
