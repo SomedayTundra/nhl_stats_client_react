@@ -7,7 +7,7 @@ import {UnplacedTeamBucket, UNPLACED_TEAM_BUCKET_DROPPABLE_ID} from '@/component
 import {LeagueBoard, divisionDroppableId} from '@/components/LeagueBoard.tsx'
 import {TeamInfoCardView} from '@/components/TeamInfoCard.tsx'
 import QuizToolbar from '@/components/QuizToolbar.tsx'
-import {WinOverlay} from '@/components/WinOverlay.tsx'
+import {QuizResultsOverlay} from '@/components/QuizResultsOverlay.tsx'
 import type {TeamInfo} from '@/state/types'
 import {useLocalStorageState} from '@/lib/useLocalStorageState.ts'
 
@@ -120,7 +120,7 @@ export default function LeagueShapeQuiz() {
                 incorrectGuesses={incorrectGuesses}
             />
             {showWinOverlay && (
-                <WinOverlay
+                <QuizResultsOverlay
                     teamsSorted={roundTeamCount}
                     correctGuesses={correctGuesses}
                     incorrectGuesses={incorrectGuesses}
