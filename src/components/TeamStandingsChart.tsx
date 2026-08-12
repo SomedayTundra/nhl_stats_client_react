@@ -1,9 +1,10 @@
 'use client'
 
 import * as React from 'react'
+import {createPortal} from 'react-dom'
 import 'react-calendar/dist/Calendar.css'
 import type TeamStatEntry from '@/components/TeamStatEntry.tsx'
-import {CartesianGrid, Line, LineChart, XAxis, YAxis} from 'recharts'
+import {CartesianGrid, Dot, Line, LineChart, XAxis, YAxis} from 'recharts'
 import {Card, CardContent, CardDescription, CardHeader, CardTitle,} from './ui/card'
 import {type ChartConfig, ChartContainer, ChartTooltip} from './ui/chart'
 
@@ -31,6 +32,12 @@ function isLineType(value: string): value is LineType {
 }
 
 const SERVER = 'localhost:8000'
+
+// size (in px) of the team logo rendered at the end of each line
+const END_LOGO_SIZE = 32
+// smaller than END_LOGO_SIZE so stacked logos' boxes overlap a bit - the logo artwork itself has
+// some blank padding baked into its own SVG, so touching boxes alone still look gapped
+const LOGO_STACK_SPACING = 24
 
 // colors below were picked the same way as the rest of this map: rendering each team's logo
 // and measuring which non-white color covers the most pixel area, nudging a couple of teams
@@ -195,51 +202,34 @@ type ChartTooltipPayloadItem = {
     name?: string | number
 }
 
-type MultiColumnTooltipContentProps = {
-    active?: boolean
-    payload?: ChartTooltipPayloadItem[]
+type DockedTooltipPanelProps = {
+    payload: ChartTooltipPayloadItem[] | null
     label?: string
-    maxHeight: number
 }
 
-// a plain vertical list of every visible team gets unreadably tall once most of the league is
-// selected; constraining height and letting CSS columns reflow keeps it within the chart's
-// actual available space instead of spilling past it
-function MultiColumnTooltipContent({active, payload, label, maxHeight}: MultiColumnTooltipContentProps) {
-    if (!active || !payload || payload.length === 0) return null
-
-    const sorted = [...payload].sort((a, b) => (Number(b.value) || 0) - (Number(a.value) || 0))
-    // measured from the rendered tooltip (text-xs row with py-0.5, header with mb-1, px-3 py-2
-    // container padding) with a little headroom so rounding doesn't clip the last row
-    const containerPaddingY = 20
-    const headerBlockHeight = 24
-    const rowHeight = 24
-    const columnWidth = 100
-    const columnGap = 16
-
-    // CSS columns only reflow into extra columns if the container is wide enough to hold them -
-    // a shrink-to-fit container never grows itself to make room, so figure out how many columns
-    // this list actually needs to fit within the available height, and size the width for that
-    const listMaxHeight = Math.max(maxHeight - containerPaddingY - headerBlockHeight, rowHeight)
-    const rowsPerColumn = Math.max(Math.floor(listMaxHeight / rowHeight), 1)
-    const columnCount = Math.max(Math.ceil(sorted.length / rowsPerColumn), 1)
-    const listWidth = columnCount * columnWidth + (columnCount - 1) * columnGap
+// docked along the chart's right edge instead of following the cursor, stretched to the chart's
+// full height; rows always start at the top and stack downward in a single column (the panel's
+// own height/scroll - not a fixed row/column grid - is what keeps a full 32-team list readable)
+function DockedTooltipPanel({payload, label}: DockedTooltipPanelProps) {
+    const sorted = payload ? [...payload].sort((a, b) => (Number(b.value) || 0) - (Number(a.value) || 0)) : null
 
     return (
-        <div className="rounded-lg border bg-background px-3 py-2 text-xs shadow-xl" style={{maxHeight}}>
-            <div className="mb-1 font-medium">{label && formatApiDateForDisplay(label)}</div>
-            <div style={{width: listWidth, columnWidth, columnGap, maxHeight: listMaxHeight, overflow: 'hidden'}}>
-                {sorted.map((item) => (
-                    <div
-                        key={item.dataKey}
-                        className="flex items-center gap-1.5 whitespace-nowrap py-0.5"
-                        style={{breakInside: 'avoid'}}
-                    >
-                        <span className="inline-block size-2 shrink-0 rounded-[2px]" style={{backgroundColor: item.color}}/>
-                        <span>{item.name ?? item.dataKey}: {item.value}</span>
+        <div className="h-full w-36 shrink-0 border-l overflow-y-auto px-3 py-2 text-xs">
+            {sorted && sorted.length > 0 ? (
+                <>
+                    <div className="mb-1 font-medium">{label && formatApiDateForDisplay(label)}</div>
+                    <div className="flex flex-col">
+                        {sorted.map((item) => (
+                            <div key={item.dataKey} className="flex items-center gap-1.5 whitespace-nowrap py-0.5">
+                                <span className="inline-block size-2 shrink-0 rounded-[2px]" style={{backgroundColor: item.color}}/>
+                                <span>{item.name ?? item.dataKey}: {item.value}</span>
+                            </div>
+                        ))}
                     </div>
-                ))}
-            </div>
+                </>
+            ) : (
+                <p className="text-muted-foreground">Hover the chart to see values</p>
+            )}
         </div>
     )
 }
@@ -262,22 +252,29 @@ export default function TeamStandingsChart() {
         deserialize: deserializeDate,
     })
 
-    // tracks the chart area's actual rendered height so the tooltip knows how much
-    // vertical space it has before it needs to split its team list into columns
-    const chartAreaRef = React.useRef<HTMLDivElement>(null)
-    const [chartAreaHeight, setChartAreaHeight] = React.useState<number>(300)
+    // hover logos are portaled into this shared layer - rendered as the very last child of
+    // LineChart, so they always paint on top of every line regardless of which team's line
+    // happens to be drawn last (each Line's own activeDot would otherwise be stacked per-line,
+    // interleaved with the lines themselves, letting a later line's stroke cover an earlier
+    // team's logo)
+    const [logoOverlayNode, setLogoOverlayNode] = React.useState<SVGGElement | null>(null)
 
-    React.useEffect(() => {
-        const element = chartAreaRef.current
-        if (!element) return
+    // drives the docked (non-cursor-following) tooltip panel; Recharts' own Tooltip stays mounted
+    // (with null visual content) purely so its activeDot/cursor machinery keeps working
+    const [hoveredPayload, setHoveredPayload] = React.useState<ChartTooltipPayloadItem[] | null>(null)
+    const [hoveredLabel, setHoveredLabel] = React.useState<string | undefined>(undefined)
 
-        const observer = new ResizeObserver((entries) => {
-            const height = entries[0]?.contentRect.height
-            if (height) setChartAreaHeight(height)
-        })
-        observer.observe(element)
-        return () => observer.disconnect()
-    }, [])
+    function handleChartMouseMove(state: {activePayload?: ChartTooltipPayloadItem[], activeLabel?: string}) {
+        if (state.activePayload && state.activePayload.length > 0) {
+            setHoveredPayload(state.activePayload)
+            setHoveredLabel(state.activeLabel)
+        }
+    }
+
+    function handleChartMouseLeave() {
+        setHoveredPayload(null)
+        setHoveredLabel(undefined)
+    }
 
     // the "from" and "to" dates are never allowed to cross (from after to) or land on the same
     // day - whichever end the user just moved "wins", and the other end gets nudged out of the way
@@ -341,6 +338,7 @@ export default function TeamStandingsChart() {
         // clear out any old data
         const chartData: Record<string, string | number>[] = []
         const teamNameByAbbrev = new Map<string, string>()
+        const teamLogoByAbbrev = new Map<string, string>()
 
         teamStats.forEach((teamStatEntry: TeamStatEntry) => {
             // get data entry for the given date
@@ -353,6 +351,7 @@ export default function TeamStandingsChart() {
             // add an entry associating this team's abbreviation with this team's points
             existingDate[teamStatEntry.teamAbbrev] = teamStatEntry.points
             teamNameByAbbrev.set(teamStatEntry.teamAbbrev, teamStatEntry.teamName)
+            teamLogoByAbbrev.set(teamStatEntry.teamAbbrev, teamStatEntry.logo)
         })
 
         // only show teams currently selected in the TeamChooser (guaranteed non-empty here)
@@ -367,58 +366,102 @@ export default function TeamStandingsChart() {
             }
         })
 
-        chartArea = (
-            <ChartContainer config={chartConfig} className="h-full w-full aspect-auto">
-                <LineChart
-                    accessibilityLayer
-                    data={chartData}
-                    margin={{
-                        top: 12,
-                        bottom: 12,
-                        left: 24,
-                        right: 12,
-                    }}
-                >
-                    <CartesianGrid vertical={false} stroke="var(--navbar-bg)"/>
-                    <XAxis
-                        dataKey="date"
-                        tickLine={true}
-                        axisLine={true}
-                        tickMargin={8}
-                        interval={Math.max(Math.ceil(chartData.length / 11) - 1, 0)}
-                        tickFormatter={(value: string) => value.slice(5)}
-                    />
-                    <YAxis
-                        tickLine={true}
-                        axisLine={true}
-                        tickMargin={8}
-                        domain={([dataMin, dataMax]: [number, number]) => {
-                            const padding = Math.max((dataMax - dataMin) * 0.1, 1)
-                            return [Math.floor(dataMin - padding), Math.ceil(dataMax + padding)]
-                        }}
-                        label={{value: 'Points', angle: -90, position: 'insideLeft'}}
-                    />
-                    <ChartTooltip cursor={true}
-                                  content={<MultiColumnTooltipContent maxHeight={chartAreaHeight}/>}
-                    />
-                    {visibleTeamAbbrevs.map((abbrev) => (
-                        <Line
-                            key={abbrev}
-                            dataKey={abbrev}
-                            type={lineType}
-                            stroke={colorForTeam(abbrev)}
-                            strokeWidth={2}
-                            dot={showDots}
+        // teams tied on points at whichever date is currently hovered would render their active-dot
+        // logos on top of each other; group them by that date's value and give each one after the
+        // first an increasing leftward offset so they lay out in a row instead of overlapping
+        function logoStackOffset(rowIndex: number, abbrev: string): number {
+            const row = chartData[rowIndex]
+            const value = row?.[abbrev]
+            if (typeof value !== 'number') return 0
+            const tiedAbbrevs = visibleTeamAbbrevs.filter((candidate) => row[candidate] === value)
+            return Math.max(tiedAbbrevs.indexOf(abbrev), 0)
+        }
+
+        // shown only for the point the user is currently hovering over (Recharts' "active dot");
+        // every other point still uses the plain small circle, gated by the "Show Dots" checkbox.
+        // the logo itself is portaled into the shared top-most overlay layer (see logoOverlayNode)
+        // rather than rendered inline here, so it always paints on top of every line
+        function renderActiveDot(abbrev: string) {
+            return (dotProps: {key?: string, cx?: number, cy?: number, index?: number, value?: number}) => {
+                const {key, cx, cy, index, value} = dotProps
+                const logoFilename = teamLogoByAbbrev.get(abbrev)
+
+                if (typeof value === 'number' && typeof index === 'number' && logoFilename) {
+                    const offset = logoStackOffset(index, abbrev)
+                    const logo = (
+                        <image
+                            key={key}
+                            href={`http://${SERVER}/api/nhl_team_info/logo?logo_filename=${logoFilename}`}
+                            x={(cx ?? 0) - END_LOGO_SIZE / 2 - offset * LOGO_STACK_SPACING}
+                            y={(cy ?? 0) - END_LOGO_SIZE / 2}
+                            width={END_LOGO_SIZE}
+                            height={END_LOGO_SIZE}
                         />
-                    ))}
-                </LineChart>
-            </ChartContainer>
+                    )
+                    return logoOverlayNode ? createPortal(logo, logoOverlayNode, key) : <g key={key}>{logo}</g>
+                }
+
+                return <Dot key={key} cx={cx} cy={cy} r={4} fill={colorForTeam(abbrev)} stroke={colorForTeam(abbrev)}/>
+            }
+        }
+
+        chartArea = (
+            <div className="flex h-full w-full flex-row">
+                <ChartContainer config={chartConfig} className="h-full flex-1 aspect-auto">
+                    <LineChart
+                        accessibilityLayer
+                        data={chartData}
+                        onMouseMove={handleChartMouseMove}
+                        onMouseLeave={handleChartMouseLeave}
+                        margin={{
+                            top: 12,
+                            bottom: 12,
+                            left: 24,
+                            right: 12 + END_LOGO_SIZE / 2,
+                        }}
+                    >
+                        <CartesianGrid vertical={false} stroke="var(--navbar-bg)"/>
+                        <XAxis
+                            dataKey="date"
+                            tickLine={true}
+                            axisLine={true}
+                            tickMargin={8}
+                            interval={Math.max(Math.ceil(chartData.length / 11) - 1, 0)}
+                            tickFormatter={(value: string) => value.slice(5)}
+                        />
+                        <YAxis
+                            tickLine={true}
+                            axisLine={true}
+                            tickMargin={8}
+                            domain={([dataMin, dataMax]: [number, number]) => {
+                                const padding = Math.max((dataMax - dataMin) * 0.1, 1)
+                                return [Math.floor(dataMin - padding), Math.ceil(dataMax + padding)]
+                            }}
+                            label={{value: 'Points', angle: -90, position: 'insideLeft'}}
+                        />
+                        <ChartTooltip cursor={true} content={() => null}/>
+                        {visibleTeamAbbrevs.map((abbrev) => (
+                            <Line
+                                key={abbrev}
+                                dataKey={abbrev}
+                                type={lineType}
+                                stroke={colorForTeam(abbrev)}
+                                strokeWidth={2}
+                                dot={showDots}
+                                activeDot={renderActiveDot(abbrev)}
+                            />
+                        ))}
+                        <g ref={setLogoOverlayNode}/>
+                    </LineChart>
+                </ChartContainer>
+                <DockedTooltipPanel payload={hoveredPayload} label={hoveredLabel}/>
+            </div>
         )
     }
 
     return (
         <div className="h-full flex flex-col">
-            <div className="w-9/12 mx-auto flex flex-row items-center gap-4 shrink-0">
+            <div className="w-9/12 mx-auto flex flex-row items-center justify-center gap-4 shrink-0">
                 <div className="flex flex-row items-center gap-2 shrink-0">
                     <FieldLabel className="justify-start whitespace-nowrap">Date Range:</FieldLabel>
                     <DateContext value={fromDateContextValue}>
@@ -459,7 +502,7 @@ export default function TeamStandingsChart() {
                         <CardDescription>
                         </CardDescription>
                     </CardHeader>
-                    <CardContent ref={chartAreaRef} className="flex-1 min-h-0 overflow-hidden">
+                    <CardContent className="flex-1 min-h-0 overflow-hidden">
                         {chartArea}
                     </CardContent>
                 </Card>
