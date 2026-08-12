@@ -13,8 +13,10 @@ import {ArrowRightLeftIcon} from 'lucide-react'
 import {DateContext} from '@/state/DateContext.tsx'
 import DatePickerWithNav from '@/components/DatePickerWithNav.tsx'
 import TeamChooser from '@/components/TeamChooser.tsx'
+import {Button} from '@/components/ui/button'
 import {Checkbox} from '@/components/ui/checkbox'
 import {Field, FieldGroup, FieldLabel} from '@/components/ui/field.tsx'
+import {Tooltip, TooltipContent, TooltipTrigger} from '@/components/ui/tooltip'
 import {useQuery} from '@tanstack/react-query'
 import {deserializeDate, formatApiDateForDisplay, formatDateForApi, serializeDate} from '@/lib/date.ts'
 import {useLocalStorageState} from '@/lib/useLocalStorageState.ts'
@@ -32,11 +34,12 @@ function isLineType(value: string): value is LineType {
 
 const SERVER = 'localhost:8000'
 
-// size (in px) of the team logo rendered at the end of each line
-const END_LOGO_SIZE = 32
-// smaller than END_LOGO_SIZE so stacked logos' boxes overlap a bit - the logo artwork itself has
-// some blank padding baked into its own SVG, so touching boxes alone still look gapped
-const LOGO_STACK_SPACING = 24
+// size (in px) of the team logo rendered at the end of each line, adjustable via the "Logos"
+// control in the docked tooltip panel
+const MIN_LOGO_SIZE = 32
+const MAX_LOGO_SIZE = 64
+const LOGO_SIZE_STEP = 8
+const DEFAULT_LOGO_SIZE = 48
 
 // colors below were picked the same way as the rest of this map: rendering each team's logo
 // and measuring which non-white color covers the most pixel area, nudging a couple of teams
@@ -204,31 +207,48 @@ type ChartTooltipPayloadItem = {
 type DockedTooltipPanelProps = {
     payload: ChartTooltipPayloadItem[] | null
     label?: string
+    logoSize: number
+    onDecreaseLogoSize: () => void
+    onIncreaseLogoSize: () => void
 }
 
 // docked along the chart's right edge instead of following the cursor, stretched to the chart's
 // full height; rows always start at the top and stack downward in a single column (the panel's
-// own height/scroll - not a fixed row/column grid - is what keeps a full 32-team list readable)
-function DockedTooltipPanel({payload, label}: DockedTooltipPanelProps) {
+// own height/scroll - not a fixed row/column grid - is what keeps a full 32-team list readable).
+// the "Logos" size control is a persistent chart setting rather than tooltip content, so it's
+// pinned to the bottom of the panel, outside the scrolling hover-content area
+function DockedTooltipPanel({payload, label, logoSize, onDecreaseLogoSize, onIncreaseLogoSize}: DockedTooltipPanelProps) {
     const sorted = payload ? [...payload].sort((a, b) => (Number(b.value) || 0) - (Number(a.value) || 0)) : null
 
     return (
-        <div className="h-full w-36 shrink-0 border-l overflow-y-auto px-3 py-2 text-xs">
-            {sorted && sorted.length > 0 ? (
-                <>
-                    <div className="mb-1 font-medium">{label && formatApiDateForDisplay(label)}</div>
-                    <div className="flex flex-col">
-                        {sorted.map((item) => (
-                            <div key={item.dataKey} className="flex items-center gap-1.5 whitespace-nowrap py-0.5">
-                                <span className="inline-block size-2 shrink-0 rounded-[2px]" style={{backgroundColor: item.color}}/>
-                                <span>{item.name ?? item.dataKey}: {item.value}</span>
-                            </div>
-                        ))}
+        <div className="h-full w-36 shrink-0 border-l flex flex-col text-xs">
+            <div className="flex-1 min-h-0 overflow-y-auto px-3 py-2">
+                {sorted && sorted.length > 0 ? (
+                    <>
+                        <div className="mb-1 font-medium">{label && formatApiDateForDisplay(label)}</div>
+                        <div className="flex flex-col">
+                            {sorted.map((item) => (
+                                <div key={item.dataKey} className="flex items-center gap-1.5 whitespace-nowrap py-0.5">
+                                    <span className="inline-block size-2 shrink-0 rounded-[2px]" style={{backgroundColor: item.color}}/>
+                                    <span>{item.name ?? item.dataKey}: {item.value}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </>
+                ) : (
+                    <p className="text-muted-foreground">Hover the chart to see values</p>
+                )}
+            </div>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <div className="shrink-0 border-t px-3 py-2 flex items-center justify-center gap-2">
+                        <Button variant="outline" size="icon-xs" onClick={onDecreaseLogoSize} disabled={logoSize <= MIN_LOGO_SIZE}>-</Button>
+                        <span>{logoSize}px</span>
+                        <Button variant="outline" size="icon-xs" onClick={onIncreaseLogoSize} disabled={logoSize >= MAX_LOGO_SIZE}>+</Button>
                     </div>
-                </>
-            ) : (
-                <p className="text-muted-foreground">Hover the chart to see values</p>
-            )}
+                </TooltipTrigger>
+                <TooltipContent>Adjust the size of team logos on the chart.</TooltipContent>
+            </Tooltip>
         </div>
     )
 }
@@ -241,6 +261,7 @@ export default function TeamStandingsChart() {
         },
     })
     const [showDots, setShowDots] = useLocalStorageState<boolean>('nhlStats.chart.showDots', false)
+    const [logoSize, setLogoSize] = useLocalStorageState<number>('nhlStats.chart.logoSize', DEFAULT_LOGO_SIZE)
     const [selectedTeams, setSelectedTeams] = useLocalStorageState<string[]>('nhlStats.chart.selectedTeams', [])
     const [fromDate, setFromDate] = useLocalStorageState<Date>('nhlStats.chart.dateRange.from', new Date('2025-10-08'), {
         serialize: serializeDate,
@@ -274,6 +295,9 @@ export default function TeamStandingsChart() {
         setHoveredPayload(null)
         setHoveredLabel(undefined)
     }
+
+    const handleDecreaseLogoSize = () => setLogoSize((current) => Math.max(MIN_LOGO_SIZE, current - LOGO_SIZE_STEP))
+    const handleIncreaseLogoSize = () => setLogoSize((current) => Math.min(MAX_LOGO_SIZE, current + LOGO_SIZE_STEP))
 
     // the "from" and "to" dates are never allowed to cross (from after to) or land on the same
     // day - whichever end the user just moved "wins", and the other end gets nudged out of the way
@@ -357,6 +381,10 @@ export default function TeamStandingsChart() {
         const teamAbbrevsInData = Array.from(teamNameByAbbrev.keys())
         const visibleTeamAbbrevs = teamAbbrevsInData.filter((abbrev) => selectedTeams.includes(abbrev))
 
+        // smaller than logoSize so stacked logos' boxes overlap a bit - the logo artwork itself
+        // has some blank padding baked into its own SVG, so touching boxes alone still look gapped
+        const logoStackSpacing = logoSize - 8
+
         const chartConfig: ChartConfig = {}
         visibleTeamAbbrevs.forEach((abbrev) => {
             chartConfig[abbrev] = HARDCODED_TEAM_COLORS[abbrev as keyof typeof HARDCODED_TEAM_COLORS] ?? {
@@ -394,10 +422,10 @@ export default function TeamStandingsChart() {
                         <image
                             key={key}
                             href={`http://${SERVER}/api/nhl_team_info/logo?logo_filename=${logoFilename}`}
-                            x={(cx ?? 0) - END_LOGO_SIZE / 2 - offset * LOGO_STACK_SPACING}
-                            y={(cy ?? 0) - END_LOGO_SIZE / 2}
-                            width={END_LOGO_SIZE}
-                            height={END_LOGO_SIZE}
+                            x={(cx ?? 0) - logoSize / 2 - offset * logoStackSpacing}
+                            y={(cy ?? 0) - logoSize / 2}
+                            width={logoSize}
+                            height={logoSize}
                         />
                     )
                     return logoOverlayNode ? createPortal(logo, logoOverlayNode, key) : <g key={key}>{logo}</g>
@@ -419,7 +447,7 @@ export default function TeamStandingsChart() {
                             top: 12,
                             bottom: 12,
                             left: 24,
-                            right: 12 + END_LOGO_SIZE / 2,
+                            right: 12 + logoSize / 2,
                         }}
                     >
                         <CartesianGrid vertical={false} stroke="var(--navbar-bg)"/>
@@ -456,7 +484,13 @@ export default function TeamStandingsChart() {
                         <g ref={setLogoOverlayNode}/>
                     </LineChart>
                 </ChartContainer>
-                <DockedTooltipPanel payload={hoveredPayload} label={hoveredLabel}/>
+                <DockedTooltipPanel
+                    payload={hoveredPayload}
+                    label={hoveredLabel}
+                    logoSize={logoSize}
+                    onDecreaseLogoSize={handleDecreaseLogoSize}
+                    onIncreaseLogoSize={handleIncreaseLogoSize}
+                />
             </div>
         )
     }
