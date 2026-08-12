@@ -16,8 +16,8 @@ const SERVER = 'localhost:8000'
 function pickRandomTeams(allTeams: TeamInfo[], count: number): TeamInfo[] {
     const shuffled = [...allTeams]
     for (let i = shuffled.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1))
-        ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
     }
     return shuffled.slice(0, count)
 }
@@ -39,10 +39,14 @@ export default function LeagueShapeQuiz() {
     const [unplacedAbbrevs, setUnplacedAbbrevs] = React.useState<Set<string>>(new Set())
     const [activeTeamAbbrev, setActiveTeamAbbrev] = React.useState<string | null>(null)
     const [showTeamNames, setShowTeamNames] = useLocalStorageState<boolean>('nhlStats.quiz.showTeamNames', true)
+
     const [correctGuesses, setCorrectGuesses] = React.useState(0)
     const [incorrectGuesses, setIncorrectGuesses] = React.useState(0)
+
     const [isRunning, setIsRunning] = React.useState(false)
+
     const [showWinOverlay, setShowWinOverlay] = React.useState(false)
+
     // how many teams the current/most recently finished round started with - used for the win
     // screen's "you correctly sorted X teams" summary, since that's a round-scoped fact rather
     // than something derivable from the (ongoing) correct/incorrect guess counters
@@ -129,10 +133,10 @@ export default function LeagueShapeQuiz() {
             )}
             <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
                 <div className='flex flex-row flex-1 min-h-0'>
-                    <div className='w-1/3 align-top justify-end mx-4 min-h-0 overflow-hidden [container-type:size]'>
+                    <div className='w-1/3 align-top justify-end mx-4 min-h-0 overflow-hidden @container-[size]'>
                         <UnplacedTeamBucket teams={teams ?? []} unplacedAbbrevs={unplacedAbbrevs} showTeamNames={showTeamNames}/>
                     </div>
-                    <div className='w-2/3 align-top justify-start mx-4 min-h-0 overflow-hidden [container-type:size]'>
+                    <div className='w-2/3 align-top justify-start mx-4 min-h-0 overflow-hidden @container-[size]'>
                         <LeagueBoard teams={teams ?? []} unplacedAbbrevs={unplacedAbbrevs} showTeamNames={showTeamNames} isPending={isPending} error={error}/>
                     </div>
                 </div>
