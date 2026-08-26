@@ -1,4 +1,5 @@
 import * as React from 'react'
+import {useMemo} from 'react'
 import 'react-calendar/dist/Calendar.css'
 import type TeamStatEntry from '@/components/TeamStatEntry.tsx'
 import {DateContext} from '@/state/DateContext.tsx'
@@ -7,48 +8,56 @@ import TeamChooser from '@/components/TeamChooser.tsx'
 import {keepPreviousData, useQuery} from '@tanstack/react-query'
 import {deserializeDate, formatDateForApi, serializeDate} from '@/lib/date.ts'
 import {useLocalStorageState} from '@/lib/useLocalStorageState.ts'
+import {
+    createColumnHelper,
+    createSortedRowModel,
+    metaHelper,
+    rowSortingFeature,
+    sortFn_alphanumeric,
+    tableFeatures,
+    useTable,
+    type SortingState,
+} from '@tanstack/react-table'
 
 const SERVER = 'localhost:8000'
 
 const CLASS_TD = 'p-2 align-middle'
 const CLASS_TD_CENTER = `${CLASS_TD} text-center`
+const CLASS_TH_LEFT = 'h-8 px-4 text-left align-middle font-medium text-muted-foreground cursor-pointer select-none hover:text-foreground'
+const CLASS_TH_CENTER = 'h-8 px-4 text-center align-middle font-medium text-muted-foreground cursor-pointer select-none hover:text-foreground'
 
-type SortKey = 'teamName' | 'wins' | 'losses' | 'otLosses' | 'points' | 'goalsFor' | 'goalsAgainst' | 'goalDiff';
-type SortDirection = 'asc' | 'desc';
+const features = tableFeatures({
+    rowSortingFeature,
+    sortedRowModel: createSortedRowModel(),
+    sortFns: {alphanumeric: sortFn_alphanumeric},
+    columnMeta: metaHelper<{align: 'left' | 'center'; cellClassName: string}>(),
+})
 
-const COLUMNS: { key: SortKey; label: string; align: 'left' | 'center' }[] = [
-    {key: 'teamName', label: 'Team', align: 'left'},
-    {key: 'wins', label: 'Wins', align: 'center'},
-    {key: 'losses', label: 'Losses', align: 'center'},
-    {key: 'otLosses', label: 'OT Losses', align: 'center'},
-    {key: 'points', label: 'Points', align: 'center'},
-    {key: 'goalsFor', label: 'Goals For', align: 'center'},
-    {key: 'goalsAgainst', label: 'Goals Against', align: 'center'},
-    {key: 'goalDiff', label: 'Goal Diff', align: 'center'},
-]
+const helper = createColumnHelper<typeof features, TeamStatEntry>()
 
-const SORT_KEYS = COLUMNS.map((column) => column.key)
+const columns = helper.columns([
+    helper.accessor('teamName', {
+        header: 'Team',
+        sortFn: 'alphanumeric',
+        sortDescFirst: false,
+        meta: {align: 'left', cellClassName: 'flex items-center'},
+        cell: (info) => (
+            <>
+                <img className='h-[48px] w-[48px] align-middle justify-center' src={`http://localhost:8000/api/nhl_team_info/logo?logo_filename=${info.row.original.logo}`} alt='logo'/>
+                <p className={CLASS_TD}>{info.getValue()}</p>
+            </>
+        ),
+    }),
+    helper.accessor('wins', {header: 'Wins', meta: {align: 'center', cellClassName: CLASS_TD_CENTER}}),
+    helper.accessor('losses', {header: 'Losses', meta: {align: 'center', cellClassName: CLASS_TD_CENTER}}),
+    helper.accessor('otLosses', {header: 'OT Losses', meta: {align: 'center', cellClassName: CLASS_TD_CENTER}}),
+    helper.accessor('points', {header: 'Points', meta: {align: 'center', cellClassName: CLASS_TD_CENTER}}),
+    helper.accessor('goalsFor', {header: 'Goals For', meta: {align: 'center', cellClassName: CLASS_TD_CENTER}}),
+    helper.accessor('goalsAgainst', {header: 'Goals Against', meta: {align: 'center', cellClassName: CLASS_TD_CENTER}}),
+    helper.accessor('goalDiff', {header: 'Goal Diff', meta: {align: 'center', cellClassName: CLASS_TD_CENTER}}),
+])
 
-function isSortKey(value: unknown): value is SortKey {
-    return typeof value === 'string' && (SORT_KEYS as string[]).includes(value)
-}
-
-
-const TeamStat: React.FC<TeamStatEntry> = ({goalDiff, goalsAgainst, goalsFor, logo, losses, teamName, otLosses, points, wins}: TeamStatEntry) => (
-    <tr className='p-0 transition-colors data-[state=selected]:bg-muted'>
-        <td className='flex items-center'>
-            <img className='h-[48px] w-[48px] align-middle justify-center' src={`http://localhost:8000/api/nhl_team_info/logo?logo_filename=${logo}`} alt='logo'></img>
-            <p className={CLASS_TD}>{teamName}</p>
-        </td>
-        <td className={CLASS_TD_CENTER}>{wins}</td>
-        <td className={CLASS_TD_CENTER}>{losses}</td>
-        <td className={CLASS_TD_CENTER}>{otLosses}</td>
-        <td className={CLASS_TD_CENTER}>{points}</td>
-        <td className={CLASS_TD_CENTER}>{goalsFor}</td>
-        <td className={CLASS_TD_CENTER}>{goalsAgainst}</td>
-        <td className={CLASS_TD_CENTER}>{goalDiff}</td>
-    </tr>
-)
+const EMPTY_DATA: TeamStatEntry[] = []
 
 
 export default function TeamStandingsTable() {
@@ -58,24 +67,7 @@ export default function TeamStandingsTable() {
         deserialize: deserializeDate,
     })
     const [selectedTeams, setSelectedTeams] = useLocalStorageState<string[]>('nhlStats.table.selectedTeams', [])
-    const [sortKey, setSortKey] = useLocalStorageState<SortKey | null>('nhlStats.table.sortKey', 'points', {
-        deserialize: (raw) => {
-            const parsed = JSON.parse(raw)
-            return isSortKey(parsed) ? parsed : null
-        },
-    })
-    const [sortDirection, setSortDirection] = useLocalStorageState<SortDirection>('nhlStats.table.sortDirection', 'desc', {
-        deserialize: (raw) => (raw === '"asc"' ? 'asc' : 'desc'),
-    })
-
-    function handleSort(key: SortKey) {
-        if (sortKey === key) {
-            setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'))
-        } else {
-            setSortKey(key)
-            setSortDirection(key === 'teamName' ? 'asc' : 'desc')
-        }
-    }
+    const [sorting, setSorting] = useLocalStorageState<SortingState>('nhlStats.table.sorting', [{id: 'points', desc: true}])
 
     const handleDateSelect = (selected: Date | undefined) => {
         setDate(selected ?? new Date())
@@ -102,74 +94,43 @@ export default function TeamStandingsTable() {
     })
 
     // this method filters the team stats down to the teams currently selected in the TeamChooser;
-    // an empty selection is handled separately, in `tableBody`, before this is ever called
-    function visibleTeamStats(allTeamStats: TeamStatEntry[]): TeamStatEntry[] {
-        return allTeamStats.filter((teamStat) => selectedTeams.includes(teamStat.teamAbbrev))
-    }
+    // an empty selection is handled separately, in `tableBody`, before this is ever used
+    const filteredTeamStats = useMemo(
+        () => (teamStats ?? EMPTY_DATA).filter((teamStat) => selectedTeams.includes(teamStat.teamAbbrev)),
+        [teamStats, selectedTeams]
+    )
 
-    // this method sorts the team stats by the currently selected column, if any
-    function sortedTeamStats(allTeamStats: TeamStatEntry[]): TeamStatEntry[] {
-        const visible = visibleTeamStats(allTeamStats)
-        if (!sortKey) return visible
-
-        const sorted = [...visible].sort((a: TeamStatEntry, b: TeamStatEntry) => {
-            const aValue = a[sortKey]
-            const bValue = b[sortKey]
-
-            if (typeof aValue === 'number' && typeof bValue === 'number') {
-                return aValue - bValue
-            }
-            return String(aValue).localeCompare(String(bValue))
-        })
-
-        return sortDirection === 'asc' ? sorted : sorted.reverse()
-    }
-
-    // this method will map out the team stats on the table
-    function teamStatsList(allTeamStats: TeamStatEntry[]) {
-        return sortedTeamStats(allTeamStats).map((teamStat: TeamStatEntry) => {
-            console.debug(teamStat)
-            const id_key = teamStat.date + '_' + teamStat.teamName
-            return (
-                <TeamStat
-                    date={teamStat.date}
-                    goalDiff={teamStat.goalDiff}
-                    goalsAgainst={teamStat.goalsAgainst}
-                    goalsFor={teamStat.goalsFor}
-                    logo={teamStat.logo}
-                    losses={teamStat.losses}
-                    teamName={teamStat.teamName}
-                    teamCommonName={teamStat.teamCommonName}
-                    teamAbbrev={teamStat.teamAbbrev}
-                    otLosses={teamStat.otLosses}
-                    points={teamStat.points}
-                    wins={teamStat.wins}
-                    key={id_key}
-                />
-            )
-        })
-    }
-
-    // this following section will display the table with the team standings stats
-    const CLASS_TH_LEFT = 'h-8 px-4 text-left align-middle font-medium text-muted-foreground cursor-pointer select-none hover:text-foreground'
-    const CLASS_TH_CENTER = 'h-8 px-4 text-center align-middle font-medium text-muted-foreground cursor-pointer select-none hover:text-foreground'
-
-    function sortIndicator(key: SortKey) {
-        if (sortKey !== key) return null
-        return sortDirection === 'asc' ? ' ▲' : ' ▼'
-    }
+    const table = useTable({
+        features,
+        columns,
+        data: filteredTeamStats,
+        getRowId: (row) => `${row.date}_${row.teamName}`,
+        state: {sorting},
+        onSortingChange: setSorting,
+        sortDescFirst: true,
+        enableMultiSort: false,
+        enableSortingRemoval: false,
+    })
 
     // the table body alone reflects loading/error/selection state; the controls above it stay
     // mounted regardless, so TeamChooser never remounts (and loses its committed selection) on refetch
     let tableBody: React.ReactNode
     if (selectedTeams.length === 0) {
-        tableBody = <tr><td colSpan={COLUMNS.length} className='p-4 text-center'>No teams selected</td></tr>
+        tableBody = <tr><td colSpan={columns.length} className='p-4 text-center'>No teams selected</td></tr>
     } else if (isPending) {
-        tableBody = <tr><td colSpan={COLUMNS.length} className='p-4 text-center'>Loading...</td></tr>
+        tableBody = <tr><td colSpan={columns.length} className='p-4 text-center'>Loading...</td></tr>
     } else if (error) {
-        tableBody = <tr><td colSpan={COLUMNS.length} className='p-4 text-center'>An error occurred: {error.message}</td></tr>
+        tableBody = <tr><td colSpan={columns.length} className='p-4 text-center'>An error occurred: {error.message}</td></tr>
     } else {
-        tableBody = teamStatsList(teamStats)
+        tableBody = table.getRowModel().rows.map((row) => (
+            <tr key={row.id} className='p-0 transition-colors data-[state=selected]:bg-muted'>
+                {row.getAllCells().map((cell) => (
+                    <td key={cell.id} className={cell.column.columnDef.meta?.cellClassName ?? CLASS_TD}>
+                        <table.FlexRender cell={cell}/>
+                    </td>
+                ))}
+            </tr>
+        ))
     }
 
     return (
@@ -186,17 +147,20 @@ export default function TeamStandingsTable() {
                 <div className='relative w-full overflow-auto'>
                     <table className='w-full caption-bottom text-sm'>
                         <thead className='[&amp;_tr]:border-b'>
-                        <tr className='border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted'>
-                            {COLUMNS.map((column) => (
-                                <th
-                                    key={column.key}
-                                    className={column.align === 'left' ? CLASS_TH_LEFT : CLASS_TH_CENTER}
-                                    onClick={() => handleSort(column.key)}
-                                >
-                                    {column.label}{sortIndicator(column.key)}
-                                </th>
-                            ))}
-                        </tr>
+                        {table.getHeaderGroups().map((headerGroup) => (
+                            <tr key={headerGroup.id} className='border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted'>
+                                {headerGroup.headers.map((header) => (
+                                    <th
+                                        key={header.id}
+                                        className={header.column.columnDef.meta?.align === 'left' ? CLASS_TH_LEFT : CLASS_TH_CENTER}
+                                        onClick={header.column.getToggleSortingHandler()}
+                                    >
+                                        {!header.isPlaceholder && <table.FlexRender header={header}/>}
+                                        {header.column.getIsSorted() === 'asc' ? ' ▲' : header.column.getIsSorted() === 'desc' ? ' ▼' : null}
+                                    </th>
+                                ))}
+                            </tr>
+                        ))}
                         </thead>
                         <tbody className='[&amp;_tr:last-child]:border-0'>
                         {tableBody}
