@@ -1,4 +1,4 @@
-import {useLocation, useNavigate} from 'react-router-dom'
+import {useLocation, useNavigate} from '@tanstack/react-router'
 import {useEffect} from 'react'
 
 export default function NotFound() {
@@ -7,7 +7,7 @@ export default function NotFound() {
 
     useEffect(() => {
         setTimeout(() => {
-            navigate('/nhl_standings', {state: `NotFound: ${location.pathname}`})
+            navigate({to: '/nhl_standings', state: {notFoundPath: location.pathname}})
         }, 3000)
     })
 
