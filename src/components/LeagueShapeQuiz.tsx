@@ -7,6 +7,9 @@ import {UnplacedTeamBucket, UNPLACED_TEAM_BUCKET_DROPPABLE_ID} from '@/component
 import {LeagueBoard, divisionDroppableId} from '@/components/LeagueBoard.tsx'
 import {TeamInfoCardView} from '@/components/TeamInfoCard.tsx'
 import QuizToolbar from '@/components/QuizToolbar.tsx'
+import {QuizScoreboard} from '@/components/QuizScoreboard.tsx'
+import {SeasonSelect} from '@/components/SeasonSelect.tsx'
+import {isSeasonOption, type SeasonOption} from '@/lib/seasonOption.ts'
 import {QuizResultsOverlay} from '@/components/QuizResultsOverlay.tsx'
 import type {TeamInfo} from '@/state/types'
 import {useLocalStorageState} from '@/lib/useLocalStorageState.ts'
@@ -23,10 +26,20 @@ function pickRandomTeams(allTeams: TeamInfo[], count: number): TeamInfo[] {
 }
 
 export default function LeagueShapeQuiz() {
+    const [season, setSeason] = useLocalStorageState<SeasonOption>('nhlStats.quiz.season', 'current', {
+        deserialize: (raw) => {
+            const parsed = JSON.parse(raw)
+            return typeof parsed === 'string' && isSeasonOption(parsed) ? parsed : 'current'
+        },
+    })
+
     const {data: teams, isPending, error} = useQuery<TeamInfo[]>({
-        queryKey: ['leagueInfo'],
+        queryKey: ['leagueInfo', season],
         queryFn: async () => {
-            const response = await fetch(`http://${SERVER}/api/nhl_team_info/`)
+            const url = season === 'current'
+                ? `http://${SERVER}/api/nhl_team_info/`
+                : `http://${SERVER}/api/nhl_team_info/?season_id=${season}`
+            const response = await fetch(url)
             if (!response.ok) {
                 throw new Error(`An error occurred: ${response.statusText}`)
             }
@@ -62,6 +75,19 @@ export default function LeagueShapeQuiz() {
     }, [isRunning, unplacedAbbrevs])
 
     const handleDismissWinOverlay = React.useCallback(() => setShowWinOverlay(false), [])
+
+    // switching seasons swaps out the whole team list, so any in-progress round (built from the
+    // previous season's teams) no longer makes sense - clear it and require a fresh "Go!". Adjusted
+    // during render (React's recommended way to reset state when a prop-like value changes) rather
+    // than in an effect, so it doesn't cost an extra render pass.
+    const [prevSeason, setPrevSeason] = React.useState(season)
+    if (season !== prevSeason) {
+        setPrevSeason(season)
+        setUnplacedAbbrevs(new Set())
+        setIsRunning(false)
+        setCorrectGuesses(0)
+        setIncorrectGuesses(0)
+    }
 
     function handleDragStart(event: DragStartEvent) {
         setActiveTeamAbbrev(String(event.active.id))
@@ -116,13 +142,20 @@ export default function LeagueShapeQuiz() {
 
     return (
         <div className='h-full min-h-0 flex flex-col'>
-            <QuizToolbar
-                showTeamNames={showTeamNames}
-                onShowTeamNamesChange={setShowTeamNames}
-                onGo={handleGo}
-                correctGuesses={correctGuesses}
-                incorrectGuesses={incorrectGuesses}
-            />
+            <div className='flex flex-row items-center'>
+                <div className='w-1/3 mx-4'>
+                    <QuizToolbar
+                        showTeamNames={showTeamNames}
+                        onShowTeamNamesChange={setShowTeamNames}
+                        onGo={handleGo}
+                        totalTeams={teams?.length ?? 0}
+                    />
+                </div>
+                <div className='w-2/3 mx-4 flex flex-row items-center justify-between'>
+                    <SeasonSelect season={season} onSeasonChange={setSeason}/>
+                    <QuizScoreboard correctGuesses={correctGuesses} incorrectGuesses={incorrectGuesses}/>
+                </div>
+            </div>
             {showWinOverlay && (
                 <QuizResultsOverlay
                     teamsSorted={roundTeamCount}
