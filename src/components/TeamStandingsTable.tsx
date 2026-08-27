@@ -1,13 +1,14 @@
 import * as React from 'react'
 import {useMemo} from 'react'
 import 'react-calendar/dist/Calendar.css'
-import type TeamStatEntry from '@/components/TeamStatEntry.tsx'
+import type {TeamStatEntry} from '@/state/types'
 import {DateContext} from '@/state/DateContext.tsx'
 import DatePickerWithNav from '@/components/DatePickerWithNav.tsx'
 import TeamChooser from '@/components/TeamChooser.tsx'
-import {keepPreviousData, useQuery} from '@tanstack/react-query'
-import {deserializeDate, formatDateForApi, serializeDate} from '@/lib/date.ts'
+import {deserializeDate, serializeDate} from '@/lib/date.ts'
 import {useLocalStorageState} from '@/lib/useLocalStorageState.ts'
+import {useTeamStats} from '@/hooks/useTeamStats.ts'
+import {getTeamLogoUrl} from '@/lib/teamLogo.ts'
 import {
     createColumnHelper,
     createSortedRowModel,
@@ -18,8 +19,6 @@ import {
     useTable,
     type SortingState,
 } from '@tanstack/react-table'
-
-const SERVER = 'localhost:8000'
 
 const CLASS_TD = 'p-2 align-middle'
 const CLASS_TD_CENTER = `${CLASS_TD} text-center`
@@ -43,7 +42,7 @@ const columns = helper.columns([
         meta: {align: 'left', cellClassName: 'flex items-center'},
         cell: (info) => (
             <>
-                <img className='h-[48px] w-[48px] align-middle justify-center' src={`http://localhost:8000/api/nhl_team_info/logo?logo_filename=${info.row.original.logo}`} alt='logo'/>
+                <img className='h-[48px] w-[48px] align-middle justify-center' src={getTeamLogoUrl(info.row.original.logo)} alt='logo'/>
                 <p className={CLASS_TD}>{info.getValue()}</p>
             </>
         ),
@@ -78,20 +77,7 @@ export default function TeamStandingsTable() {
         setDate: handleDateSelect
     }
 
-    // this method fetches the NHL stats from the database.
-    const {data: teamStats, isPending, error} = useQuery<TeamStatEntry[]>({
-        queryKey: ['teamStats', dateContextValue.date],
-        queryFn: async () => {
-            const prettyDate: string = formatDateForApi(date)
-
-            const response = await fetch(`http://${SERVER}/api/nhl_standings/?start_date=${prettyDate}&end_date=${prettyDate}`)
-            if (!response.ok) {
-                throw new Error(`An error occurred: ${response.statusText}`)
-            }
-            return (await response.json()) as TeamStatEntry[]
-        },
-        placeholderData: keepPreviousData
-    })
+    const {data: teamStats, isPending, error} = useTeamStats(date, date)
 
     // this method filters the team stats down to the teams currently selected in the TeamChooser;
     // an empty selection is handled separately, in `tableBody`, before this is ever used

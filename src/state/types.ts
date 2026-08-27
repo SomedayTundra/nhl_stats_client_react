@@ -15,6 +15,23 @@ export type TeamInfo = {
 }
 
 
+export type TeamStatEntry = {
+    key?: string,
+    date: string,
+    teamName: string,
+    teamCommonName: string,
+    teamAbbrev: string,
+    logo: string,
+    wins: number,
+    losses: number,
+    otLosses: number,
+    points: number,
+    goalsFor: number,
+    goalsAgainst: number,
+    goalDiff: number,
+}
+
+
 export type LeagueInfo = {
     conferences: Map<string, Conference>;
 }

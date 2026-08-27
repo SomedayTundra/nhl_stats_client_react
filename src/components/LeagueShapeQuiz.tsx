@@ -1,7 +1,6 @@
 'use client'
 
 import * as React from 'react'
-import {useQuery} from '@tanstack/react-query'
 import {DndContext, DragOverlay, type DragEndEvent, type DragStartEvent} from '@dnd-kit/core'
 import {UnplacedTeamBucket, UNPLACED_TEAM_BUCKET_DROPPABLE_ID} from '@/components/UnplacedTeamBucket.tsx'
 import {LeagueBoard, divisionDroppableId} from '@/components/LeagueBoard.tsx'
@@ -13,8 +12,7 @@ import {isSeasonOption, type SeasonOption} from '@/lib/seasonOption.ts'
 import {QuizResultsOverlay} from '@/components/QuizResultsOverlay.tsx'
 import type {TeamInfo} from '@/state/types'
 import {useLocalStorageState} from '@/lib/useLocalStorageState.ts'
-
-const SERVER = 'localhost:8000'
+import {useTeamInfo} from '@/hooks/useTeamInfo.ts'
 
 function pickRandomTeams(allTeams: TeamInfo[], count: number): TeamInfo[] {
     const shuffled = [...allTeams]
@@ -33,19 +31,7 @@ export default function LeagueShapeQuiz() {
         },
     })
 
-    const {data: teams, isPending, error} = useQuery<TeamInfo[]>({
-        queryKey: ['leagueInfo', season],
-        queryFn: async () => {
-            const url = season === 'current'
-                ? `http://${SERVER}/api/nhl_team_info/`
-                : `http://${SERVER}/api/nhl_team_info/?season_id=${season}`
-            const response = await fetch(url)
-            if (!response.ok) {
-                throw new Error(`An error occurred: ${response.statusText}`)
-            }
-            return (await response.json()) as TeamInfo[]
-        }
-    })
+    const {data: teams, isPending, error} = useTeamInfo(season)
 
     // teams the player has dragged out of the league board and into the bucket; everything else
     // renders in its correct conference/division on the board

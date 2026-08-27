@@ -3,7 +3,7 @@
 import * as React from 'react'
 import {createPortal} from 'react-dom'
 import 'react-calendar/dist/Calendar.css'
-import type TeamStatEntry from '@/components/TeamStatEntry.tsx'
+import type {TeamStatEntry} from '@/state/types'
 import {CartesianGrid, Dot, Line, LineChart, XAxis, YAxis} from 'recharts'
 import {Card, CardContent, CardDescription, CardHeader, CardTitle,} from './ui/card'
 import {type ChartConfig, ChartContainer, ChartTooltip} from './ui/chart'
@@ -17,9 +17,10 @@ import {Button} from '@/components/ui/button'
 import {Checkbox} from '@/components/ui/checkbox'
 import {Field, FieldGroup, FieldLabel} from '@/components/ui/field.tsx'
 import {Tooltip, TooltipContent, TooltipTrigger} from '@/components/ui/tooltip'
-import {useQuery} from '@tanstack/react-query'
-import {deserializeDate, formatApiDateForDisplay, formatDateForApi, serializeDate} from '@/lib/date.ts'
+import {deserializeDate, formatApiDateForDisplay, serializeDate} from '@/lib/date.ts'
 import {useLocalStorageState} from '@/lib/useLocalStorageState.ts'
+import {useTeamStats} from '@/hooks/useTeamStats.ts'
+import {getTeamLogoUrl} from '@/lib/teamLogo.ts'
 import {addDays, isAfter, isBefore, isSameDay, subDays} from 'date-fns'
 
 const lineTypes = [
@@ -31,8 +32,6 @@ type LineType = typeof lineTypes[number]
 function isLineType(value: string): value is LineType {
     return (lineTypes as readonly string[]).includes(value)
 }
-
-const SERVER = 'localhost:8000'
 
 // size (in px) of the team logo rendered at the end of each line, adjustable via the "Logos"
 // control in the docked tooltip panel
@@ -333,20 +332,7 @@ export default function TeamStandingsChart() {
         setDate: handleToDateSelect
     };
 
-    // this method fetches the NHL stats from the database.
-    const {data: teamStats, isPending, error} = useQuery<TeamStatEntry[]>({
-        queryKey: ['teamStats', fromDate, toDate],
-        queryFn: async({signal}) => {
-            const prettyStartDate: string = formatDateForApi(fromDate);
-            const prettyEndDate: string = formatDateForApi(toDate);
-
-            const response = await fetch(`http://${SERVER}/api/nhl_standings/?start_date=${prettyStartDate}&end_date=${prettyEndDate}`, {signal});
-            if (!response.ok) {
-                throw new Error(`An error occurred: ${response.statusText}`);
-            }
-            return (await response.json()) as TeamStatEntry[];
-        }
-    })
+    const {data: teamStats, isPending, error} = useTeamStats(fromDate, toDate)
 
     // the controls below stay mounted regardless of loading/error/selection state, so TeamChooser
     // never remounts (and loses its committed selection) on refetch; only the chart area swaps out
@@ -421,7 +407,7 @@ export default function TeamStandingsChart() {
                     const logo = (
                         <image
                             key={key}
-                            href={`http://${SERVER}/api/nhl_team_info/logo?logo_filename=${logoFilename}`}
+                            href={getTeamLogoUrl(logoFilename)}
                             x={(cx ?? 0) - logoSize / 2 - offset * logoStackSpacing}
                             y={(cy ?? 0) - logoSize / 2}
                             width={logoSize}

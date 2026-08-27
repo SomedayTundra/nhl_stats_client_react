@@ -1,6 +1,7 @@
 import {useDraggable} from '@dnd-kit/core'
 import {CSS} from '@dnd-kit/utilities'
 import type {TeamInfo} from '@/state/types';
+import {getTeamLogoUrl} from '@/lib/teamLogo.ts'
 
 type TeamInfoCardProps = {
     info: TeamInfo
@@ -8,12 +9,10 @@ type TeamInfoCardProps = {
     disabled?: boolean
 }
 
-const BASE_URL = 'http://localhost:8000/api'
-
 export function TeamInfoCardView({info, showTeamNames = true, dragOverlay = false}: TeamInfoCardProps & {dragOverlay?: boolean}) {
     const verbose = false;
 
-    const logoURL = `${BASE_URL}/nhl_team_info/logo?logo_filename=${info.logo}`
+    const logoURL = getTeamLogoUrl(info.logo)
 
     return (
         <div className={dragOverlay ? 'team-info-card team-info-card-drag-overlay' : 'team-info-card'}>

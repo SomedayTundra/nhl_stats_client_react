@@ -2,15 +2,12 @@
 
 import * as React from 'react'
 import {ChevronDownIcon} from 'lucide-react'
-import {useQuery} from '@tanstack/react-query'
 
 import {Button} from '@/components/ui/button'
 import {Checkbox} from '@/components/ui/checkbox'
 import {Popover, PopoverContent, PopoverTrigger} from '@/components/ui/popover'
-import type {TeamInfo} from '@/state/types'
 import {groupTeamsByConferenceAndDivision} from '@/lib/teamGrouping'
-
-const SERVER = 'localhost:8000'
+import {useTeamInfo} from '@/hooks/useTeamInfo.ts'
 
 type TeamChooserProps = {
     selected: string[]
@@ -31,16 +28,7 @@ function haveSameElements(a: string[], b: string[]): boolean {
 }
 
 export default function TeamChooser({selected, onChange}: TeamChooserProps) {
-    const {data: teams, isPending, error} = useQuery<TeamInfo[]>({
-        queryKey: ['teamInfo'],
-        queryFn: async () => {
-            const response = await fetch(`http://${SERVER}/api/nhl_team_info/`)
-            if (!response.ok) {
-                throw new Error(`An error occurred: ${response.statusText}`)
-            }
-            return (await response.json()) as TeamInfo[]
-        }
-    })
+    const {data: teams, isPending, error} = useTeamInfo()
 
     // default to every team selected once the team list first loads, but only when nothing was
     // already selected (e.g. restored from persisted state) - otherwise this would clobber that
