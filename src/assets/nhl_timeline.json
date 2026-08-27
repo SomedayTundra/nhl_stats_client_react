@@ -1,0 +1,137 @@
+{
+  "19671968": {
+    "seasonId": "19671968",
+    "name": "Expansion era (1967-1970)",
+    "description": "Twelve teams"
+  },
+  "19701971": {
+    "seasonId": "19701971",
+    "name": "Expansion era (1970-1972)",
+    "description": "Fourteen teams"
+  },
+  "19721973": {
+    "seasonId": "19721973",
+    "name": "Expansion era (1972-1974)",
+    "description": "Sixteen teams"
+  },
+  "19741975": {
+    "seasonId": "19741975",
+    "name": "Expansion era (1974-1976)",
+    "description": "Eighteen teams"
+  },
+  "19761977": {
+    "seasonId": "19761977",
+    "name": "Expansion era (1976-1978)",
+    "description": "Two teams relocate"
+  },
+  "19781979": {
+    "seasonId": "19781979",
+    "name": "Expansion era (1978-1979)",
+    "description": "Seventeen teams"
+  },
+  "19791980": {
+    "seasonId": "19791980",
+    "name": "Expansion era (1979-1980)",
+    "description": "21 teams"
+  },
+  "19801981": {
+    "seasonId": "19801981",
+    "name": "Expansion era (1980-1981)",
+    "description": "Flames relocate to Calgary"
+  },
+  "19811982": {
+    "seasonId": "19811982",
+    "name": "Expansion era (1981-1982)",
+    "description": "1981 realignment"
+  },
+  "19821983": {
+    "seasonId": "19821983",
+    "name": "Expansion era (1982-1991)",
+    "description": "Colorado relocates to New Jersey"
+  },
+  "19911992": {
+    "seasonId": "19911992",
+    "name": "Further expansion and realignment (1991-1992)",
+    "description": "22 teams"
+  },
+  "19921993": {
+    "seasonId": "19921993",
+    "name": "Further expansion and realignment (1992-1993)",
+    "description": "24 teams"
+  },
+  "19931994": {
+    "seasonId": "19931994",
+    "name": "Further expansion and realignment (1993-1995)",
+    "description": "26 teams"
+  },
+  "19951996": {
+    "seasonId": "19951996",
+    "name": "Further expansion and realignment (1995-1996)",
+    "description": "Nordiques relocate to Colorado"
+  },
+  "19961997": {
+    "seasonId": "19961997",
+    "name": "Further expansion and realignment (1996-1997)",
+    "description": "Jets relocate to Phoenix"
+  },
+  "19971998": {
+    "seasonId": "19971998",
+    "name": "Further expansion and realignment (1997-1998)",
+    "description": "Whalers relocate to Carolina"
+  },
+  "19981999": {
+    "seasonId": "19981999",
+    "name": "Further expansion and realignment (1998-1999)",
+    "description": "27 teams"
+  },
+  "19992000": {
+    "seasonId": "19992000",
+    "name": "Further expansion and realignment (1999-2000)",
+    "description": "28 teams"
+  },
+  "20002001": {
+    "seasonId": "20002001",
+    "name": "Further expansion and realignment (2000-2006)",
+    "description": "30 teams"
+  },
+  "20062007": {
+    "seasonId": "20062007",
+    "name": "Further expansion and realignment (2006-2011)",
+    "description": "Anaheim shortens its name"
+  },
+  "20112012": {
+    "seasonId": "20112012",
+    "name": "Further expansion and realignment (2011-2012)",
+    "description": "Thrashers relocate to Winnipeg"
+  },
+  "20132014": {
+    "seasonId": "20132014",
+    "name": "Further expansion and realignment (2013-2014)",
+    "description": "2013 realignment"
+  },
+  "20142015": {
+    "seasonId": "20142015",
+    "name": "Further expansion and realignment (2014-2017)",
+    "description": "Coyotes change their name"
+  },
+  "20172018": {
+    "seasonId": "20172018",
+    "name": "Second century (2017-2021)",
+    "description": "31 teams"
+  },
+  "20212022": {
+    "seasonId": "20212022",
+    "name": "Second century (2021-2024)",
+    "description": "32 teams"
+  },
+  "20242025": {
+    "seasonId": "20242025",
+    "name": "Second century (2024-2025)",
+    "description": "League expands to Utah, Coyotes suspend operations (2024-2025)"
+  },
+  "20252026": {
+    "seasonId": "20252026",
+    "name": "Second century (2025-present)",
+    "description": "Utah changes its name (2025-present)"
+  }
+}

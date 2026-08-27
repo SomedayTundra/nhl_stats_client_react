@@ -8,8 +8,8 @@ export type TeamInfo = {
     teamName: string
     teamCommonName: string
     logo: string
-    conferenceName: string
-    conferenceAbbrev: string
+    conferenceName?: string
+    conferenceAbbrev?: string
     divisionName: string
     divisionAbbrev: string
 }

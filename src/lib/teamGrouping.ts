@@ -14,10 +14,11 @@ export function groupTeamsByConferenceAndDivision(teams: TeamInfo[]): TeamConfer
     const conferenceMap = new Map<string, Map<string, TeamInfo[]>>()
 
     for (const team of teams) {
-        let divisionMap = conferenceMap.get(team.conferenceName)
+        const conferenceName = team.conferenceName ?? 'NA'
+        let divisionMap = conferenceMap.get(conferenceName)
         if (!divisionMap) {
             divisionMap = new Map()
-            conferenceMap.set(team.conferenceName, divisionMap)
+            conferenceMap.set(conferenceName, divisionMap)
         }
 
         let divisionTeams = divisionMap.get(team.divisionName)

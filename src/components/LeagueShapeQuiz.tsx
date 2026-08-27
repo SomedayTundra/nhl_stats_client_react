@@ -8,7 +8,7 @@ import {TeamInfoCardView} from '@/components/TeamInfoCard.tsx'
 import QuizToolbar from '@/components/QuizToolbar.tsx'
 import {QuizScoreboard} from '@/components/QuizScoreboard.tsx'
 import {SeasonSelect} from '@/components/SeasonSelect.tsx'
-import {isSeasonOption, type SeasonOption} from '@/lib/seasonOption.ts'
+import {defaultSeasonOption, isSeasonOption, type SeasonOption} from '@/lib/seasonOption.ts'
 import {QuizResultsOverlay} from '@/components/QuizResultsOverlay.tsx'
 import type {TeamInfo} from '@/state/types'
 import {useLocalStorageState} from '@/lib/useLocalStorageState.ts'
@@ -24,10 +24,10 @@ function pickRandomTeams(allTeams: TeamInfo[], count: number): TeamInfo[] {
 }
 
 export default function LeagueShapeQuiz() {
-    const [season, setSeason] = useLocalStorageState<SeasonOption>('nhlStats.quiz.season', 'current', {
+    const [season, setSeason] = useLocalStorageState<SeasonOption>('nhlStats.quiz.season', defaultSeasonOption, {
         deserialize: (raw) => {
             const parsed = JSON.parse(raw)
-            return typeof parsed === 'string' && isSeasonOption(parsed) ? parsed : 'current'
+            return typeof parsed === 'string' && isSeasonOption(parsed) ? parsed : defaultSeasonOption
         },
     })
 
@@ -95,7 +95,7 @@ export default function LeagueShapeQuiz() {
         // dropping on the board only places the team if it lands on its own conference/division's
         // drop zone - any other division (or missing the board entirely) sends it back to the bucket
         const team = teams?.find((candidate) => candidate.teamAbbrev === abbrev)
-        const isCorrectSlot = team !== undefined && overId === divisionDroppableId(team.conferenceName, team.divisionName)
+        const isCorrectSlot = team !== undefined && overId === divisionDroppableId(team.conferenceName ?? 'NA', team.divisionName)
 
         if (isCorrectSlot) {
             setCorrectGuesses((current) => current + 1)

@@ -1,14 +1,31 @@
-// 'current' asks the backend for the latest season (its default when no season_id is given);
-// any other value is passed through as the season_id query param verbatim
-export type SeasonOption = 'current' | '19891990'
+import nhlTimeline from '@/assets/nhl_timeline.json'
 
-export const seasonLabels: Record<SeasonOption, string> = {
-    current: 'Current season',
-    '19891990': '1989-1990',
+// each entry in nhl_timeline.json describes an NHL era: `seasonId` is the season we've farmed
+// data for (and pass to the backend as the season_id query param), `name` is what the
+// SeasonSelect combo box shows, and `description` is the note rendered beside it
+export type SeasonEntry = {
+    seasonId: string
+    name: string
+    description: string
 }
 
-export const seasonOptions = Object.keys(seasonLabels) as SeasonOption[]
+// object keys are numeric-string seasonIds, so Object.values walks them oldest-to-newest
+export const seasonEntries = Object.values(nhlTimeline as Record<string, SeasonEntry>)
+
+// a SeasonOption is one of the timeline seasonIds, e.g. '19671968'
+export type SeasonOption = string
+
+export const seasonOptions: SeasonOption[] = seasonEntries.map((entry) => entry.seasonId)
+
+const seasonEntriesById = new Map(seasonEntries.map((entry) => [entry.seasonId, entry]))
+
+// the newest era is the default selection
+export const defaultSeasonOption: SeasonOption = seasonOptions[seasonOptions.length - 1]
+
+export function getSeasonEntry(season: SeasonOption): SeasonEntry | undefined {
+    return seasonEntriesById.get(season)
+}
 
 export function isSeasonOption(value: string): value is SeasonOption {
-    return (seasonOptions as string[]).includes(value)
+    return seasonEntriesById.has(value)
 }

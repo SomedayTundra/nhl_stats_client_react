@@ -47,7 +47,7 @@ export function LeagueBoard({teams, unplacedAbbrevs, showTeamNames, isPending, e
 
     if (!isPending && !error) {
         teams.forEach((teamInfo) => {
-            const conferenceName = teamInfo.conferenceName
+            const conferenceName = teamInfo.conferenceName ?? 'NA'
             let conferenceForThisTeam = newConferences.get(conferenceName)
             if (conferenceForThisTeam === undefined) {
                 conferenceForThisTeam = {divisions: new Map()}
@@ -74,7 +74,7 @@ export function LeagueBoard({teams, unplacedAbbrevs, showTeamNames, isPending, e
                 <div className='league-ref-all-conferences-container flex-1 min-h-0'>
                     {[...newConferences.entries()].map((conferenceInfo) => (
                         <div key={conferenceInfo[0]} className='league-ref-one-conference-container'>
-                            <h2 className='conference-name-row'>{conferenceInfo[0]} Conference</h2>
+                            <h2 className='conference-name-row'>{conferenceInfo[0] === 'NA' ? '' : `${conferenceInfo[0]} Conference`}</h2>
                             {[...conferenceInfo[1].divisions.entries()].map((divisionInfo) => (
                                 <DivisionDropZone key={divisionInfo[0]} conferenceName={conferenceInfo[0]} divisionName={divisionInfo[0]}>
                                     <h2 className='division-name-row'>{divisionInfo[0]} Division</h2>
