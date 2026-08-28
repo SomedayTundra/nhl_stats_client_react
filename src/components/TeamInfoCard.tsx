@@ -1,5 +1,4 @@
 import {useDraggable} from '@dnd-kit/core'
-import {CSS} from '@dnd-kit/utilities'
 import type {TeamInfo} from '@/state/types';
 import {getTeamLogoUrl} from '@/lib/teamLogo.ts'
 
@@ -31,15 +30,16 @@ export function TeamInfoCardView({info, showTeamNames = true, dragOverlay = fals
 }
 
 export function TeamInfoCard({info, showTeamNames = true, disabled = false}: TeamInfoCardProps) {
-    const {attributes, listeners, setNodeRef, transform, isDragging} = useDraggable({id: info.teamAbbrev, disabled})
+    const {attributes, listeners, setNodeRef, isDragging} = useDraggable({id: info.teamAbbrev, disabled})
 
     return (
+        // the moving visual is the DndContext's <DragOverlay>; the source card stays put (just
+        // dimmed) so it can't translate out of the bucket and stretch its scroll region
         <div
             ref={setNodeRef}
             {...listeners}
             {...attributes}
             style={{
-                transform: CSS.Translate.toString(transform),
                 opacity: isDragging ? 0.4 : 1,
                 cursor: disabled ? 'default' : 'grab',
                 touchAction: 'none',
