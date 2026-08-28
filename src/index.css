@@ -59,10 +59,12 @@
     --secondary-foreground: oklch(0.205 0 0);
     --muted: oklch(0.97 0 0);
     --muted-foreground: oklch(0.556 0 0);
-    --accent: oklch(0.97 0 0);
-    --accent-foreground: oklch(0.205 0 0);
+    /* accent is themed to the navbar palette (see --navbar-* below); kept here so all
+       shadcn-contract tokens live in one place and the pair stays self-consistent */
+    --accent: var(--navbar-bg);
+    --accent-foreground: var(--navbar-fg);
     --destructive: oklch(0.577 0.245 27.325);
-    --border: oklch(0.922 0 0);
+    --border: #8dfb72;
     --input: oklch(0.922 0 0);
     --ring: oklch(0.708 0 0);
     --chart-1: oklch(0.628 0.258 29.2);
@@ -99,11 +101,7 @@
     --unplaced-team-bucket-bg-light: #FFEEC9;
     --unplaced-team-bucket-text-color: #FFF0CF;
 
-    --border: #8dfb72;
     --code-bg: #f4f3ec;
-    --accent: var(--navbar-bg);
-    --accent-bg: rgba(170, 59, 255, 0.1);
-    --accent-border: rgba(170, 59, 255, 0.5);
     --shadow: rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
 
     --sans: Roboto, system-ui, 'Segoe UI', sans-serif;
