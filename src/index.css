@@ -202,6 +202,9 @@ p {
     flex-direction: column;
     gap: 2rem;
     color: #333;
+    /* the board content scales to fit via cqh units, but once enough divisions/rows stack up their
+       clamped min-heights can still exceed the panel - fall back to scrolling instead of clipping */
+    overflow-y: auto;
 }
 
 .league-ref-one-conference-container {

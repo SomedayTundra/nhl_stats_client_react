@@ -3,41 +3,50 @@
 import {useEffect, useLayoutEffect, useRef, useState} from 'react'
 
 import {Combobox, ComboboxContent, ComboboxEmpty, ComboboxInput, ComboboxItem, ComboboxList} from '@/components/ui/combobox'
-import {getSeasonEntry, seasonEntries, type SeasonOption} from '@/lib/seasonOption.ts'
+import {Tooltip, TooltipContent, TooltipTrigger} from '@/components/ui/tooltip'
+import {getSeasonEntry, seasonEntriesNewestFirst, type SeasonOption} from '@/lib/seasonOption.ts'
 
 type SeasonSelectProps = {
     season: SeasonOption
     onSeasonChange: (season: SeasonOption) => void
 }
 
-// seasonEntries runs oldest-to-newest; the picker shows newest-first
-const orderedSeasonEntries = [...seasonEntries].reverse()
+// derived once from the static era list rather than per render
+const seasonNames = seasonEntriesNewestFirst.map((entry) => entry.name)
+const seasonEntryByName = new Map(seasonEntriesNewestFirst.map((entry) => [entry.name, entry]))
+const longestSeasonName = seasonNames.reduce((longest, name) => (name.length > longest.length ? name : longest), '')
 
 // a single wheel flick (especially on a trackpad) fires a burst of events; only step one entry
 // per this window so one gesture doesn't skip across several eras
 const WHEEL_STEP_COOLDOWN_MS = 120
 
-// covers the input's own horizontal padding (pl-3 + pr-2) plus a small anti-clip buffer, added
-// on top of the measured text width so the widest entry never touches the edge
-const INPUT_PADDING_ALLOWANCE = '1.75rem'
-
 export function SeasonSelect({season, onSeasonChange}: SeasonSelectProps) {
-    const entryByName = new Map(orderedSeasonEntries.map((entry) => [entry.name, entry]))
     const selectedEntry = getSeasonEntry(season)
 
-    const [open, setOpen] = useState(false)
-    // the name of the item the pointer/keyboard is currently highlighting while the list is open;
-    // drives the description preview and is cleared on close so it reverts to the real selection
+    // the name the pointer/keyboard is highlighting while the list is open; drives the description
+    // preview and is cleared on close so it reverts to the real selection
     const [highlightedName, setHighlightedName] = useState<string | undefined>(undefined)
-    const wrapperRef = useRef<HTMLDivElement | null>(null)
-    const lastStepAtRef = useRef(0)
-
-    // measure the pixel width of the longest entry name (in the real rendered font) so the input
-    // can be sized to hold it whatever is currently selected; a ResizeObserver on the hidden
-    // sizer re-measures when the font finishes loading or the responsive font-size changes
-    const sizerRef = useRef<HTMLDivElement | null>(null)
     const [widestNameWidth, setWidestNameWidth] = useState<number | undefined>(undefined)
 
+    const wrapperRef = useRef<HTMLDivElement | null>(null)
+    const sizerRef = useRef<HTMLSpanElement | null>(null)
+
+    // latest-value refs so the wheel listener can be attached once instead of re-subscribed every
+    // time the selected season changes (which it does on every wheel step)
+    const openRef = useRef(false)
+    const seasonRef = useRef(season)
+    const onSeasonChangeRef = useRef(onSeasonChange)
+    const lastStepAtRef = useRef(0)
+
+    useEffect(() => {
+        seasonRef.current = season
+        onSeasonChangeRef.current = onSeasonChange
+    })
+
+    // size the input to hold the longest name whatever is selected; the ResizeObserver re-measures
+    // when the webfont loads or the responsive font-size changes. The sizer carries the input's own
+    // px-3, so the measured width already includes horizontal padding (the inline-end addon makes
+    // the real right padding pr-2, so this over-allocates by ~0.25rem - harmless, never clips).
     useLayoutEffect(() => {
         const sizer = sizerRef.current
         if (sizer === null) {
@@ -51,26 +60,26 @@ export function SeasonSelect({season, onSeasonChange}: SeasonSelectProps) {
     }, [])
 
     const handleInputValueChange = (name: string) => {
-        const matched = entryByName.get(name)
+        const matched = seasonEntryByName.get(name)
         if (matched !== undefined) {
             onSeasonChange(matched.seasonId)
         }
     }
 
-    const handleOpenChange = (nextOpen: boolean) => {
-        setOpen(nextOpen)
-        if (!nextOpen) {
+    const handleOpenChange = (open: boolean) => {
+        openRef.current = open
+        if (!open) {
             setHighlightedName(undefined)
         }
     }
 
-    // while open, preview the highlighted item's description; otherwise show the selected one
-    const previewEntry = open && highlightedName !== undefined ? entryByName.get(highlightedName) : undefined
-    const describedEntry = previewEntry ?? selectedEntry
+    // highlightedName is cleared on close, so a value here already means the list is open
+    const describedEntry =
+        (highlightedName !== undefined ? seasonEntryByName.get(highlightedName) : undefined) ?? selectedEntry
 
     // native, non-passive wheel listener: React's synthetic onWheel is passive, so it can't
-    // preventDefault the page scroll. Only active while the dropdown is closed and the pointer
-    // is over the control - wheel down moves to the next entry in the list, wheel up the previous.
+    // preventDefault the page scroll. Acts only while the dropdown is closed and the pointer is
+    // over the control - wheel down moves to the next entry in the list, wheel up the previous.
     useEffect(() => {
         const wrapper = wrapperRef.current
         if (wrapper === null) {
@@ -78,7 +87,7 @@ export function SeasonSelect({season, onSeasonChange}: SeasonSelectProps) {
         }
 
         const handleWheel = (event: WheelEvent) => {
-            if (open || Math.abs(event.deltaY) < 1) {
+            if (openRef.current || Math.abs(event.deltaY) < 1) {
                 return
             }
             event.preventDefault()
@@ -87,64 +96,59 @@ export function SeasonSelect({season, onSeasonChange}: SeasonSelectProps) {
                 return
             }
 
-            const currentIndex = orderedSeasonEntries.findIndex((entry) => entry.seasonId === season)
-            if (currentIndex === -1) {
-                return
-            }
+            const currentIndex = seasonEntriesNewestFirst.findIndex((entry) => entry.seasonId === seasonRef.current)
             const step = event.deltaY > 0 ? 1 : -1
-            const nextIndex = Math.min(Math.max(currentIndex + step, 0), orderedSeasonEntries.length - 1)
+            const nextIndex = Math.min(Math.max(currentIndex + step, 0), seasonEntriesNewestFirst.length - 1)
             if (nextIndex !== currentIndex) {
                 lastStepAtRef.current = event.timeStamp
-                onSeasonChange(orderedSeasonEntries[nextIndex].seasonId)
+                onSeasonChangeRef.current(seasonEntriesNewestFirst[nextIndex].seasonId)
             }
         }
 
         wrapper.addEventListener('wheel', handleWheel, {passive: false})
         return () => wrapper.removeEventListener('wheel', handleWheel)
-    }, [open, season, onSeasonChange])
+    }, [])
 
     return (
-        <div ref={wrapperRef} className="relative flex flex-row items-center gap-3">
-            {/* hidden, non-interactive stack of every entry name, used only to measure the widest */}
-            <div
-                ref={sizerRef}
-                aria-hidden
-                className="pointer-events-none invisible absolute left-0 top-0 w-max text-base whitespace-nowrap md:text-sm"
-            >
-                {orderedSeasonEntries.map((entry) => (
-                    <div key={entry.seasonId}>{entry.name}</div>
-                ))}
-            </div>
-            <Combobox
-                items={orderedSeasonEntries.map((entry) => entry.name)}
-                value={selectedEntry?.name ?? ''}
-                onInputValueChange={handleInputValueChange}
-                open={open}
-                onOpenChange={handleOpenChange}
-                onItemHighlighted={(name) => setHighlightedName(name)}
-            >
-                <ComboboxInput
-                    id="quiz-season"
-                    style={
-                        widestNameWidth !== undefined
-                            ? {minWidth: `calc(${widestNameWidth}px + ${INPUT_PADDING_ALLOWANCE})`}
-                            : undefined
-                    }
-                />
-                <ComboboxContent>
-                    <ComboboxEmpty>No items found.</ComboboxEmpty>
-                    <ComboboxList>
-                        {(item) => (
-                            <ComboboxItem key={item} value={item}>
-                                {item}
-                            </ComboboxItem>
-                        )}
-                    </ComboboxList>
-                </ComboboxContent>
-            </Combobox>
-            {describedEntry ? (
-                <span className="text-sm text-muted-foreground">{describedEntry.description}</span>
-            ) : null}
-        </div>
+        <Tooltip>
+            <TooltipTrigger asChild>
+                <div ref={wrapperRef} className="relative flex flex-row items-center gap-3">
+                    {/* hidden twin of the longest entry name, measured to size the input */}
+                    <span
+                        ref={sizerRef}
+                        aria-hidden
+                        className="pointer-events-none invisible absolute left-0 top-0 px-3 text-base whitespace-nowrap md:text-sm"
+                    >
+                        {longestSeasonName}
+                    </span>
+                    <Combobox
+                        items={seasonNames}
+                        value={selectedEntry?.name ?? ''}
+                        onInputValueChange={handleInputValueChange}
+                        onOpenChange={handleOpenChange}
+                        onItemHighlighted={(name) => setHighlightedName(name)}
+                    >
+                        <ComboboxInput
+                            id="quiz-season"
+                            style={widestNameWidth !== undefined ? {minWidth: `${widestNameWidth}px`} : undefined}
+                        />
+                        <ComboboxContent>
+                            <ComboboxEmpty>No items found.</ComboboxEmpty>
+                            <ComboboxList>
+                                {(item) => (
+                                    <ComboboxItem key={item} value={item}>
+                                        {item}
+                                    </ComboboxItem>
+                                )}
+                            </ComboboxList>
+                        </ComboboxContent>
+                    </Combobox>
+                    {describedEntry ? (
+                        <span className="text-sm text-muted-foreground">{describedEntry.description}</span>
+                    ) : null}
+                </div>
+            </TooltipTrigger>
+            <TooltipContent side="top">Mousewheel to browse through time</TooltipContent>
+        </Tooltip>
     )
 }

@@ -12,6 +12,11 @@ export type SeasonEntry = {
 // object keys are numeric-string seasonIds, so Object.values walks them oldest-to-newest
 export const seasonEntries = Object.values(nhlTimeline as Record<string, SeasonEntry>)
 
+// same eras, newest-first - for pickers that surface recent seasons at the top. Kept separate
+// rather than reversing seasonEntries in place: defaultSeasonOption and seasonEntriesById both
+// rely on the oldest-first order.
+export const seasonEntriesNewestFirst: SeasonEntry[] = [...seasonEntries].reverse()
+
 // a SeasonOption is one of the timeline seasonIds, e.g. '19671968'
 export type SeasonOption = string
 
