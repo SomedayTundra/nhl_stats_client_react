@@ -20,6 +20,12 @@ const longestSeasonName = seasonNames.reduce((longest, name) => (name.length > l
 // per this window so one gesture doesn't skip across several eras
 const WHEEL_STEP_COOLDOWN_MS = 120
 
+// the open dropdown's list is overflow-y-auto and its popup width is derived from this input's
+// width (--anchor-width). Pad the measured name width so the popup keeps room for a vertical
+// scrollbar - without this the scrollbar eats into the row and wraps the longest names onto two
+// lines. Doubles as making the closed control read a touch wider next to the description text.
+const DROPDOWN_SCROLLBAR_ALLOWANCE_PX = 24
+
 export function SeasonSelect({season, onSeasonChange}: SeasonSelectProps) {
     const selectedEntry = getSeasonEntry(season)
 
@@ -110,45 +116,53 @@ export function SeasonSelect({season, onSeasonChange}: SeasonSelectProps) {
     }, [])
 
     return (
-        <Tooltip>
-            <TooltipTrigger asChild>
-                <div ref={wrapperRef} className="relative flex flex-row items-center gap-3">
-                    {/* hidden twin of the longest entry name, measured to size the input */}
-                    <span
-                        ref={sizerRef}
-                        aria-hidden
-                        className="pointer-events-none invisible absolute left-0 top-0 px-3 text-base whitespace-nowrap md:text-sm"
-                    >
-                        {longestSeasonName}
-                    </span>
-                    <Combobox
-                        items={seasonNames}
-                        value={selectedEntry?.name ?? ''}
-                        onInputValueChange={handleInputValueChange}
-                        onOpenChange={handleOpenChange}
-                        onItemHighlighted={(name) => setHighlightedName(name)}
-                    >
-                        <ComboboxInput
-                            id="quiz-season"
-                            style={widestNameWidth !== undefined ? {minWidth: `${widestNameWidth}px`} : undefined}
-                        />
-                        <ComboboxContent>
-                            <ComboboxEmpty>No items found.</ComboboxEmpty>
-                            <ComboboxList>
-                                {(item) => (
-                                    <ComboboxItem key={item} value={item}>
-                                        {item}
-                                    </ComboboxItem>
-                                )}
-                            </ComboboxList>
-                        </ComboboxContent>
-                    </Combobox>
-                    {describedEntry ? (
-                        <span className="text-sm text-muted-foreground">{describedEntry.description}</span>
-                    ) : null}
-                </div>
-            </TooltipTrigger>
-            <TooltipContent side="top">Mousewheel to browse through time</TooltipContent>
-        </Tooltip>
+        <div ref={wrapperRef} className="relative flex flex-row items-center gap-3">
+            {/* hidden twin of the longest entry name, measured to size the input */}
+            <span
+                ref={sizerRef}
+                aria-hidden
+                className="pointer-events-none invisible absolute left-0 top-0 px-3 text-base whitespace-nowrap md:text-sm"
+            >
+                {longestSeasonName}
+            </span>
+            <Tooltip>
+                {/* trigger wraps only the combo box, so the tooltip stays centered over it - anchoring
+                    it to the whole control lets the variable-width description shift it side to side */}
+                <TooltipTrigger asChild>
+                    <div className="flex">
+                        <Combobox
+                            items={seasonNames}
+                            value={selectedEntry?.name ?? ''}
+                            onInputValueChange={handleInputValueChange}
+                            onOpenChange={handleOpenChange}
+                            onItemHighlighted={(name) => setHighlightedName(name)}
+                        >
+                            <ComboboxInput
+                                id="quiz-season"
+                                style={
+                                    widestNameWidth !== undefined
+                                        ? {minWidth: `${widestNameWidth + DROPDOWN_SCROLLBAR_ALLOWANCE_PX}px`}
+                                        : undefined
+                                }
+                            />
+                            <ComboboxContent>
+                                <ComboboxEmpty>No items found.</ComboboxEmpty>
+                                <ComboboxList>
+                                    {(item) => (
+                                        <ComboboxItem key={item} value={item}>
+                                            {item}
+                                        </ComboboxItem>
+                                    )}
+                                </ComboboxList>
+                            </ComboboxContent>
+                        </Combobox>
+                    </div>
+                </TooltipTrigger>
+                <TooltipContent side="top">Mousewheel to browse through time</TooltipContent>
+            </Tooltip>
+            {describedEntry ? (
+                <span className="text-sm text-muted-foreground">{describedEntry.description}</span>
+            ) : null}
+        </div>
     )
 }
