@@ -4,7 +4,7 @@ import {ReactQueryDevtools} from '@tanstack/react-query-devtools'
 
 const NavBar = () => {
 
-    const inactiveClass = 'text-[var(--navbar-fg)] hover:bg-[var(--navbar-fg)] hover:text-white rounded-md px-3 py-2';
+    const inactiveClass = 'text-[var(--navbar-fg)] hover:bg-[var(--navbar-fg)] hover:text-[var(--navbar-bg)] rounded-md px-3 py-2';
     const activeClass = 'text-white bg-[var(--navbar-fg)] hover:bg-[var(--navbar-fg)] hover:text-white rounded-md px-3 py-2';
 
     return (
