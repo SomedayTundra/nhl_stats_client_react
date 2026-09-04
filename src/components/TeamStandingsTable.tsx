@@ -168,7 +168,7 @@ export default function TeamStandingsTable() {
 
     return (
         <DateContext value={dateContextValue}>
-            <div className='w-9/12 mx-auto flex flex-row items-center gap-4 top-controls-container'>
+            <div className='w-9/12 mx-auto flex flex-row items-center gap-4 py-2 top-controls-container'>
                 <SeasonSelect value={resolvedSeason} onChange={setSeason}/>
                 <div className='flex justify-start items-center'>
                     <DatePickerWithNav id="date-picker" label="Date" tooltip="Date" minDate={minDate} maxDate={maxDate}/>

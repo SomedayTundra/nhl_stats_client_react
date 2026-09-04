@@ -67,7 +67,7 @@ export default function QuizToolbar({showTeamNames, onShowTeamNamesChange, onGo,
                     onValueChange={handleTeamCountFractionChange}
                     itemToStringLabel={(fraction) => String(teamCountForFraction(fraction, totalTeams))}
                 >
-                    <ComboboxInput id="quiz-team-count" className="w-20"/>
+                    <ComboboxInput id="quiz-team-count" className="w-20 gray"/>
                     <ComboboxContent>
                         <ComboboxEmpty>No items found.</ComboboxEmpty>
                         <ComboboxList>

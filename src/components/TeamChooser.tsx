@@ -140,7 +140,7 @@ export default function TeamChooser({season, selected, onChange}: TeamChooserPro
     return (
         <Popover open={open} onOpenChange={handleOpenChange}>
             <PopoverTrigger asChild>
-                <Button variant="outline" className="justify-between">
+                <Button variant="outline" className="justify-between border-neutral-800">
                     <span className={draftSelected.length === 0 ? 'text-red-600' : undefined}>
                         Teams ({draftSelected.length}/{teams.length})
                     </span>

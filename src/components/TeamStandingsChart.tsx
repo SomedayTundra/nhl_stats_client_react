@@ -29,6 +29,9 @@ const lineTypes = [
     'basis', 'bump', 'linear', 'natural', 'monotone', 'step',
 ] as const
 
+// used to size the line-type combo box to exactly fit its longest choice, whichever one that is
+const longestLineType = lineTypes.reduce((longest, type) => (type.length > longest.length ? type : longest), '')
+
 type LineType = typeof lineTypes[number]
 
 function isLineType(value: string): value is LineType {
@@ -282,6 +285,23 @@ export default function TeamStandingsChart() {
     const minDate = selectedSeason ? parseApiDate(selectedSeason.startDate) : undefined
     const maxDate = selectedSeason ? parseApiDate(selectedSeason.endDate) : undefined
 
+    // sizes the line-type combo box to exactly fit "monotone" (its longest choice) rather than some
+    // guessed-at width; the sizer carries the input's own px-3, so the measured width already
+    // includes horizontal padding. Re-measures via ResizeObserver in case the webfont loads late.
+    const lineTypeSizerRef = React.useRef<HTMLSpanElement | null>(null)
+    const [lineTypeInputWidth, setLineTypeInputWidth] = React.useState<number | undefined>(undefined)
+    React.useLayoutEffect(() => {
+        const sizer = lineTypeSizerRef.current
+        if (sizer === null) {
+            return
+        }
+        const measure = () => setLineTypeInputWidth(sizer.getBoundingClientRect().width)
+        measure()
+        const observer = new ResizeObserver(measure)
+        observer.observe(sizer)
+        return () => observer.disconnect()
+    }, [])
+
     // when the selected season changes, snap the date range back inside it: keep the existing
     // from/to only if they already sit within the new season (and stay ordered), else fall back to
     // the whole season. Adjusted during render, React's recommended derive-from-changing-value way.
@@ -512,7 +532,7 @@ export default function TeamStandingsChart() {
 
     return (
         <div className="h-full flex flex-col">
-            <div className="w-9/12 mx-auto flex flex-row flex-wrap items-center justify-center gap-x-4 gap-y-2 shrink-0">
+            <div className="w-9/12 mx-auto flex flex-row flex-wrap items-center justify-start gap-x-4 gap-y-2 py-2 shrink-0">
                 <SeasonSelect value={resolvedSeason} onChange={setSeason}/>
                 <div className="flex flex-row items-center gap-2 shrink-0">
                     <FieldLabel className="justify-start whitespace-nowrap">Date Range:</FieldLabel>
@@ -525,22 +545,53 @@ export default function TeamStandingsChart() {
                     </DateContext>
                 </div>
                 <TeamChooser season={resolvedSeason} selected={selectedTeams} onChange={setSelectedTeams}/>
-                <Combobox items={lineTypes} value={lineType} onInputValueChange={handleLineTypeChange} autoHighlight>
-                    <ComboboxInput placeholder="Select a line type"/>
-                    <ComboboxContent>
-                        <ComboboxEmpty>No items found.</ComboboxEmpty>
-                        <ComboboxList>
-                            {(item) => (
-                                <ComboboxItem key={item} value={item}>
-                                    {item}
-                                </ComboboxItem>
-                            )}
-                        </ComboboxList>
-                    </ComboboxContent>
-                </Combobox>
+                {/* hidden twin of the longest line-type choice, measured to size the combo box */}
+                <span
+                    ref={lineTypeSizerRef}
+                    aria-hidden
+                    className="pointer-events-none invisible absolute px-3 text-sm whitespace-nowrap"
+                >
+                    {longestLineType}
+                </span>
+                <Tooltip>
+                    {/* trigger wraps only the combo box, so the tooltip stays put - the box's width
+                        is fixed (sized to "monotone"), so unlike EraSelect/SeasonSelect there's no
+                        variable-width neighbor that could shift it */}
+                    <TooltipTrigger asChild>
+                        <div className="flex">
+                            <Combobox items={lineTypes} value={lineType} onInputValueChange={handleLineTypeChange} autoHighlight>
+                                <ComboboxInput
+                                    placeholder="Select a line type"
+                                    // the input is flex-1 with a 0% flex-basis, so a plain min-width can't win
+                                    // against its browser-default intrinsic size (~20ch) once content is
+                                    // shorter than that; pin flex:none so the exact measured width applies
+                                    style={lineTypeInputWidth !== undefined ? {flex: 'none', width: `${lineTypeInputWidth}px`} : undefined}
+                                    className="border-neutral-800 bg-background hover:bg-accent hover:text-accent-foreground dark:hover:bg-input/50"
+                                />
+                                <ComboboxContent>
+                                    <ComboboxEmpty>No items found.</ComboboxEmpty>
+                                    <ComboboxList>
+                                        {(item) => (
+                                            <ComboboxItem key={item} value={item}>
+                                                {item}
+                                            </ComboboxItem>
+                                        )}
+                                    </ComboboxList>
+                                </ComboboxContent>
+                            </Combobox>
+                        </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="top">Line Type</TooltipContent>
+                </Tooltip>
                 <FieldGroup className="w-auto shrink-0">
-                    <Field orientation='horizontal'>
-                        <Checkbox id='show-dots-checkbox-basic' name='show-dots-checkbox-basic' checked={showDots} onCheckedChange={(checked) => setShowDots(checked === true)}/>
+                    <Field orientation='horizontal' className="gap-0.5">
+                        <Checkbox
+                            id='show-dots-checkbox-basic'
+                            name='show-dots-checkbox-basic'
+                            checked={showDots}
+                            onCheckedChange={(checked) => setShowDots(checked === true)}
+                            className="border-neutral-800"
+                        />
                         <FieldLabel htmlFor='show-dots-checkbox-basic' className="whitespace-nowrap">
                             Show Dots
                         </FieldLabel>
