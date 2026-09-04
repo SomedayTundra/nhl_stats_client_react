@@ -12,13 +12,15 @@ import {Combobox, ComboboxContent, ComboboxEmpty, ComboboxInput, ComboboxItem, C
 import {ArrowRightLeftIcon} from 'lucide-react'
 import {DateContext} from '@/state/DateContext.tsx'
 import DatePickerWithNav from '@/components/DatePickerWithNav.tsx'
+import {SeasonSelect} from '@/components/SeasonSelect.tsx'
 import TeamChooser from '@/components/TeamChooser.tsx'
 import {Button} from '@/components/ui/button'
 import {Checkbox} from '@/components/ui/checkbox'
 import {Field, FieldGroup, FieldLabel} from '@/components/ui/field.tsx'
 import {Tooltip, TooltipContent, TooltipTrigger} from '@/components/ui/tooltip'
-import {deserializeDate, formatApiDateForDisplay, serializeDate} from '@/lib/date.ts'
+import {deserializeDate, formatApiDateForDisplay, formatDateForApi, parseApiDate, serializeDate} from '@/lib/date.ts'
 import {useLocalStorageState} from '@/lib/useLocalStorageState.ts'
+import {useSeasonInfo} from '@/hooks/useSeasonInfo.ts'
 import {useTeamStats} from '@/hooks/useTeamStats.ts'
 import {getTeamLogoUrl} from '@/lib/teamLogo.ts'
 import {addDays, isAfter, isBefore, isSameDay, subDays} from 'date-fns'
@@ -271,6 +273,33 @@ export default function TeamStandingsChart() {
         deserialize: deserializeDate,
     })
 
+    // '' until we've resolved a default; persisted on every change (useLocalStorageState writes back)
+    const [season, setSeason] = useLocalStorageState<string>('nhlStats.chart.season', '')
+    const {data: currentSeason} = useSeasonInfo()
+    const resolvedSeason = season || (currentSeason ? String(currentSeason.seasonId) : '')
+    const {data: selectedSeason} = useSeasonInfo(resolvedSeason || undefined)
+
+    const minDate = selectedSeason ? parseApiDate(selectedSeason.startDate) : undefined
+    const maxDate = selectedSeason ? parseApiDate(selectedSeason.endDate) : undefined
+
+    // when the selected season changes, snap the date range back inside it: keep the existing
+    // from/to only if they already sit within the new season (and stay ordered), else fall back to
+    // the whole season. Adjusted during render, React's recommended derive-from-changing-value way.
+    const [clampedSeasonId, setClampedSeasonId] = React.useState<number | null>(null)
+    if (selectedSeason && selectedSeason.seasonId !== clampedSeasonId) {
+        setClampedSeasonId(selectedSeason.seasonId)
+        const fromKey = formatDateForApi(fromDate)
+        const toKey = formatDateForApi(toDate)
+        const rangeFitsSeason =
+            fromKey >= selectedSeason.startDate && fromKey <= selectedSeason.endDate &&
+            toKey >= selectedSeason.startDate && toKey <= selectedSeason.endDate &&
+            fromKey < toKey
+        if (!rangeFitsSeason) {
+            setFromDate(parseApiDate(selectedSeason.startDate))
+            setToDate(parseApiDate(selectedSeason.endDate))
+        }
+    }
+
     // hover logos are portaled into this shared layer - rendered as the very last child of
     // LineChart, so they always paint on top of every line regardless of which team's line
     // happens to be drawn last (each Line's own activeDot would otherwise be stacked per-line,
@@ -483,15 +512,16 @@ export default function TeamStandingsChart() {
 
     return (
         <div className="h-full flex flex-col">
-            <div className="w-9/12 mx-auto flex flex-row items-center justify-center gap-4 shrink-0">
+            <div className="w-9/12 mx-auto flex flex-row flex-wrap items-center justify-center gap-x-4 gap-y-2 shrink-0">
+                <SeasonSelect value={resolvedSeason} onChange={setSeason}/>
                 <div className="flex flex-row items-center gap-2 shrink-0">
                     <FieldLabel className="justify-start whitespace-nowrap">Date Range:</FieldLabel>
                     <DateContext value={fromDateContextValue}>
-                        <DatePickerWithNav id="date-picker-from" tooltip="From"/>
+                        <DatePickerWithNav id="date-picker-from" tooltip="From" minDate={minDate} maxDate={maxDate}/>
                     </DateContext>
                     <ArrowRightLeftIcon className="size-4 shrink-0 text-muted-foreground"/>
                     <DateContext value={toDateContextValue}>
-                        <DatePickerWithNav id="date-picker-to" tooltip="To"/>
+                        <DatePickerWithNav id="date-picker-to" tooltip="To" minDate={minDate} maxDate={maxDate}/>
                     </DateContext>
                 </div>
                 <TeamChooser selected={selectedTeams} onChange={setSelectedTeams}/>

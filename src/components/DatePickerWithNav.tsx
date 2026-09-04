@@ -20,13 +20,38 @@ type DatePickerWithNavProps = {
     id: string
     tooltip: string
     label?: string
+    // when set, days outside [minDate, maxDate] are disabled in the calendar and the -/+ nav
+    // buttons clamp to (and disable at) these bounds
+    minDate?: Date
+    maxDate?: Date
 }
 
-export default function DatePickerWithNav({id, tooltip, label}: DatePickerWithNavProps) {
+export default function DatePickerWithNav({id, tooltip, label, minDate, maxDate}: DatePickerWithNavProps) {
     const dateFormat = "MM-dd-yyyy";
 
     const dc = use(DateContext);
     const [open, setOpen] = useState(false);
+
+    // compare at day granularity via yyyy-MM-dd strings, so a Date's time-of-day / timezone can't
+    // push an in-bounds day out (or vice versa)
+    const dayKey = (d: Date) => format(d, "yyyy-MM-dd");
+    const minKey = minDate ? dayKey(minDate) : undefined;
+    const maxKey = maxDate ? dayKey(maxDate) : undefined;
+    const currentKey = dayKey(dc.date);
+
+    const atOrBeforeMin = minKey !== undefined && currentKey <= minKey;
+    const atOrAfterMax = maxKey !== undefined && currentKey >= maxKey;
+
+    const clampToBounds = (d: Date): Date => {
+        if (minDate && dayKey(d) < dayKey(minDate)) return minDate;
+        if (maxDate && dayKey(d) > dayKey(maxDate)) return maxDate;
+        return d;
+    };
+
+    const disabledDays = [
+        ...(minDate ? [{ before: minDate }] : []),
+        ...(maxDate ? [{ after: maxDate }] : []),
+    ];
 
     const handleCalendarSelect: OnSelectHandler<Date | undefined> = (selected) => {
         dc.setDate(selected ?? new Date());
@@ -34,19 +59,19 @@ export default function DatePickerWithNav({id, tooltip, label}: DatePickerWithNa
     };
 
     function goToPreviousWeek() {
-        dc.setDate(subDays(dc.date, 7))
+        dc.setDate(clampToBounds(subDays(dc.date, 7)))
     }
 
     function goToPreviousDay() {
-        dc.setDate(subDays(dc.date, 1))
+        dc.setDate(clampToBounds(subDays(dc.date, 1)))
     }
 
     function goToNextDay() {
-        dc.setDate(addDays(dc.date, 1))
+        dc.setDate(clampToBounds(addDays(dc.date, 1)))
     }
 
     function goToNextWeek() {
-        dc.setDate(addDays(dc.date, 7))
+        dc.setDate(clampToBounds(addDays(dc.date, 7)))
     }
 
     return (
@@ -57,7 +82,7 @@ export default function DatePickerWithNav({id, tooltip, label}: DatePickerWithNa
             <div className="flex items-center gap-0">
                 <Tooltip>
                     <TooltipTrigger asChild>
-                        <Button variant="outline" size="icon" className="rounded-r-none bg-blue-100 hover:bg-accent hover:text-accent-foreground" onClick={goToPreviousWeek} aria-label="Previous week">
+                        <Button variant="outline" size="icon" className="rounded-r-none bg-blue-100 hover:bg-accent hover:text-accent-foreground" onClick={goToPreviousWeek} disabled={atOrBeforeMin} aria-label="Previous week">
                             <ChevronsLeftIcon />
                         </Button>
                     </TooltipTrigger>
@@ -65,7 +90,7 @@ export default function DatePickerWithNav({id, tooltip, label}: DatePickerWithNa
                 </Tooltip>
                 <Tooltip>
                     <TooltipTrigger asChild>
-                        <Button variant="outline" size="icon" className="rounded-none bg-blue-100 hover:bg-accent hover:text-accent-foreground" onClick={goToPreviousDay} aria-label="Previous day">
+                        <Button variant="outline" size="icon" className="rounded-none bg-blue-100 hover:bg-accent hover:text-accent-foreground" onClick={goToPreviousDay} disabled={atOrBeforeMin} aria-label="Previous day">
                             <ChevronLeftIcon />
                         </Button>
                     </TooltipTrigger>
@@ -98,12 +123,15 @@ export default function DatePickerWithNav({id, tooltip, label}: DatePickerWithNa
                             selected={dc.date}
                             onSelect={handleCalendarSelect}
                             numberOfMonths={1}
+                            disabled={disabledDays.length ? disabledDays : undefined}
+                            startMonth={minDate}
+                            endMonth={maxDate}
                         />
                     </PopoverContent>
                 </Popover>
                 <Tooltip>
                     <TooltipTrigger asChild>
-                        <Button variant="outline" size="icon" className="rounded-none bg-blue-100 hover:bg-accent hover:text-accent-foreground" onClick={goToNextDay} aria-label="Next day">
+                        <Button variant="outline" size="icon" className="rounded-none bg-blue-100 hover:bg-accent hover:text-accent-foreground" onClick={goToNextDay} disabled={atOrAfterMax} aria-label="Next day">
                             <ChevronRightIcon />
                         </Button>
                     </TooltipTrigger>
@@ -111,7 +139,7 @@ export default function DatePickerWithNav({id, tooltip, label}: DatePickerWithNa
                 </Tooltip>
                 <Tooltip>
                     <TooltipTrigger asChild>
-                        <Button variant="outline" size="icon" className="rounded-l-none bg-blue-100 hover:bg-accent hover:text-accent-foreground" onClick={goToNextWeek} aria-label="Next week">
+                        <Button variant="outline" size="icon" className="rounded-l-none bg-blue-100 hover:bg-accent hover:text-accent-foreground" onClick={goToNextWeek} disabled={atOrAfterMax} aria-label="Next week">
                             <ChevronsRightIcon />
                         </Button>
                     </TooltipTrigger>

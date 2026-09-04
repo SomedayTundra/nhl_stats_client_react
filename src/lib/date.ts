@@ -11,6 +11,13 @@ export function formatApiDateForDisplay(apiDate: string): string {
     return `${month}-${day}-${year}`
 }
 
+// yyyy-MM-dd -> a local-midnight Date built from the parts, so there's no UTC-parsing day shift
+// (matches how formatDateForApi and date-fns `format` read a Date back out, in local time)
+export function parseApiDate(apiDate: string): Date {
+    const [year, month, day] = apiDate.split("-").map(Number)
+    return new Date(year, month - 1, day)
+}
+
 export function serializeDate(date: Date): string {
     return date.toISOString()
 }

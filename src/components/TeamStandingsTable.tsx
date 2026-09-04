@@ -4,9 +4,11 @@ import 'react-calendar/dist/Calendar.css'
 import type {TeamStatEntry} from '@/state/types'
 import {DateContext} from '@/state/DateContext.tsx'
 import DatePickerWithNav from '@/components/DatePickerWithNav.tsx'
+import {SeasonSelect} from '@/components/SeasonSelect.tsx'
 import TeamChooser from '@/components/TeamChooser.tsx'
-import {deserializeDate, serializeDate} from '@/lib/date.ts'
+import {deserializeDate, formatDateForApi, parseApiDate, serializeDate} from '@/lib/date.ts'
 import {useLocalStorageState} from '@/lib/useLocalStorageState.ts'
+import {useSeasonInfo} from '@/hooks/useSeasonInfo.ts'
 import {useTeamStats} from '@/hooks/useTeamStats.ts'
 import {getTeamLogoUrl} from '@/lib/teamLogo.ts'
 import {
@@ -68,6 +70,28 @@ export default function TeamStandingsTable() {
     const [selectedTeams, setSelectedTeams] = useLocalStorageState<string[]>('nhlStats.table.selectedTeams', [])
     const [sorting, setSorting] = useLocalStorageState<SortingState>('nhlStats.table.sorting', [{id: 'points', desc: true}])
 
+    // '' until we've resolved a default; persisted on every change (useLocalStorageState writes back)
+    const [season, setSeason] = useLocalStorageState<string>('nhlStats.table.season', '')
+    const {data: currentSeason} = useSeasonInfo()
+    const resolvedSeason = season || (currentSeason ? String(currentSeason.seasonId) : '')
+    const {data: selectedSeason} = useSeasonInfo(resolvedSeason || undefined)
+
+    const minDate = selectedSeason ? parseApiDate(selectedSeason.startDate) : undefined
+    const maxDate = selectedSeason ? parseApiDate(selectedSeason.endDate) : undefined
+
+    // when the selected season changes, pull the picked date back inside the new season's span.
+    // Adjusted during render (React's recommended way to derive state from a changing value).
+    const [clampedSeasonId, setClampedSeasonId] = React.useState<number | null>(null)
+    if (selectedSeason && selectedSeason.seasonId !== clampedSeasonId) {
+        setClampedSeasonId(selectedSeason.seasonId)
+        const dayKey = formatDateForApi(date)
+        if (dayKey < selectedSeason.startDate) {
+            setDate(parseApiDate(selectedSeason.startDate))
+        } else if (dayKey > selectedSeason.endDate) {
+            setDate(parseApiDate(selectedSeason.endDate))
+        }
+    }
+
     const handleDateSelect = (selected: Date | undefined) => {
         setDate(selected ?? new Date())
     }
@@ -122,8 +146,9 @@ export default function TeamStandingsTable() {
     return (
         <DateContext value={dateContextValue}>
             <div className='w-9/12 mx-auto flex flex-row items-center gap-4 top-controls-container'>
+                <SeasonSelect value={resolvedSeason} onChange={setSeason}/>
                 <div className='flex justify-start items-center'>
-                    <DatePickerWithNav id="date-picker" label="Date" tooltip="Date"/>
+                    <DatePickerWithNav id="date-picker" label="Date" tooltip="Date" minDate={minDate} maxDate={maxDate}/>
                 </div>
                 <div className='flex justify-start'>
                     <TeamChooser selected={selectedTeams} onChange={setSelectedTeams}/>

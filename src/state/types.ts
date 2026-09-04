@@ -32,6 +32,14 @@ export type TeamStatEntry = {
 }
 
 
+// one season's date span, as served by GET /api/season_info (dates are yyyy-MM-dd strings)
+export type SeasonInfo = {
+    seasonId: number
+    startDate: string
+    endDate: string
+}
+
+
 export type LeagueInfo = {
     conferences: Map<string, Conference>;
 }

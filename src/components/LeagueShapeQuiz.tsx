@@ -7,7 +7,7 @@ import {LeagueBoard, divisionDroppableId} from '@/components/LeagueBoard.tsx'
 import {TeamInfoCardView} from '@/components/TeamInfoCard.tsx'
 import QuizToolbar from '@/components/QuizToolbar.tsx'
 import {QuizScoreboard} from '@/components/QuizScoreboard.tsx'
-import {SeasonSelect} from '@/components/SeasonSelect.tsx'
+import {EraSelect} from '@/components/EraSelect.tsx'
 import {defaultSeasonOption, isSeasonOption, type SeasonOption} from '@/lib/seasonOption.ts'
 import {QuizResultsOverlay} from '@/components/QuizResultsOverlay.tsx'
 import type {TeamInfo} from '@/state/types'
@@ -138,7 +138,7 @@ export default function LeagueShapeQuiz() {
                     />
                 </div>
                 <div className='w-2/3 mx-4 flex flex-row items-center justify-between'>
-                    <SeasonSelect season={season} onSeasonChange={setSeason}/>
+                    <EraSelect season={season} onSeasonChange={setSeason}/>
                     <QuizScoreboard correctGuesses={correctGuesses} incorrectGuesses={incorrectGuesses}/>
                 </div>
             </div>
