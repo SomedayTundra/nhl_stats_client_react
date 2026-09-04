@@ -8,7 +8,7 @@ import {SeasonSelect} from '@/components/SeasonSelect.tsx'
 import TeamChooser from '@/components/TeamChooser.tsx'
 import {deserializeDate, formatDateForApi, parseApiDate, serializeDate} from '@/lib/date.ts'
 import {useLocalStorageState} from '@/lib/useLocalStorageState.ts'
-import {useSeasonInfo} from '@/hooks/useSeasonInfo.ts'
+import {useLatestSeasonId, useSeasonInfo} from '@/hooks/useSeasonInfo.ts'
 import {useTeamStats} from '@/hooks/useTeamStats.ts'
 import {getTeamLogoUrl} from '@/lib/teamLogo.ts'
 import {
@@ -60,6 +60,11 @@ const columns = helper.columns([
 
 const EMPTY_DATA: TeamStatEntry[] = []
 
+// a standings fetch still running past this is almost certainly the backend farming an uncached
+// season from the NHL API (a normal cached fetch returns in well under a second), so we swap the
+// table for a "loading uncached data" notice
+const SLOW_FETCH_MS = 1500
+
 
 export default function TeamStandingsTable() {
     // const [teamStats, setTeamStats] = useState<TeamStatEntry[]>([]);
@@ -72,8 +77,8 @@ export default function TeamStandingsTable() {
 
     // '' until we've resolved a default; persisted on every change (useLocalStorageState writes back)
     const [season, setSeason] = useLocalStorageState<string>('nhlStats.table.season', '')
-    const {data: currentSeason} = useSeasonInfo()
-    const resolvedSeason = season || (currentSeason ? String(currentSeason.seasonId) : '')
+    const defaultSeason = useLatestSeasonId()
+    const resolvedSeason = season || defaultSeason
     const {data: selectedSeason} = useSeasonInfo(resolvedSeason || undefined)
 
     const minDate = selectedSeason ? parseApiDate(selectedSeason.startDate) : undefined
@@ -101,7 +106,23 @@ export default function TeamStandingsTable() {
         setDate: handleDateSelect
     }
 
-    const {data: teamStats, isPending, error} = useTeamStats(date, date)
+    const {data: teamStats, isPending, isFetching, error} = useTeamStats(date, date, resolvedSeason || undefined)
+
+    // flip on once a fetch has been running longer than SLOW_FETCH_MS; reset the moment fetching
+    // stops (adjust-state-during-render, so no synchronous setState inside an effect)
+    const [fetchIsSlow, setFetchIsSlow] = React.useState(false)
+    const [slowTrackedFetching, setSlowTrackedFetching] = React.useState(isFetching)
+    if (slowTrackedFetching !== isFetching) {
+        setSlowTrackedFetching(isFetching)
+        if (!isFetching) {
+            setFetchIsSlow(false)
+        }
+    }
+    React.useEffect(() => {
+        if (!isFetching) return
+        const timer = window.setTimeout(() => setFetchIsSlow(true), SLOW_FETCH_MS)
+        return () => window.clearTimeout(timer)
+    }, [isFetching])
 
     // this method filters the team stats down to the teams currently selected in the TeamChooser;
     // an empty selection is handled separately, in `tableBody`, before this is ever used
@@ -127,6 +148,8 @@ export default function TeamStandingsTable() {
     let tableBody: React.ReactNode
     if (selectedTeams.length === 0) {
         tableBody = <tr><td colSpan={columns.length} className='p-4 text-center'>No teams selected</td></tr>
+    } else if (fetchIsSlow) {
+        tableBody = <tr><td colSpan={columns.length} className='p-4 text-center'>Loading uncached data...</td></tr>
     } else if (isPending) {
         tableBody = <tr><td colSpan={columns.length} className='p-4 text-center'>Loading...</td></tr>
     } else if (error) {
@@ -151,7 +174,7 @@ export default function TeamStandingsTable() {
                     <DatePickerWithNav id="date-picker" label="Date" tooltip="Date" minDate={minDate} maxDate={maxDate}/>
                 </div>
                 <div className='flex justify-start'>
-                    <TeamChooser selected={selectedTeams} onChange={setSelectedTeams}/>
+                    <TeamChooser season={resolvedSeason} selected={selectedTeams} onChange={setSelectedTeams}/>
                 </div>
             </div>
             <div className='w-9/12 mx-auto border rounded-lg overflow-hidden'>

@@ -15,5 +15,8 @@ export function useTeamInfo(season: SeasonOption = defaultSeasonOption) {
                 conferenceAbbrev: team.conferenceAbbrev ?? 'NA',
             }))
         },
+        // an uncached season has no team_data yet; the standings fetch farms it in the background,
+        // so keep polling until the teams show up (cached seasons return non-empty and never poll)
+        refetchInterval: (query) => ((query.state.data?.length ?? 0) === 0 ? 4000 : false),
     })
 }

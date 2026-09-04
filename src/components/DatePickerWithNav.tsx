@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/popover"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import {addDays, format, subDays} from "date-fns"
-import { CalendarIcon, ChevronLeftIcon, ChevronRightIcon, ChevronsLeftIcon, ChevronsRightIcon } from "lucide-react"
+import { CalendarIcon, ChevronFirstIcon, ChevronLastIcon, ChevronLeftIcon, ChevronRightIcon, ChevronsLeftIcon, ChevronsRightIcon } from "lucide-react"
 import type {OnSelectHandler} from "react-day-picker"
 
 import { use, useState } from 'react';
@@ -58,6 +58,10 @@ export default function DatePickerWithNav({id, tooltip, label, minDate, maxDate}
         setOpen(false);
     };
 
+    function goToFirstDay() {
+        if (minDate) dc.setDate(minDate)
+    }
+
     function goToPreviousWeek() {
         dc.setDate(clampToBounds(subDays(dc.date, 7)))
     }
@@ -74,15 +78,36 @@ export default function DatePickerWithNav({id, tooltip, label, minDate, maxDate}
         dc.setDate(clampToBounds(addDays(dc.date, 7)))
     }
 
+    function goToLastDay() {
+        if (maxDate) dc.setDate(maxDate)
+    }
+
+    // the leftmost/rightmost buttons in the group get the outer corner radius; everything between
+    // them is square. Which button ends up on each edge shifts depending on whether the
+    // first-day/last-day bumper buttons are present (first day is always leftmost when shown,
+    // last day is always rightmost when shown).
+    const weekBackIsLeftmost = minDate === undefined
+    const weekForwardIsRightmost = maxDate === undefined
+
     return (
         <Field className="w-auto flex-row items-center" orientation="horizontal">
             {label && (
                 <FieldLabel htmlFor={id} className="justify-start shrink-0">{label}:</FieldLabel>
             )}
             <div className="flex items-center gap-0">
+                {minDate && (
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button variant="outline" size="icon-xs" className="rounded-r-none bg-blue-100 hover:bg-accent hover:text-accent-foreground" onClick={goToFirstDay} disabled={atOrBeforeMin} aria-label="First day">
+                                <ChevronFirstIcon />
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>First day</TooltipContent>
+                    </Tooltip>
+                )}
                 <Tooltip>
                     <TooltipTrigger asChild>
-                        <Button variant="outline" size="icon" className="rounded-r-none bg-blue-100 hover:bg-accent hover:text-accent-foreground" onClick={goToPreviousWeek} disabled={atOrBeforeMin} aria-label="Previous week">
+                        <Button variant="outline" size="icon-xs" className={`bg-blue-100 hover:bg-accent hover:text-accent-foreground ${weekBackIsLeftmost ? 'rounded-r-none' : 'rounded-none'}`} onClick={goToPreviousWeek} disabled={atOrBeforeMin} aria-label="Previous week">
                             <ChevronsLeftIcon />
                         </Button>
                     </TooltipTrigger>
@@ -90,7 +115,7 @@ export default function DatePickerWithNav({id, tooltip, label, minDate, maxDate}
                 </Tooltip>
                 <Tooltip>
                     <TooltipTrigger asChild>
-                        <Button variant="outline" size="icon" className="rounded-none bg-blue-100 hover:bg-accent hover:text-accent-foreground" onClick={goToPreviousDay} disabled={atOrBeforeMin} aria-label="Previous day">
+                        <Button variant="outline" size="icon-xs" className="rounded-none bg-blue-100 hover:bg-accent hover:text-accent-foreground" onClick={goToPreviousDay} disabled={atOrBeforeMin} aria-label="Previous day">
                             <ChevronLeftIcon />
                         </Button>
                     </TooltipTrigger>
@@ -131,7 +156,7 @@ export default function DatePickerWithNav({id, tooltip, label, minDate, maxDate}
                 </Popover>
                 <Tooltip>
                     <TooltipTrigger asChild>
-                        <Button variant="outline" size="icon" className="rounded-none bg-blue-100 hover:bg-accent hover:text-accent-foreground" onClick={goToNextDay} disabled={atOrAfterMax} aria-label="Next day">
+                        <Button variant="outline" size="icon-xs" className="rounded-none bg-blue-100 hover:bg-accent hover:text-accent-foreground" onClick={goToNextDay} disabled={atOrAfterMax} aria-label="Next day">
                             <ChevronRightIcon />
                         </Button>
                     </TooltipTrigger>
@@ -139,12 +164,22 @@ export default function DatePickerWithNav({id, tooltip, label, minDate, maxDate}
                 </Tooltip>
                 <Tooltip>
                     <TooltipTrigger asChild>
-                        <Button variant="outline" size="icon" className="rounded-l-none bg-blue-100 hover:bg-accent hover:text-accent-foreground" onClick={goToNextWeek} disabled={atOrAfterMax} aria-label="Next week">
+                        <Button variant="outline" size="icon-xs" className={`bg-blue-100 hover:bg-accent hover:text-accent-foreground ${weekForwardIsRightmost ? 'rounded-l-none' : 'rounded-none'}`} onClick={goToNextWeek} disabled={atOrAfterMax} aria-label="Next week">
                             <ChevronsRightIcon />
                         </Button>
                     </TooltipTrigger>
                     <TooltipContent>+1 week</TooltipContent>
                 </Tooltip>
+                {maxDate && (
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button variant="outline" size="icon-xs" className="rounded-l-none bg-blue-100 hover:bg-accent hover:text-accent-foreground" onClick={goToLastDay} disabled={atOrAfterMax} aria-label="Last day">
+                                <ChevronLastIcon />
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Last day</TooltipContent>
+                    </Tooltip>
+                )}
             </div>
         </Field>
     )

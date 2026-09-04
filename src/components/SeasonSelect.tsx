@@ -1,10 +1,10 @@
 'use client'
 
-import {useMemo} from 'react'
+import {useEffect, useMemo, useRef} from 'react'
 
 import {Combobox, ComboboxContent, ComboboxEmpty, ComboboxInput, ComboboxItem, ComboboxList} from '@/components/ui/combobox'
 import {FieldLabel} from '@/components/ui/field.tsx'
-import {useSeasonInfo} from '@/hooks/useSeasonInfo.ts'
+import {useLatestSeasonId} from '@/hooks/useSeasonInfo.ts'
 import {buildSeasonIds, seasonIdToLabel} from '@/lib/season.ts'
 
 type SeasonSelectProps = {
@@ -13,18 +13,22 @@ type SeasonSelectProps = {
     onChange: (seasonId: string) => void
 }
 
+// a single wheel flick (especially on a trackpad) fires a burst of events; only step one entry
+// per this window so one gesture doesn't skip across several seasons
+const WHEEL_STEP_COOLDOWN_MS = 120
+
 // "Season:" label + a combo box holding one entry per playable season from 1942-43 through the
 // current season (newest first). Controlled: the caller owns the value and persists it.
 export function SeasonSelect({value, onChange}: SeasonSelectProps) {
-    // no argument -> the season currently in progress, or the upcoming one between seasons; it's
-    // the newest entry the picker offers
-    const {data: currentSeason} = useSeasonInfo()
+    // the newest entry the picker offers: the latest season that has actually started. The
+    // upcoming season isn't listed until the calendar date reaches its startDate.
+    const latestSeasonId = useLatestSeasonId()
 
-    const {labels, seasonIdByLabel, labelBySeasonId} = useMemo(() => {
-        // before we know the current season, fall back to just the selected id so the control
-        // still shows the right thing
-        const ids = currentSeason
-            ? buildSeasonIds(currentSeason.seasonId)
+    const {ids, labels, seasonIdByLabel, labelBySeasonId} = useMemo(() => {
+        // before the lookup resolves, fall back to just the selected id so the control still
+        // shows the right thing
+        const ids = latestSeasonId
+            ? buildSeasonIds(latestSeasonId)
             : (value ? [value] : [])
 
         const seasonIdByLabel = new Map<string, string>()
@@ -34,8 +38,8 @@ export function SeasonSelect({value, onChange}: SeasonSelectProps) {
             seasonIdByLabel.set(label, id)
             labelBySeasonId.set(id, label)
         }
-        return {labels: ids.map(seasonIdToLabel), seasonIdByLabel, labelBySeasonId}
-    }, [currentSeason, value])
+        return {ids, labels: ids.map(seasonIdToLabel), seasonIdByLabel, labelBySeasonId}
+    }, [latestSeasonId, value])
 
     const handleInputValueChange = (label: string) => {
         const id = seasonIdByLabel.get(label)
@@ -46,16 +50,75 @@ export function SeasonSelect({value, onChange}: SeasonSelectProps) {
 
     const selectedLabel = value ? (labelBySeasonId.get(value) ?? seasonIdToLabel(value)) : ''
 
+    // latest-value refs so the wheel listener can be bound once instead of re-subscribed on every
+    // step (the selection changes on each wheel tick)
+    const wrapperRef = useRef<HTMLDivElement | null>(null)
+    const openRef = useRef(false)
+    const idsRef = useRef(ids)
+    const valueRef = useRef(value)
+    const onChangeRef = useRef(onChange)
+    const lastStepAtRef = useRef(0)
+
+    useEffect(() => {
+        idsRef.current = ids
+        valueRef.current = value
+        onChangeRef.current = onChange
+    })
+
+    // native, non-passive wheel listener: React's synthetic onWheel is passive so it can't
+    // preventDefault the page scroll. Acts only while the dropdown is closed and the pointer is
+    // over the control - wheel down picks the next entry in the list, wheel up the previous.
+    useEffect(() => {
+        const wrapper = wrapperRef.current
+        if (wrapper === null) {
+            return
+        }
+
+        const handleWheel = (event: WheelEvent) => {
+            if (openRef.current || Math.abs(event.deltaY) < 1) {
+                return
+            }
+            event.preventDefault()
+
+            if (event.timeStamp - lastStepAtRef.current < WHEEL_STEP_COOLDOWN_MS) {
+                return
+            }
+
+            const seasonIds = idsRef.current
+            const currentIndex = seasonIds.indexOf(valueRef.current)
+            if (currentIndex === -1) {
+                return
+            }
+            const step = event.deltaY > 0 ? 1 : -1
+            const nextIndex = Math.min(Math.max(currentIndex + step, 0), seasonIds.length - 1)
+            if (nextIndex !== currentIndex) {
+                lastStepAtRef.current = event.timeStamp
+                onChangeRef.current(seasonIds[nextIndex])
+            }
+        }
+
+        wrapper.addEventListener('wheel', handleWheel, {passive: false})
+        return () => wrapper.removeEventListener('wheel', handleWheel)
+    }, [])
+
     return (
-        <div className="flex flex-row items-center gap-2 shrink-0">
+        <div ref={wrapperRef} className="flex flex-row items-center gap-2 shrink-0">
             <FieldLabel htmlFor="season-select" className="justify-start whitespace-nowrap">Season:</FieldLabel>
             <Combobox
                 items={labels}
                 value={selectedLabel}
                 onInputValueChange={handleInputValueChange}
+                onOpenChange={(open) => {
+                    openRef.current = open
+                }}
                 autoHighlight
             >
-                <ComboboxInput id="season-select" className="w-32"/>
+                {/* matches the outline Button's hovered/unhovered look (e.g. the TeamChooser trigger):
+                    bg-background at rest, bg-accent/text-accent-foreground on hover */}
+                <ComboboxInput
+                    id="season-select"
+                    className="w-32 bg-background hover:bg-accent hover:text-accent-foreground dark:hover:bg-input/50"
+                />
                 <ComboboxContent>
                     <ComboboxEmpty>No items found.</ComboboxEmpty>
                     <ComboboxList>

@@ -20,7 +20,7 @@ import {Field, FieldGroup, FieldLabel} from '@/components/ui/field.tsx'
 import {Tooltip, TooltipContent, TooltipTrigger} from '@/components/ui/tooltip'
 import {deserializeDate, formatApiDateForDisplay, formatDateForApi, parseApiDate, serializeDate} from '@/lib/date.ts'
 import {useLocalStorageState} from '@/lib/useLocalStorageState.ts'
-import {useSeasonInfo} from '@/hooks/useSeasonInfo.ts'
+import {useLatestSeasonId, useSeasonInfo} from '@/hooks/useSeasonInfo.ts'
 import {useTeamStats} from '@/hooks/useTeamStats.ts'
 import {getTeamLogoUrl} from '@/lib/teamLogo.ts'
 import {addDays, isAfter, isBefore, isSameDay, subDays} from 'date-fns'
@@ -275,8 +275,8 @@ export default function TeamStandingsChart() {
 
     // '' until we've resolved a default; persisted on every change (useLocalStorageState writes back)
     const [season, setSeason] = useLocalStorageState<string>('nhlStats.chart.season', '')
-    const {data: currentSeason} = useSeasonInfo()
-    const resolvedSeason = season || (currentSeason ? String(currentSeason.seasonId) : '')
+    const defaultSeason = useLatestSeasonId()
+    const resolvedSeason = season || defaultSeason
     const {data: selectedSeason} = useSeasonInfo(resolvedSeason || undefined)
 
     const minDate = selectedSeason ? parseApiDate(selectedSeason.startDate) : undefined
@@ -524,7 +524,7 @@ export default function TeamStandingsChart() {
                         <DatePickerWithNav id="date-picker-to" tooltip="To" minDate={minDate} maxDate={maxDate}/>
                     </DateContext>
                 </div>
-                <TeamChooser selected={selectedTeams} onChange={setSelectedTeams}/>
+                <TeamChooser season={resolvedSeason} selected={selectedTeams} onChange={setSelectedTeams}/>
                 <Combobox items={lineTypes} value={lineType} onInputValueChange={handleLineTypeChange} autoHighlight>
                     <ComboboxInput placeholder="Select a line type"/>
                     <ComboboxContent>
