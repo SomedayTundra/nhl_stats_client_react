@@ -6,7 +6,7 @@ import {DateContext} from '@/state/DateContext.tsx'
 import DatePickerWithNav from '@/components/DatePickerWithNav.tsx'
 import {SeasonSelect} from '@/components/SeasonSelect.tsx'
 import TeamChooser from '@/components/TeamChooser.tsx'
-import {deserializeDate, formatDateForApi, parseApiDate, serializeDate} from '@/lib/date.ts'
+import {deserializeDate, parseApiDate, serializeDate} from '@/lib/date.ts'
 import {useLocalStorageState} from '@/lib/useLocalStorageState.ts'
 import {useLatestSeasonId, useSeasonInfo} from '@/hooks/useSeasonInfo.ts'
 import {useTeamStats} from '@/hooks/useTeamStats.ts'
@@ -84,17 +84,12 @@ export default function TeamStandingsTable() {
     const minDate = selectedSeason ? parseApiDate(selectedSeason.startDate) : undefined
     const maxDate = selectedSeason ? parseApiDate(selectedSeason.endDate) : undefined
 
-    // when the selected season changes, pull the picked date back inside the new season's span.
+    // when the selected season changes, default the picked date to the end of the new season.
     // Adjusted during render (React's recommended way to derive state from a changing value).
     const [clampedSeasonId, setClampedSeasonId] = React.useState<number | null>(null)
     if (selectedSeason && selectedSeason.seasonId !== clampedSeasonId) {
         setClampedSeasonId(selectedSeason.seasonId)
-        const dayKey = formatDateForApi(date)
-        if (dayKey < selectedSeason.startDate) {
-            setDate(parseApiDate(selectedSeason.startDate))
-        } else if (dayKey > selectedSeason.endDate) {
-            setDate(parseApiDate(selectedSeason.endDate))
-        }
+        setDate(parseApiDate(selectedSeason.endDate))
     }
 
     const handleDateSelect = (selected: Date | undefined) => {
