@@ -500,7 +500,10 @@ export default function TeamStandingsChart() {
                             tickMargin={8}
                             domain={([dataMin, dataMax]: [number, number]) => {
                                 const padding = Math.max((dataMax - dataMin) * 0.1, 1)
-                                return [Math.floor(dataMin - padding), Math.ceil(dataMax + padding)]
+                                // points are never negative, so the axis shouldn't dip below zero just
+                                // to pad the bottom of the chart; the top tracks the data exactly, with
+                                // no headroom padding above the current max
+                                return [Math.max(0, Math.floor(dataMin - padding)), dataMax]
                             }}
                             label={{value: 'Points', angle: -90, position: 'insideLeft'}}
                         />
