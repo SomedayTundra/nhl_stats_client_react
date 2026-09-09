@@ -26,7 +26,7 @@ const NavBar = () => {
                             <Link className={inactiveClass} activeProps={{className: activeClass}} to="/nhl_standings">Table</Link>
                             <Link className={inactiveClass} activeProps={{className: activeClass}} to="/nhl_stats_chart">Chart</Link>
                             <Link className={inactiveClass} activeProps={{className: activeClass}} to="/league_shape_quiz">Quiz</Link>
-                            <ReactQueryDevtools/>
+                            {import.meta.env.DEV && <ReactQueryDevtools/>}
                         </div>
                     </div>
                 </div>

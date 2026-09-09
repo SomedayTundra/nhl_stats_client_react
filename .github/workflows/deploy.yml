@@ -1,0 +1,59 @@
+# Builds the SPA and publishes it to S3 + CloudFront.
+#
+# One-time setup before this runs (see the deploy notes):
+#   Repository variables:
+#     DEPLOY_ENABLED               = "true"   (gate; the job is skipped until this is set)
+#     S3_BUCKET                    = somedaytundra.com
+#     CLOUDFRONT_DISTRIBUTION_ID   = E...
+#     VITE_API_BASE_URL            = https://api.somedaytundra.com/api   (optional; .env.production is the default)
+#   Repository secret:
+#     AWS_ROLE_ARN                 = arn:aws:iam::<acct>:role/<github-oidc-deploy-role>
+#   The IAM role trusts this repo via the GitHub OIDC provider and allows
+#   s3:PutObject/DeleteObject/ListBucket on the bucket + cloudfront:CreateInvalidation.
+
+name: Deploy client
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-client
+  cancel-in-progress: true
+
+permissions:
+  id-token: write   # mint the OIDC token for AWS
+  contents: read
+
+jobs:
+  deploy:
+    if: ${{ vars.DEPLOY_ENABLED == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run build
+        env:
+          VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Sync to S3
+        run: aws s3 sync dist/ "s3://${{ vars.S3_BUCKET }}" --delete
+
+      - name: Invalidate CloudFront
+        run: >
+          aws cloudfront create-invalidation
+          --distribution-id "${{ vars.CLOUDFRONT_DISTRIBUTION_ID }}"
+          --paths '/*'
