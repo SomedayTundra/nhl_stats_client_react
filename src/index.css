@@ -97,9 +97,11 @@
     --league-board-text-conference: #ffffff;
     --league-board-text-division: #B0CCFF;
 
-    --unplaced-team-bucket-bg-dark: #614E26;
-    --unplaced-team-bucket-bg-light: #FFEEC9;
-    --unplaced-team-bucket-text-color: #FFF0CF;
+    /* the bucket now wears the navbar palette: navbar-bg fill, navbar-fg (dark blue) text.
+       -bg-light is the drag-over highlight, kept a shade lighter than the base fill. */
+    --unplaced-team-bucket-bg-dark: var(--navbar-bg);
+    --unplaced-team-bucket-bg-light: #D9E6FF;
+    --unplaced-team-bucket-text-color: var(--navbar-fg);
 
     --code-bg: #f4f3ec;
     --shadow: rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
@@ -177,7 +179,12 @@ p {
     margin: 0 0 clamp(0.15rem, 0.8cqh, 0.5rem) 0;
     border-top: clamp(0.15rem, 1cqh, 0.5rem) solid var(--league-board-bg-dark);
     border-left: clamp(0.15rem, 1cqh, 0.5rem) solid var(--league-board-bg-dark);
-    border-radius: 0.75rem;
+    /* dark fill so the pixels the rounded-corner clip carves out of the header read dark, not
+       white; the scrollable content area below paints itself white on top of this */
+    background: var(--league-board-bg-dark);
+    /* top-left and bottom-right rounded; top-right square (so the league-ref-header's upper-right
+       corner, which this overflow:hidden box clips, is square too) and bottom-left square */
+    border-radius: 0.75rem 0 0.75rem 0;
     overflow: hidden;
     font-weight: bold;
 }
@@ -199,6 +206,8 @@ p {
     display: flex;
     flex-direction: column;
     gap: 2rem;
+    /* the division drop-target areas are white */
+    background: var(--bg);
     color: #333;
     /* the board content scales to fit via cqh units, but once enough divisions/rows stack up their
        clamped min-heights can still exceed the panel - fall back to scrolling instead of clipping */
@@ -233,7 +242,7 @@ p {
 }
 
 .division-name-row {
-    background: linear-gradient(var(--league-board-bg-dark) 50%, var(--league-board-bg-light));
+    background: var(--league-board-bg-dark);
     border-right: clamp(0.15rem, 1cqh, 0.5rem) solid var(--league-board-bg-dark);
     color: var(--league-board-text-division);
     text-align: start;
@@ -248,7 +257,7 @@ p {
     font-weight: bold;
     border: clamp(0.15rem, 1cqh, 0.5rem) solid var(--unplaced-team-bucket-bg-dark);
     background: var(--unplaced-team-bucket-bg-dark);
-    border-radius: 0.75rem;
+    border-radius: 0.75rem 0.75rem 0 0;
     overflow: hidden;
     height: 100%;
 
@@ -257,16 +266,30 @@ p {
     }
 }
 
+/* header + scoreboard share one dark band */
+.unplaced-team-bucket-heading {
+    width: 100%;
+    background: var(--unplaced-team-bucket-bg-dark);
+    color: var(--unplaced-team-bucket-text-color);
+}
+
 .unplaced-team-bucket-header {
     color: var(--unplaced-team-bucket-text-color);
-    background: var(--unplaced-team-bucket-bg-dark);
     padding: clamp(0.1rem, 1cqh, 0.4rem) 0;
     width: 100%;
     font-size: clamp(0.75rem, 3cqh, 1rem);
-    border-bottom: 2px solid var(--unplaced-team-bucket-text-color);
     display: flex;
     justify-content: center;
     align-items: center;
+}
+
+.unplaced-team-bucket-scoreboard {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0 0 clamp(0.15rem, 1.2cqh, 0.5rem);
+    font-size: clamp(0.7rem, 2.6cqh, 0.95rem);
+    font-weight: normal;
 }
 
 .unplaced-team-bucket-drop-zone {
@@ -284,6 +307,46 @@ p {
 
 .unplaced-team-bucket-drop-zone-drag-over {
     background: var(--unplaced-team-bucket-bg-light);
+}
+
+/* end-of-round results, shown below the header/scoreboard band in place of the drop zone.
+   cqh/cqw-based so it scales to the (1/3-width) bucket panel instead of overflowing like fixed
+   sizes would */
+.quiz-results {
+    flex: 1 1 0;
+    min-height: 0;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: clamp(0.5rem, 3cqh, 1.5rem);
+    padding: clamp(0.75rem, 5cqw, 2rem);
+    text-align: center;
+    color: var(--unplaced-team-bucket-text-color);
+    overflow-y: auto;
+}
+
+.quiz-results-title {
+    font-size: clamp(1.25rem, 9cqh, 3.5rem);
+    font-weight: bold;
+    line-height: 1.1;
+}
+
+.quiz-results-line {
+    font-size: clamp(0.75rem, 3.5cqh, 1.25rem);
+    font-weight: bold;
+}
+
+/* the round's settings, left-justified and set off from the score lines by extra top margin
+   (on top of the flex `gap`) */
+.quiz-results-details {
+    align-self: stretch;
+    margin-top: clamp(0.75rem, 4cqh, 2rem);
+    font-weight: normal;
+    text-align: left;
+    font-size: clamp(0.7rem, 3cqh, 1.1rem);
+    line-height: 1.7;
 }
 
 .team-info-card-row {

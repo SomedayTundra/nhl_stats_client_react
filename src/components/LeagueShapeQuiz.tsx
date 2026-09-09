@@ -2,14 +2,13 @@
 
 import * as React from 'react'
 import {DndContext, DragOverlay, type DragEndEvent, type DragStartEvent} from '@dnd-kit/core'
-import {UnplacedTeamBucket, UNPLACED_TEAM_BUCKET_DROPPABLE_ID} from '@/components/UnplacedTeamBucket.tsx'
+import {UnplacedTeamBucket, UNPLACED_TEAM_BUCKET_DROPPABLE_ID, type QuizResultsSummary} from '@/components/UnplacedTeamBucket.tsx'
 import {LeagueBoard, divisionDroppableId} from '@/components/LeagueBoard.tsx'
 import {TeamInfoCardView} from '@/components/TeamInfoCard.tsx'
 import QuizToolbar from '@/components/QuizToolbar.tsx'
-import {QuizScoreboard} from '@/components/QuizScoreboard.tsx'
 import {EraSelect} from '@/components/EraSelect.tsx'
-import {defaultSeasonOption, isSeasonOption, type SeasonOption} from '@/lib/seasonOption.ts'
-import {QuizResultsOverlay} from '@/components/QuizResultsOverlay.tsx'
+import {defaultSeasonOption, getSeasonEntry, isSeasonOption, seasonOptions, type SeasonOption} from '@/lib/seasonOption.ts'
+import {teamCountForFraction, type TeamCountFraction} from '@/lib/quizTeamCount.ts'
 import type {TeamInfo} from '@/state/types'
 import {useLocalStorageState} from '@/lib/useLocalStorageState.ts'
 import {useTeamInfo} from '@/hooks/useTeamInfo.ts'
@@ -21,6 +20,10 @@ function pickRandomTeams(allTeams: TeamInfo[], count: number): TeamInfo[] {
         [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
     }
     return shuffled.slice(0, count)
+}
+
+function randomOf<T>(items: readonly T[]): T {
+    return items[Math.floor(Math.random() * items.length)]
 }
 
 export default function LeagueShapeQuiz() {
@@ -44,28 +47,65 @@ export default function LeagueShapeQuiz() {
 
     const [isRunning, setIsRunning] = React.useState(false)
 
-    const [showWinOverlay, setShowWinOverlay] = React.useState(false)
+    // a frozen snapshot of the round that just finished; while set, it's what the
+    // UnplacedTeamBucket shows instead of its header + drop zone. Snapshotting (rather than
+    // reading live state) is what lets it stay put while the user fiddles with the era /
+    // team-count / show-names controls afterwards - only the next "Go!" clears it.
+    const [completedRound, setCompletedRound] = React.useState<QuizResultsSummary | null>(null)
 
     // how many teams the current/most recently finished round started with - used for the win
     // screen's "you correctly sorted X teams" summary, since that's a round-scoped fact rather
     // than something derivable from the (ongoing) correct/incorrect guess counters
     const [roundTeamCount, setRoundTeamCount] = React.useState(0)
 
+    // set by "Randomize & Go": the toolbar-rolled team-count fraction, held until the newly-rolled
+    // era's team list finishes loading (see the effect below), then consumed to start the round
+    const [pendingRandomFraction, setPendingRandomFraction] = React.useState<TeamCountFraction | null>(null)
+
     // once every team the round started with has been correctly placed, the bucket empties out -
-    // end the round (re-enable Go) and celebrate
+    // end the round (re-enable Go) and snapshot the result for the bucket to display
     React.useEffect(() => {
         if (isRunning && unplacedAbbrevs.size === 0) {
             setIsRunning(false)
-            setShowWinOverlay(true)
+            setCompletedRound({
+                teamsSorted: roundTeamCount,
+                correctGuesses,
+                incorrectGuesses,
+                era: getSeasonEntry(season)?.name ?? season,
+                totalTeams: teams?.length ?? 0,
+                showTeamNames,
+            })
         }
-    }, [isRunning, unplacedAbbrevs])
+    }, [isRunning, unplacedAbbrevs, roundTeamCount, correctGuesses, incorrectGuesses, season, teams, showTeamNames])
 
-    const handleDismissWinOverlay = () => setShowWinOverlay(false)
+    // "Randomize & Go" rolls the era right here, but a round can't be built until that era's team
+    // list has loaded. Once it's in, start the round with the fraction the toolbar rolled; a load
+    // failure just drops the pending request. (Round-start body mirrors handleGo.)
+    React.useEffect(() => {
+        if (pendingRandomFraction === null) return
+        if (error) {
+            setPendingRandomFraction(null)
+            return
+        }
+        if (!teams || teams.length === 0) return
+
+        const teamCount = teamCountForFraction(pendingRandomFraction, teams.length)
+        const chosenTeams = pickRandomTeams(teams, teamCount)
+        setPendingRandomFraction(null)
+        setUnplacedAbbrevs(new Set(chosenTeams.map((team) => team.teamAbbrev)))
+        setRoundTeamCount(teamCount)
+        setCorrectGuesses(0)
+        setIncorrectGuesses(0)
+        setCompletedRound(null)
+        setIsRunning(true)
+    }, [pendingRandomFraction, teams, error])
 
     // switching seasons swaps out the whole team list, so any in-progress round (built from the
     // previous season's teams) no longer makes sense - clear it and require a fresh "Go!". Adjusted
     // during render (React's recommended way to reset state when a prop-like value changes) rather
-    // than in an effect, so it doesn't cost an extra render pass.
+    // than in an effect, so it doesn't cost an extra render pass. `completedRound` is deliberately
+    // left alone: a finished round's results stay on screen until the next "Go!", changing era or
+    // not.
     const [prevSeason, setPrevSeason] = React.useState(season)
     if (season !== prevSeason) {
         setPrevSeason(season)
@@ -123,7 +163,16 @@ export default function LeagueShapeQuiz() {
         setRoundTeamCount(teamCount)
         setCorrectGuesses(0)
         setIncorrectGuesses(0)
+        setCompletedRound(null)
         setIsRunning(true)
+    }
+
+    // the toolbar has already rolled (and applied) the team-count fraction; roll the era +
+    // show-names here, then let the effect above launch the round once the new era loads
+    function handleRandomizeAndGo(fraction: TeamCountFraction) {
+        setSeason(randomOf(seasonOptions))
+        setShowTeamNames(Math.random() < 0.5)
+        setPendingRandomFraction(fraction)
     }
 
     return (
@@ -133,27 +182,26 @@ export default function LeagueShapeQuiz() {
                     <QuizToolbar
                         showTeamNames={showTeamNames}
                         onShowTeamNamesChange={setShowTeamNames}
+                        onRandomizeAndGo={handleRandomizeAndGo}
                         onGo={handleGo}
                         totalTeams={teams?.length ?? 0}
                     />
                 </div>
-                <div className='w-2/3 mx-4 flex flex-row items-center justify-between'>
+                <div className='w-2/3 mx-4 flex flex-row items-center'>
                     <EraSelect season={season} onSeasonChange={setSeason}/>
-                    <QuizScoreboard correctGuesses={correctGuesses} incorrectGuesses={incorrectGuesses}/>
                 </div>
             </div>
-            {showWinOverlay && (
-                <QuizResultsOverlay
-                    teamsSorted={roundTeamCount}
-                    correctGuesses={correctGuesses}
-                    incorrectGuesses={incorrectGuesses}
-                    onDismiss={handleDismissWinOverlay}
-                />
-            )}
             <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
                 <div className='flex flex-row flex-1 min-h-0'>
                     <div className='w-1/3 align-top justify-end mx-4 min-h-0 overflow-hidden @container-[size]'>
-                        <UnplacedTeamBucket teams={teams ?? []} unplacedAbbrevs={unplacedAbbrevs} showTeamNames={showTeamNames}/>
+                        <UnplacedTeamBucket
+                            teams={teams ?? []}
+                            unplacedAbbrevs={unplacedAbbrevs}
+                            showTeamNames={showTeamNames}
+                            correctGuesses={correctGuesses}
+                            incorrectGuesses={incorrectGuesses}
+                            results={completedRound}
+                        />
                     </div>
                     <div className='w-2/3 align-top justify-start mx-4 min-h-0 overflow-hidden @container-[size]'>
                         <LeagueBoard teams={teams ?? []} unplacedAbbrevs={unplacedAbbrevs} showTeamNames={showTeamNames} isPending={isPending} error={error}/>
