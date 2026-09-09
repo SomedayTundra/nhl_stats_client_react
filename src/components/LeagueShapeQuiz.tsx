@@ -60,7 +60,7 @@ export default function LeagueShapeQuiz() {
         }
     }, [isRunning, unplacedAbbrevs])
 
-    const handleDismissWinOverlay = React.useCallback(() => setShowWinOverlay(false), [])
+    const handleDismissWinOverlay = () => setShowWinOverlay(false)
 
     // switching seasons swaps out the whole team list, so any in-progress round (built from the
     // previous season's teams) no longer makes sense - clear it and require a fresh "Go!". Adjusted

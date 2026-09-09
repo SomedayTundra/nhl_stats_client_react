@@ -1,5 +1,4 @@
 import * as React from 'react'
-import {useMemo} from 'react'
 import 'react-calendar/dist/Calendar.css'
 import type {TeamStatEntry} from '@/state/types'
 import {DateContext} from '@/state/DateContext.tsx'
@@ -121,9 +120,8 @@ export default function TeamStandingsTable() {
 
     // this method filters the team stats down to the teams currently selected in the TeamChooser;
     // an empty selection is handled separately, in `tableBody`, before this is ever used
-    const filteredTeamStats = useMemo(
-        () => (teamStats ?? EMPTY_DATA).filter((teamStat) => selectedTeams.includes(teamStat.teamAbbrev)),
-        [teamStats, selectedTeams]
+    const filteredTeamStats = (teamStats ?? EMPTY_DATA).filter((teamStat) =>
+        selectedTeams.includes(teamStat.teamAbbrev)
     )
 
     const table = useTable({

@@ -4,8 +4,15 @@ import react from '@vitejs/plugin-react'
 import path from 'node:path'
 
 // https://vite.dev/config/
-export default defineConfig({
-  plugins: [react(),tailwindcss()],
+export default defineConfig(({ mode }) => ({
+  plugins: [
+    react({
+      babel: {
+        plugins: [['babel-plugin-react-compiler', {}]]
+      }
+    }),
+    tailwindcss()
+  ],
   server: {
     port: 5173,
     strictPort: true
@@ -17,6 +24,7 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
-    sourcemap: true
+    // ship source maps for non-production builds only; keep them out of the deployed bundle
+    sourcemap: mode !== 'production'
   }
-})
+}))

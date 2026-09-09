@@ -1,6 +1,6 @@
 'use client'
 
-import {useEffect, useMemo, useRef} from 'react'
+import {useEffect, useRef} from 'react'
 
 import {Combobox, ComboboxContent, ComboboxEmpty, ComboboxInput, ComboboxItem, ComboboxList} from '@/components/ui/combobox'
 import {FieldLabel} from '@/components/ui/field.tsx'
@@ -24,22 +24,20 @@ export function SeasonSelect({value, onChange}: SeasonSelectProps) {
     // upcoming season isn't listed until the calendar date reaches its startDate.
     const latestSeasonId = useLatestSeasonId()
 
-    const {ids, labels, seasonIdByLabel, labelBySeasonId} = useMemo(() => {
-        // before the lookup resolves, fall back to just the selected id so the control still
-        // shows the right thing
-        const ids = latestSeasonId
-            ? buildSeasonIds(latestSeasonId)
-            : (value ? [value] : [])
+    // before the lookup resolves, fall back to just the selected id so the control still shows the
+    // right thing
+    const ids = latestSeasonId
+        ? buildSeasonIds(latestSeasonId)
+        : (value ? [value] : [])
 
-        const seasonIdByLabel = new Map<string, string>()
-        const labelBySeasonId = new Map<string, string>()
-        for (const id of ids) {
-            const label = seasonIdToLabel(id)
-            seasonIdByLabel.set(label, id)
-            labelBySeasonId.set(id, label)
-        }
-        return {ids, labels: ids.map(seasonIdToLabel), seasonIdByLabel, labelBySeasonId}
-    }, [latestSeasonId, value])
+    const seasonIdByLabel = new Map<string, string>()
+    const labelBySeasonId = new Map<string, string>()
+    for (const id of ids) {
+        const label = seasonIdToLabel(id)
+        seasonIdByLabel.set(label, id)
+        labelBySeasonId.set(id, label)
+    }
+    const labels = ids.map(seasonIdToLabel)
 
     const handleInputValueChange = (label: string) => {
         const id = seasonIdByLabel.get(label)

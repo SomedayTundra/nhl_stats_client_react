@@ -76,7 +76,7 @@ export default function TeamChooser({season, selected, onChange}: TeamChooserPro
         setOpen(nextOpen)
     }
 
-    const draftSelectedSet = React.useMemo(() => new Set(draftSelected), [draftSelected])
+    const draftSelectedSet = new Set(draftSelected)
 
     function toggleTeam(abbrev: string) {
         if (draftSelectedSet.has(abbrev)) {
