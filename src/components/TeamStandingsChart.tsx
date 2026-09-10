@@ -32,6 +32,10 @@ const lineTypes = [
 // used to size the line-type combo box to exactly fit its longest choice, whichever one that is
 const longestLineType = lineTypes.reduce((longest, type) => (type.length > longest.length ? type : longest), '')
 
+// a single wheel flick (especially on a trackpad) fires a burst of events; only step one entry
+// per this window so one gesture doesn't skip across several line types
+const WHEEL_STEP_COOLDOWN_MS = 120
+
 type LineType = typeof lineTypes[number]
 
 function isLineType(value: string): value is LineType {
@@ -302,6 +306,52 @@ export default function TeamStandingsChart() {
         return () => observer.disconnect()
     }, [])
 
+    // mouse wheel over the (closed) line-type combo box steps through lineTypes, mirroring
+    // SeasonSelect/EraSelect. Latest-value refs so the native listener can be bound once instead of
+    // re-subscribed on every step (setLineType is React-stable, so it needs no ref).
+    const lineTypeWrapperRef = React.useRef<HTMLDivElement | null>(null)
+    const lineTypeOpenRef = React.useRef(false)
+    const lineTypeRef = React.useRef(lineType)
+    const lineTypeLastStepAtRef = React.useRef(0)
+    React.useEffect(() => {
+        lineTypeRef.current = lineType
+    })
+
+    // native, non-passive wheel listener: React's synthetic onWheel is passive so it can't
+    // preventDefault the page scroll. Acts only while the dropdown is closed and the pointer is
+    // over the control - wheel down picks the next entry in the list, wheel up the previous.
+    React.useEffect(() => {
+        const wrapper = lineTypeWrapperRef.current
+        if (wrapper === null) {
+            return
+        }
+
+        const handleWheel = (event: WheelEvent) => {
+            if (lineTypeOpenRef.current || Math.abs(event.deltaY) < 1) {
+                return
+            }
+            event.preventDefault()
+
+            if (event.timeStamp - lineTypeLastStepAtRef.current < WHEEL_STEP_COOLDOWN_MS) {
+                return
+            }
+
+            const currentIndex = lineTypes.indexOf(lineTypeRef.current)
+            if (currentIndex === -1) {
+                return
+            }
+            const step = event.deltaY > 0 ? 1 : -1
+            const nextIndex = Math.min(Math.max(currentIndex + step, 0), lineTypes.length - 1)
+            if (nextIndex !== currentIndex) {
+                lineTypeLastStepAtRef.current = event.timeStamp
+                setLineType(lineTypes[nextIndex])
+            }
+        }
+
+        wrapper.addEventListener('wheel', handleWheel, {passive: false})
+        return () => wrapper.removeEventListener('wheel', handleWheel)
+    }, [setLineType])
+
     // when the selected season changes, snap the date range back inside it: keep the existing
     // from/to only if they already sit within the new season (and stay ordered), else fall back to
     // the whole season. Adjusted during render, React's recommended derive-from-changing-value way.
@@ -561,8 +611,16 @@ export default function TeamStandingsChart() {
                         is fixed (sized to "monotone"), so unlike EraSelect/SeasonSelect there's no
                         variable-width neighbor that could shift it */}
                     <TooltipTrigger asChild>
-                        <div className="flex">
-                            <Combobox items={lineTypes} value={lineType} onInputValueChange={handleLineTypeChange} autoHighlight>
+                        <div ref={lineTypeWrapperRef} className="flex">
+                            <Combobox
+                                items={lineTypes}
+                                value={lineType}
+                                onInputValueChange={handleLineTypeChange}
+                                onOpenChange={(open) => {
+                                    lineTypeOpenRef.current = open
+                                }}
+                                autoHighlight
+                            >
                                 <ComboboxInput
                                     placeholder="Select a line type"
                                     // the input is flex-1 with a 0% flex-basis, so a plain min-width can't win
