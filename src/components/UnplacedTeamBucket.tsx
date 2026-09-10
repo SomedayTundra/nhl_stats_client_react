@@ -51,10 +51,7 @@ export function UnplacedTeamBucket({teams, unplacedAbbrevs, showTeamNames, corre
                         ref={setNodeRef}
                         className={`unplaced-team-bucket-drop-zone flex-1 min-h-0${isOver ? ' unplaced-team-bucket-drop-zone-drag-over' : ''}`}
                     >
-                        {unplacedTeams.length === 0
-                            ? <p>...no teams in the bucket...</p>
-                            : unplacedTeams.map((team) => <TeamInfoCard key={team.teamAbbrev} info={team} showTeamNames={showTeamNames}/>)
-                        }
+                        {unplacedTeams.map((team) => <TeamInfoCard key={team.teamAbbrev} info={team} showTeamNames={showTeamNames}/>)}
                     </div>
                 }
             </div>
