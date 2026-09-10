@@ -431,14 +431,17 @@ export default function TeamStandingsChart() {
         setDate: handleToDateSelect
     };
 
-    const {data: teamStats, isPending, error} = useTeamStats(fromDate, toDate)
+    const {data: teamStats, isPending, isPlaceholderData, error} = useTeamStats(fromDate, toDate)
 
     // the controls below stay mounted regardless of loading/error/selection state, so TeamChooser
     // never remounts (and loses its committed selection) on refetch; only the chart area swaps out
     let chartArea: React.ReactNode
     if (selectedTeams.length === 0) {
         chartArea = <p className="p-4 text-center">No teams selected</p>
-    } else if (isPending) {
+    } else if (isPending || isPlaceholderData) {
+        // useTeamStats keeps the previous date range's data as placeholderData so React Query has
+        // something to show during a refetch; for the chart we'd rather blank it out immediately and
+        // show "Loading..." than leave stale points on screen while the new range loads
         chartArea = <p className="p-4 text-center">Loading...</p>
     } else if (error) {
         chartArea = <p className="p-4 text-center">An error occurred: {error.message}</p>
