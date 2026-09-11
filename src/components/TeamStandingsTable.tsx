@@ -43,7 +43,7 @@ const columns = helper.columns([
         meta: {align: 'left', cellClassName: 'flex items-center'},
         cell: (info) => (
             <>
-                <img className='h-[48px] w-[48px] align-middle justify-center' src={getTeamLogoUrl(info.row.original.logo)} alt='logo'/>
+                <img className='h-[48px] w-[48px] align-middle justify-center' src={getTeamLogoUrl(info.row.original.logo, '2x')} alt='logo'/>
                 <p className={CLASS_TD}>{info.getValue()}</p>
             </>
         ),

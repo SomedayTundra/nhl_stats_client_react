@@ -11,7 +11,7 @@ type TeamInfoCardProps = {
 export function TeamInfoCardView({info, showTeamNames = true, dragOverlay = false}: TeamInfoCardProps & {dragOverlay?: boolean}) {
     const verbose = false;
 
-    const logoURL = getTeamLogoUrl(info.logo)
+    const logoURL = getTeamLogoUrl(info.logo, '2x')
 
     return (
         <div className={dragOverlay ? 'team-info-card team-info-card-drag-overlay' : 'team-info-card'}>
