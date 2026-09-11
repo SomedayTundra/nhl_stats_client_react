@@ -509,7 +509,7 @@ export default function TeamStandingsChart() {
                     const logo = (
                         <image
                             key={key}
-                            href={getTeamLogoUrl(logoFilename)}
+                            href={getTeamLogoUrl(logoFilename, '2x')}
                             x={(cx ?? 0) - logoSize / 2 - offset * logoStackSpacing}
                             y={(cy ?? 0) - logoSize / 2}
                             width={logoSize}
