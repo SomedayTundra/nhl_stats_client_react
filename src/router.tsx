@@ -3,6 +3,7 @@ import App from './App.tsx'
 import NavBar from './components/NavBar.tsx'
 import TeamStandingsTable from '@/components/TeamStandingsTable.tsx'
 import TeamStandingsChart from '@/components/TeamStandingsChart.tsx'
+import Playoffs from '@/components/Playoffs.tsx'
 import LeagueShapeQuiz from '@/components/LeagueShapeQuiz.tsx'
 import NotFound from '@/components/NotFound.tsx'
 
@@ -36,6 +37,12 @@ const chartRoute = createRoute({
     component: TeamStandingsChart,
 })
 
+const playoffsRoute = createRoute({
+    path: '/nhl_playoffs',
+    getParentRoute: () => navBarRoute,
+    component: Playoffs,
+})
+
 const quizRoute = createRoute({
     path: '/league_shape_quiz',
     getParentRoute: () => navBarRoute,
@@ -43,7 +50,7 @@ const quizRoute = createRoute({
 })
 
 const routeTree = rootRoute.addChildren([
-    navBarRoute.addChildren([indexRoute, standingsRoute, chartRoute, quizRoute]),
+    navBarRoute.addChildren([indexRoute, standingsRoute, chartRoute, playoffsRoute, quizRoute]),
 ])
 
 export const router = createRouter({

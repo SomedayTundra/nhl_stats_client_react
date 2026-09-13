@@ -413,3 +413,348 @@ p {
     box-shadow: var(--shadow);
     cursor: grabbing;
 }
+
+/* ---- Playoffs page: the bracket -------------------------------------------------------------
+   Rounds run inward from both edges into the Stanley Cup panel in the middle. All the connector
+   geometry rests on one fact: a .bracket-pair holding two slots with `justify-content:
+   space-around` puts those slots' midpoints at exactly 25% and 75% of the pair's height, so the
+   spine joining them is `top: 25%; height: 50%` with nothing to measure. Each pair being a
+   `flex: 1` child of its column keeps that true at every round, which is also why the next
+   round's slot lands exactly opposite the spine that feeds it. */
+
+.bracket {
+    --bracket-gap: 0.875rem;
+    --bracket-stub: calc(var(--bracket-gap) / 2);
+    --bracket-rule: #a9bfe4;
+    --bracket-hairline: #e2e9f6;
+    --bracket-ink: var(--league-board-bg-dark);
+    --bracket-frost: #eaf1ff;
+    --bracket-silver: #ccd5e4;
+    --bracket-dim: #77839c;
+    /* a series' two team rows, and the Final panel's two finalist rows, are all pinned to this -
+       see .bracket-team and .bracket-final-team. Also mirrored as a plain number in
+       PlayoffBracket.tsx (BRACKET_ROW_HEIGHT_REM), which needs it to size the grid's row track. */
+    --bracket-row-height: 2.8rem;
+    /* every logo and team name in the bracket - any round, and the Final - share these two, so
+       they're never something to keep in sync by hand the way --bracket-row-height is */
+    --bracket-logo-size: 2rem;
+    --bracket-name-size: 0.82rem;
+
+    /* grid-template-columns and -rows are set inline: column count varies by era (two rounds for
+       the Original Six brackets, four since 1982), and the row track needs the tallest round's
+       actual slot count (computed from data) to size correctly - see PlayoffBracket.tsx */
+    display: grid;
+    height: 100%;
+    column-gap: var(--bracket-gap);
+    row-gap: 0.6rem;
+    padding: 0.9rem 0.75rem;
+    box-sizing: border-box;
+    text-align: left;
+    color: var(--navbar-fg);
+}
+
+/* the panel wrapping the bracket (or the message standing in for it, while loading/empty) keeps a
+   consistent footprint so the page doesn't jump around - and scrolls internally on a bracket tall
+   enough to exceed it, rather than letting rows shrink below --bracket-row-height to fit */
+.bracket-panel,
+.bracket-message {
+    height: clamp(26rem, 58vh, 36rem);
+}
+
+.bracket-panel {
+    overflow: auto;
+}
+
+.bracket-message {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.95rem;
+    color: var(--muted-foreground);
+}
+
+/* round names come from the payload itself, so each era gets its own vocabulary - "Quarterfinals"
+   in 1970, "Division Semifinals" in 1982, "1st Round" today */
+.bracket-round-label {
+    margin: 0;
+    padding-bottom: 0.35rem;
+    border-bottom: 1px solid var(--bracket-hairline);
+    font-size: 0.75rem;
+    font-weight: 500;
+    line-height: 1.25;
+    text-align: center;
+    color: #4b5f86;
+    overflow-wrap: break-word;
+}
+
+.bracket-round-label[data-final='true'] {
+    color: var(--bracket-ink);
+    font-weight: 700;
+    border-bottom-color: var(--bracket-rule);
+}
+
+.bracket-column {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+}
+
+.bracket-pair {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+}
+
+.bracket-series {
+    position: relative;
+    background: #fff;
+    border: 1px solid var(--bracket-hairline);
+    border-radius: 0.375rem;
+    overflow: hidden;
+}
+
+/* cards gain weight as they near the Cup: depth 0 is the round that feeds the final */
+.bracket-series[data-depth='0'] {
+    border-color: var(--bracket-rule);
+    background: #f7faff;
+}
+
+.bracket-team {
+    height: var(--bracket-row-height);
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.25rem 0.3rem;
+    min-width: 0;
+}
+
+.bracket-team + .bracket-team {
+    border-top: 1px solid var(--bracket-hairline);
+}
+
+.bracket-team img {
+    width: var(--bracket-logo-size);
+    height: var(--bracket-logo-size);
+    object-fit: contain;
+    flex: none;
+}
+
+/* every team reads at full strength, winner or not: same weight, same colour, same logo. The
+   filled chip on the winner's record is the only thing that marks who advanced. */
+.bracket-team-name {
+    flex: 1;
+    min-width: 0;
+    font-size: var(--bracket-name-size);
+    line-height: 1.15;
+    font-weight: 600;
+    color: var(--navbar-fg);
+    /* two lines fits the two-word names ("Golden Knights", "Maple Leafs") outright; break-word is
+       the backstop for the long single-word ones ("Hurricanes") in a narrow first-round column,
+       so a name that still doesn't fit wraps instead of being clipped mid-letter */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    overflow-wrap: break-word;
+}
+
+.bracket-record {
+    flex: none;
+    font-size: 0.66rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.bracket-team[data-outcome='won'] .bracket-record {
+    background: var(--bracket-ink);
+    color: #fff;
+    border-radius: 999px;
+    padding: 0.05rem 0.3rem;
+}
+
+/* the right half is a true mirror: logo to the outside, record toward the middle */
+[data-side='right'] .bracket-team {
+    flex-direction: row-reverse;
+}
+
+[data-side='right'] .bracket-team-name {
+    text-align: right;
+}
+
+/* some 1970s and 1980s formats sent teams straight into a later round */
+.bracket-bye {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.1rem;
+    padding: 0.3rem 0.5rem;
+    border: 1px dashed var(--bracket-rule);
+    border-radius: 0.375rem;
+    background: #fbfcff;
+}
+
+.bracket-bye-team {
+    font-size: var(--bracket-name-size);
+    line-height: 1.15;
+    font-weight: 600;
+    color: var(--navbar-fg);
+}
+
+.bracket-bye-note {
+    font-size: 0.62rem;
+    color: var(--bracket-dim);
+}
+
+[data-side='right'] .bracket-bye {
+    align-items: flex-end;
+}
+
+/* holds a bye's place in the rounds further out, so the slots above and below it stay lined up
+   with the spines that connect them */
+.bracket-empty {
+    visibility: hidden;
+}
+
+/* the short line out of each slot toward the next round */
+.bracket-slot::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    width: var(--bracket-stub);
+    border-top: 2px solid var(--bracket-rule);
+}
+
+[data-side='left'] .bracket-slot::after {
+    right: calc(-1 * var(--bracket-stub));
+}
+
+[data-side='right'] .bracket-slot::after {
+    left: calc(-1 * var(--bracket-stub));
+}
+
+/* the spine joining a pair's two slots, plus the line carrying it into the next column */
+.bracket-pair[data-join='pair']::before {
+    content: '';
+    position: absolute;
+    top: 25%;
+    height: 50%;
+    border-left: 2px solid var(--bracket-rule);
+}
+
+.bracket-pair[data-join='pair']::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    width: var(--bracket-stub);
+    border-top: 2px solid var(--bracket-rule);
+}
+
+[data-side='left'] .bracket-pair[data-join='pair']::before {
+    right: calc(-1 * var(--bracket-stub));
+}
+
+[data-side='left'] .bracket-pair[data-join='pair']::after {
+    right: calc(-1 * var(--bracket-gap));
+}
+
+[data-side='right'] .bracket-pair[data-join='pair']::before {
+    left: calc(-1 * var(--bracket-stub));
+}
+
+[data-side='right'] .bracket-pair[data-join='pair']::after {
+    left: calc(-1 * var(--bracket-gap));
+}
+
+/* the innermost column has no spine to join - it runs straight into the Cup panel */
+.bracket-pair[data-join='final'] .bracket-slot::after {
+    width: var(--bracket-gap);
+}
+
+[data-side='left'] .bracket-pair[data-join='final'] .bracket-slot::after {
+    right: calc(-1 * var(--bracket-gap));
+}
+
+[data-side='right'] .bracket-pair[data-join='final'] .bracket-slot::after {
+    left: calc(-1 * var(--bracket-gap));
+}
+
+.bracket-final {
+    align-self: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.875rem 0.75rem 0.75rem;
+    border-radius: 0.75rem;
+    background: var(--bracket-ink);
+    box-shadow: 0 16px 32px -20px rgba(33, 43, 63, 0.85);
+}
+
+.bracket-cup {
+    width: 1.9rem;
+    height: 2.35rem;
+    flex: none;
+    fill: var(--bracket-silver);
+}
+
+/* the NHL's Stanley Cup shield, straight from the payload. Its artwork is already a dark shield
+   with a silver Cup, so it sits on the navy panel without any treatment of ours. */
+.bracket-cup-logo {
+    height: 5rem;
+    width: auto;
+    flex: none;
+}
+
+/* the finalists sit on pale tiles rather than straight on the navy, so the crests (which are
+   drawn for light backgrounds) keep their contrast */
+.bracket-final-team {
+    height: var(--bracket-row-height);
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 0.5rem;
+    border-radius: 0.5rem;
+    background: var(--bracket-frost);
+    color: var(--navbar-fg);
+}
+
+/* both finalists get the same tile; the silver ring is what marks the champion */
+.bracket-final-team[data-outcome='won'] {
+    box-shadow: inset 0 0 0 2px var(--bracket-silver);
+}
+
+.bracket-final-team img {
+    width: var(--bracket-logo-size);
+    height: var(--bracket-logo-size);
+    object-fit: contain;
+    flex: none;
+}
+
+.bracket-final-name {
+    flex: 1;
+    min-width: 0;
+    font-size: var(--bracket-name-size);
+    font-weight: 600;
+    line-height: 1.15;
+}
+
+.bracket-final-record {
+    flex: none;
+    font-size: 0.75rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.bracket-final-result {
+    margin: 0;
+    font-size: 0.72rem;
+    text-align: center;
+    color: var(--league-board-text-division);
+}
