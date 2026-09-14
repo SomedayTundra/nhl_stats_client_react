@@ -21,7 +21,9 @@ function handleLogoError(event: React.SyntheticEvent<HTMLImageElement>, fallback
     }
 }
 
-function TeamRow({team, showRecord}: {team: BracketTeamView; showRecord: boolean}) {
+// each team always shows its own win count in this series - the winner's as a filled pill
+// (.bracket-team[data-outcome='won'] .bracket-record in index.css), the loser's as a plain digit
+function TeamRow({team}: {team: BracketTeamView}) {
     return (
         <div className='bracket-team' data-outcome={team.won ? 'won' : 'lost'}>
             <img
@@ -31,7 +33,7 @@ function TeamRow({team, showRecord}: {team: BracketTeamView; showRecord: boolean
                 onError={(event) => handleLogoError(event, team.logoFallbackUrl)}
             />
             <span className='bracket-team-name'>{team.commonName}</span>
-            {showRecord && <span className='bracket-record'>{team.wins}–{team.losses}</span>}
+            <span className='bracket-record'>{team.wins}</span>
         </div>
     )
 }
@@ -51,8 +53,8 @@ function Slot({slot, depth}: {slot: BracketSlot; depth: number}) {
     const {series} = slot
     return (
         <div className='bracket-series bracket-slot' data-depth={depth}>
-            <TeamRow team={series.top} showRecord={series.recordTeam === 'top'}/>
-            <TeamRow team={series.bottom} showRecord={series.recordTeam === 'bottom'}/>
+            <TeamRow team={series.top}/>
+            <TeamRow team={series.bottom}/>
         </div>
     )
 }
@@ -122,7 +124,8 @@ function CupMark() {
     )
 }
 
-function FinalTeam({team, showRecord}: {team: BracketTeamView; showRecord: boolean}) {
+// same rule as TeamRow: each finalist always shows its own win count, winner pilled, loser plain
+function FinalTeam({team}: {team: BracketTeamView}) {
     return (
         <div className='bracket-final-team' data-outcome={team.won ? 'won' : 'lost'}>
             <img
@@ -131,7 +134,7 @@ function FinalTeam({team, showRecord}: {team: BracketTeamView; showRecord: boole
                 onError={(event) => handleLogoError(event, team.logoFallbackUrl)}
             />
             <span className='bracket-final-name'>{team.commonName}</span>
-            {showRecord && <span className='bracket-final-record'>{team.wins}–{team.losses}</span>}
+            <span className='bracket-final-record'>{team.wins}</span>
         </div>
     )
 }
@@ -200,8 +203,8 @@ export default function PlayoffBracket({season}: PlayoffBracketProps) {
                     ) : (
                         <CupMark/>
                     )}
-                    <FinalTeam team={final.top} showRecord={final.recordTeam === 'top'}/>
-                    <FinalTeam team={final.bottom} showRecord={final.recordTeam === 'bottom'}/>
+                    <FinalTeam team={final.top}/>
+                    <FinalTeam team={final.bottom}/>
                 </div>
                 <SideColumns side={view.right} sideName='right'/>
             </div>
@@ -209,7 +212,7 @@ export default function PlayoffBracket({season}: PlayoffBracketProps) {
     }
 
     return (
-        <div className='w-9/12 border rounded-lg overflow-hidden flex flex-col'>
+        <div className='w-full border rounded-lg overflow-hidden flex flex-col'>
             <div className='relative w-full flex-1 min-h-0 bracket-panel'>
                 {content}
             </div>

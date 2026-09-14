@@ -565,17 +565,23 @@ p {
     overflow-wrap: break-word;
 }
 
+/* the eliminated team's own win count: black digit on a white pill shaped and padded exactly like
+   the navbar-blue one below, so both sit in the same footprint and every row's numbers line up -
+   the white just blends into the card's own white background, rather than announcing a pill */
 .bracket-record {
     flex: none;
     font-size: 0.66rem;
+    font-weight: 700;
     font-variant-numeric: tabular-nums;
+    color: #000;
+    background: #fff;
+    border-radius: 999px;
+    padding: 0.05rem 0.3rem;
 }
 
 .bracket-team[data-outcome='won'] .bracket-record {
-    background: var(--bracket-ink);
-    color: #fff;
-    border-radius: 999px;
-    padding: 0.05rem 0.3rem;
+    background: var(--navbar-bg);
+    color: var(--navbar-fg);
 }
 
 /* the right half is a true mirror: logo to the outside, record toward the middle */
@@ -693,20 +699,21 @@ p {
     gap: 0.5rem;
     padding: 0.875rem 0.75rem 0.75rem;
     border-radius: 0.75rem;
-    background: var(--bracket-ink);
-    box-shadow: 0 16px 32px -20px rgba(33, 43, 63, 0.85);
+    background: #fff;
+    border: 2px solid var(--bracket-ink);
+    box-shadow: 0 16px 32px -20px rgba(33, 43, 63, 0.35);
 }
 
 .bracket-cup {
     width: 1.9rem;
     height: 2.35rem;
     flex: none;
-    fill: var(--bracket-silver);
+    fill: var(--bracket-ink);
 }
 
 /* the NHL's Stanley Cup shield, straight from the payload - shown only until the Final is decided,
-   at which point .bracket-winner-logo below takes this same spot instead. Its artwork is already
-   a dark shield with a silver Cup, so it sits on the navy panel without any treatment of ours. */
+   at which point .bracket-winner-logo below takes this same spot instead. Its artwork carries its
+   own dark shield backdrop, so it reads the same regardless of what's behind it. */
 .bracket-cup-logo {
     height: 5rem;
     width: auto;
@@ -721,8 +728,7 @@ p {
     object-fit: contain;
 }
 
-/* the finalists sit on pale tiles rather than straight on the navy, so the crests (which are
-   drawn for light backgrounds) keep their contrast */
+/* a faint tint distinguishes each finalist's row from the panel's own white background */
 .bracket-final-team {
     height: var(--bracket-row-height);
     width: 100%;
@@ -756,9 +762,23 @@ p {
     line-height: 1.15;
 }
 
+/* same convention as the side rounds' .bracket-record: black digit for the runner-up, on a pill
+   shaped/padded to match the champion's navbar-blue one below so both sit in the same footprint -
+   colored to match the finalist tile (--bracket-frost), not literal white, since that's what it's
+   actually sitting on here, so the pill still doesn't announce itself */
 .bracket-final-record {
     flex: none;
     font-size: 0.75rem;
+    font-weight: 700;
     font-variant-numeric: tabular-nums;
+    color: #000;
+    background: var(--bracket-frost);
+    border-radius: 999px;
+    padding: 0.05rem 0.35rem;
+}
+
+.bracket-final-team[data-outcome='won'] .bracket-final-record {
+    background: var(--navbar-bg);
+    color: var(--navbar-fg);
 }
 
