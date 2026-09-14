@@ -10,11 +10,13 @@ export default function Playoffs() {
     const resolvedSeason = season || defaultSeason
 
     return (
-        <>
-            <div className='w-9/12 mx-auto flex flex-row items-center gap-4 py-2 top-controls-container'>
+        <div className='h-full flex flex-col'>
+            <div className='w-9/12 mx-auto flex flex-row items-center gap-4 py-2 top-controls-container shrink-0'>
                 <SeasonSelect value={resolvedSeason} onChange={setSeason}/>
             </div>
-            <PlayoffBracket season={resolvedSeason}/>
-        </>
+            <div className='flex-1 min-h-0 flex justify-center'>
+                <PlayoffBracket season={resolvedSeason}/>
+            </div>
+        </div>
     )
 }

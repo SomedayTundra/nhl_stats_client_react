@@ -456,16 +456,17 @@ p {
 /* the panel wrapping the bracket (or the message standing in for it, while loading/empty) keeps a
    consistent footprint so the page doesn't jump around - and scrolls internally on a bracket tall
    enough to exceed it, rather than letting rows shrink below --bracket-row-height to fit */
-.bracket-panel,
-.bracket-message {
-    height: clamp(26rem, 58vh, 36rem);
-}
-
+/* .bracket-panel's own height comes from its wrapper's flex-1/min-h-0 Tailwind classes in
+   PlayoffBracket.tsx (filling whatever the page has between the season picker and the footer),
+   not from a rule here - it scrolls internally only if a season's actual content still exceeds
+   that. .bracket-message fills the same box so a short "Loading..."/error/empty state still
+   occupies the full panel instead of collapsing to a line of text. */
 .bracket-panel {
     overflow: auto;
 }
 
 .bracket-message {
+    height: 100%;
     margin: 0;
     display: flex;
     align-items: center;
@@ -703,12 +704,21 @@ p {
     fill: var(--bracket-silver);
 }
 
-/* the NHL's Stanley Cup shield, straight from the payload. Its artwork is already a dark shield
-   with a silver Cup, so it sits on the navy panel without any treatment of ours. */
+/* the NHL's Stanley Cup shield, straight from the payload - shown only until the Final is decided,
+   at which point .bracket-winner-logo below takes this same spot instead. Its artwork is already
+   a dark shield with a silver Cup, so it sits on the navy panel without any treatment of ours. */
 .bracket-cup-logo {
     height: 5rem;
     width: auto;
     flex: none;
+}
+
+/* the champion's own crest, replacing the Cup shield above once the Final is decided */
+.bracket-winner-logo {
+    height: 9rem;
+    width: auto;
+    flex: none;
+    object-fit: contain;
 }
 
 /* the finalists sit on pale tiles rather than straight on the navy, so the crests (which are
@@ -752,9 +762,3 @@ p {
     font-variant-numeric: tabular-nums;
 }
 
-.bracket-final-result {
-    margin: 0;
-    font-size: 0.72rem;
-    text-align: center;
-    color: var(--league-board-text-division);
-}

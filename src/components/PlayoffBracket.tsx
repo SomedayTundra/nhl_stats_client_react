@@ -151,7 +151,6 @@ export default function PlayoffBracket({season}: PlayoffBracketProps) {
     } else {
         const {final} = view
         const champion = final.top.won ? final.top : (final.bottom.won ? final.bottom : null)
-        const leader = final.top.wins > final.bottom.wins ? final.top : final.bottom
         const columnCount = view.left.columns.length
 
         // the outermost round has the most slots (byes included, since a bye still occupies a slot
@@ -189,18 +188,20 @@ export default function PlayoffBracket({season}: PlayoffBracketProps) {
 
                 <SideColumns side={view.left} sideName='left'/>
                 <div className='bracket-final'>
-                    {view.finalLogoUrl !== ''
-                        ? <img className='bracket-cup-logo' src={view.finalLogoUrl} alt=''/>
-                        : <CupMark/>}
+                    {champion !== null ? (
+                        <img
+                            className='bracket-winner-logo'
+                            src={getTeamLogoUrl(champion.logoFilename, '2x')}
+                            alt=''
+                            onError={(event) => handleLogoError(event, champion.logoFallbackUrl)}
+                        />
+                    ) : view.finalLogoUrl !== '' ? (
+                        <img className='bracket-cup-logo' src={view.finalLogoUrl} alt=''/>
+                    ) : (
+                        <CupMark/>
+                    )}
                     <FinalTeam team={final.top} showRecord={final.recordTeam === 'top'}/>
                     <FinalTeam team={final.bottom} showRecord={final.recordTeam === 'bottom'}/>
-                    <p className='bracket-final-result'>
-                        {champion !== null
-                            ? `${champion.commonName} win ${champion.wins}–${champion.losses}`
-                            : final.top.wins === final.bottom.wins
-                                ? `Series tied ${final.top.wins}–${final.bottom.wins}`
-                                : `${leader.commonName} lead ${leader.wins}–${leader.losses}`}
-                    </p>
                 </div>
                 <SideColumns side={view.right} sideName='right'/>
             </div>
@@ -208,8 +209,8 @@ export default function PlayoffBracket({season}: PlayoffBracketProps) {
     }
 
     return (
-        <div className='w-9/12 mx-auto border rounded-lg overflow-hidden'>
-            <div className='relative w-full bracket-panel'>
+        <div className='w-9/12 border rounded-lg overflow-hidden flex flex-col'>
+            <div className='relative w-full flex-1 min-h-0 bracket-panel'>
                 {content}
             </div>
         </div>
