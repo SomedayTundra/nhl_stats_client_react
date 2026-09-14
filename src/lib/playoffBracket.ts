@@ -28,8 +28,6 @@ export type NhlBracketSeries = {
     topSeedWins?: number
     bottomSeedWins?: number
     winningTeamId?: number
-    // added by our backend for a level, still-being-played series (see nhl_playoffs.py)
-    lastGameWinnerTeamId?: number
 }
 
 export type NhlBracketPayload = {
@@ -53,9 +51,6 @@ export type BracketSeriesView = {
     title: string
     top: BracketTeamView
     bottom: BracketTeamView
-    // exactly one team carries the series record - the other's would be the same two numbers
-    // reversed. See recordHolder() for how it's picked.
-    recordTeam: 'top' | 'bottom'
 }
 
 // one position in a round's column. A 'bye' is a team that reached the next round without playing
@@ -101,32 +96,6 @@ function teamView(team: NhlBracketTeam, wins: number, opponentWins: number, won:
     }
 }
 
-// Which team the series record is shown against, in priority order: the team that won the series;
-// failing that (it's still being played) the team currently ahead; failing that (it's level) the
-// team that took the most recent game. A series where nothing has been played yet falls back to
-// the top seed, where the record is 0-0 either way.
-function recordHolder(
-    series: NhlBracketSeries,
-    top: NhlBracketTeam,
-    bottom: NhlBracketTeam,
-    topWins: number,
-    bottomWins: number,
-): 'top' | 'bottom' {
-    if (series.winningTeamId === top.id) {
-        return 'top'
-    }
-    if (series.winningTeamId === bottom.id) {
-        return 'bottom'
-    }
-    if (topWins !== bottomWins) {
-        return topWins > bottomWins ? 'top' : 'bottom'
-    }
-    if (series.lastGameWinnerTeamId === bottom.id) {
-        return 'bottom'
-    }
-    return 'top'
-}
-
 function seriesView(series: NhlBracketSeries, index: number): BracketSeriesView {
     // both teams are known to exist - callers filter incomplete series out first
     const top = series.topSeedTeam as NhlBracketTeam
@@ -141,7 +110,6 @@ function seriesView(series: NhlBracketSeries, index: number): BracketSeriesView 
         title: series.seriesTitle ?? `Round ${series.playoffRound}`,
         top: teamView(top, topWins, bottomWins, decidedBy === top.id),
         bottom: teamView(bottom, bottomWins, topWins, decidedBy === bottom.id),
-        recordTeam: recordHolder(series, top, bottom, topWins, bottomWins),
     }
 }
 

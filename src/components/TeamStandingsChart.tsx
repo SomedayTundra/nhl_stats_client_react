@@ -588,7 +588,7 @@ export default function TeamStandingsChart() {
 
     return (
         <div className="h-full flex flex-col">
-            <div className="w-9/12 mx-auto flex flex-row flex-wrap items-center justify-start gap-x-4 gap-y-2 py-2 shrink-0">
+            <div className="w-full flex flex-row flex-wrap items-center justify-start gap-x-4 gap-y-2 py-2 shrink-0">
                 <SeasonSelect value={resolvedSeason} onChange={setSeason}/>
                 <div className="flex flex-row items-center gap-2 shrink-0">
                     <FieldLabel className="justify-start whitespace-nowrap">Date Range:</FieldLabel>
@@ -663,7 +663,7 @@ export default function TeamStandingsChart() {
                 </FieldGroup>
             </div>
             <div className="flex-1 min-h-0 flex justify-center">
-                <Card className="w-9/12 flex flex-col overflow-hidden">
+                <Card className="w-full flex flex-col overflow-hidden">
                     <CardHeader className="shrink-0">
                         <CardTitle>Team Standings Over Time</CardTitle>
                         <CardDescription>
