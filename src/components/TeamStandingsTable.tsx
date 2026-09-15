@@ -149,7 +149,7 @@ export default function TeamStandingsTable() {
         tableBody = <tr><td colSpan={columns.length} className='p-4 text-center'>An error occurred: {error.message}</td></tr>
     } else {
         tableBody = table.getRowModel().rows.map((row) => (
-            <tr key={row.id} className='p-0 transition-colors data-[state=selected]:bg-muted'>
+            <tr key={row.id} className='p-0 transition-colors hover:bg-muted data-[state=selected]:bg-muted'>
                 {row.getAllCells().map((cell) => (
                     <td key={cell.id} className={cell.column.columnDef.meta?.cellClassName ?? CLASS_TD}>
                         <table.FlexRender cell={cell}/>
