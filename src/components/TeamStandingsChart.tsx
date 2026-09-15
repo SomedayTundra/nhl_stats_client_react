@@ -185,6 +185,70 @@ const HARDCODED_TEAM_COLORS = {
         label: 'Golden Knights',
         color: '#B89858',
     },
+    // defunct/relocated franchises below, added the same way as everything above - measured
+    // from that team's own era-correct logo (team_data's localLogo era, not necessarily the
+    // franchise's most recent one). A few needed a deliberate nudge off their computed color
+    // because it landed on top of another team's that actually overlapped them in real seasons
+    // (checked against every other team's season span in team_data, not just eyeballed):
+    // AFM/KCS/CBN/QUE all measured out to essentially the same red, and three of them
+    // (1974-75 through 1979-80) shared seasons with Atlanta's Flames, so KCS/CBN/QUE are each
+    // nudged to their own shade within the same red family. CLR and WIN both measured to the
+    // same navy and overlap each other directly (1979-82), and both also overlap Edmonton's
+    // already-hardcoded navy for their entire lifespan - nudged apart from both. ATL's measured
+    // navy landed on Washington's.
+    AFM: {
+        label: 'Flames',
+        color: '#C8102E',
+    },
+    KCS: {
+        label: 'Scouts',
+        color: '#8C0B20',
+    },
+    CBN: {
+        label: 'Barons',
+        color: '#E8455C',
+    },
+    QUE: {
+        label: 'Nordiques',
+        color: '#7A0020',
+    },
+    CLR: {
+        label: 'Rockies',
+        color: '#00476D',
+    },
+    WIN: {
+        label: 'Jets',
+        color: '#060073',
+    },
+    ATL: {
+        label: 'Thrashers',
+        color: '#053D53',
+    },
+    // the rest had no overlapping collision to nudge away from - straight off the logo
+    ARI: {
+        label: 'Coyotes',
+        color: '#862633',
+    },
+    CGS: {
+        label: 'Seals',
+        color: '#009CA6',
+    },
+    HFD: {
+        label: 'Whalers',
+        color: '#00781F',
+    },
+    MNS: {
+        label: 'North Stars',
+        color: '#009639',
+    },
+    OAK: {
+        label: 'Seals',
+        color: '#00205B',
+    },
+    PHX: {
+        label: 'Coyotes',
+        color: '#A9431E',
+    },
 } satisfies ChartConfig
 
 // safety net only: every team above now has a real color, so this should never actually run
