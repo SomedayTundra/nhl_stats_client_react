@@ -54,136 +54,136 @@ const DEFAULT_LOGO_SIZE = 48
 // slightly apart from a very close sibling so lines stay readable on the chart
 const HARDCODED_TEAM_COLORS = {
     TBL: {
-        label: "Lightning",
-        color: "#1E5AA8",
+        label: 'Lightning',
+        color: '#1E5AA8',
     },
     BUF: {
-        label: "Sabres",
-        color: "#003088",
+        label: 'Sabres',
+        color: '#003088',
     },
     DET: {
-        label: "Red Wings",
-        color: "#9E1B32",
+        label: 'Red Wings',
+        color: '#9E1B32',
     },
     MTL: {
-        label: "Canadiens",
-        color: "#A81830",
+        label: 'Canadiens',
+        color: '#A81830',
     },
     BOS: {
-        label: "Bruins",
-        color: "#FFB820",
+        label: 'Bruins',
+        color: '#FFB820',
     },
     OTT: {
-        label: "Senators",
-        color: "#D2232C",
+        label: 'Senators',
+        color: '#D2232C',
     },
     FLA: {
-        label: "Panthers",
-        color: "#C9A227",
+        label: 'Panthers',
+        color: '#C9A227',
     },
     TOR: {
-        label: "Maple Leafs",
-        color: "#003E7E",
+        label: 'Maple Leafs',
+        color: '#003E7E',
     },
     // colors below were picked by rendering each team's logo and measuring which non-white
     // color covers the most pixel area (a couple were nudged slightly apart from a very close
     // sibling team so lines stay readable on the chart; LAK's logo has no color at all, so it
     // gets their well-known "Forum Blue" instead)
     CAR: {
-        label: "Hurricanes",
-        color: "#D00018",
+        label: 'Hurricanes',
+        color: '#D00018',
     },
     NJD: {
-        label: "Devils",
-        color: "#B8001C",
+        label: 'Devils',
+        color: '#B8001C',
     },
     CBJ: {
-        label: "Blue Jackets",
-        color: "#002654",
+        label: 'Blue Jackets',
+        color: '#002654',
     },
     NYI: {
-        label: "Islanders",
-        color: "#003087",
+        label: 'Islanders',
+        color: '#003087',
     },
     NYR: {
-        label: "Rangers",
-        color: "#0038A8",
+        label: 'Rangers',
+        color: '#0038A8',
     },
     PHI: {
-        label: "Flyers",
-        color: "#F74902",
+        label: 'Flyers',
+        color: '#F74902',
     },
     PIT: {
-        label: "Penguins",
-        color: "#FFB81C",
+        label: 'Penguins',
+        color: '#FFB81C',
     },
     WSH: {
-        label: "Capitals",
-        color: "#041E42",
+        label: 'Capitals',
+        color: '#041E42',
     },
     CHI: {
-        label: "Blackhawks",
-        color: "#D8A810",
+        label: 'Blackhawks',
+        color: '#D8A810',
     },
     COL: {
-        label: "Avalanche",
-        color: "#206090",
+        label: 'Avalanche',
+        color: '#206090',
     },
     DAL: {
-        label: "Stars",
-        color: "#008840",
+        label: 'Stars',
+        color: '#008840',
     },
     MIN: {
-        label: "Wild",
-        color: "#184838",
+        label: 'Wild',
+        color: '#184838',
     },
     NSH: {
-        label: "Predators",
-        color: "#E8A415",
+        label: 'Predators',
+        color: '#E8A415',
     },
     STL: {
-        label: "Blues",
-        color: "#0068C8",
+        label: 'Blues',
+        color: '#0068C8',
     },
     UTA: {
-        label: "Mammoth",
-        color: "#70B0E8",
+        label: 'Mammoth',
+        color: '#70B0E8',
     },
     WPG: {
-        label: "Jets",
-        color: "#10284B",
+        label: 'Jets',
+        color: '#10284B',
     },
     ANA: {
-        label: "Ducks",
-        color: "#886050",
+        label: 'Ducks',
+        color: '#886050',
     },
     CGY: {
-        label: "Flames",
-        color: "#C81030",
+        label: 'Flames',
+        color: '#C81030',
     },
     EDM: {
-        label: "Oilers",
-        color: "#002058",
+        label: 'Oilers',
+        color: '#002058',
     },
     LAK: {
-        label: "Kings",
-        color: "#6F9BD1",
+        label: 'Kings',
+        color: '#6F9BD1',
     },
     SJS: {
-        label: "Sharks",
-        color: "#007888",
+        label: 'Sharks',
+        color: '#007888',
     },
     SEA: {
-        label: "Kraken",
-        color: "#68A8B8",
+        label: 'Kraken',
+        color: '#68A8B8',
     },
     VAN: {
-        label: "Canucks",
-        color: "#143C64",
+        label: 'Canucks',
+        color: '#143C64',
     },
     VGK: {
-        label: "Golden Knights",
-        color: "#B89858",
+        label: 'Golden Knights',
+        color: '#B89858',
     },
 } satisfies ChartConfig
 
@@ -228,31 +228,77 @@ type DockedTooltipPanelProps = {
 function DockedTooltipPanel({payload, label, logoSize, onDecreaseLogoSize, onIncreaseLogoSize}: DockedTooltipPanelProps) {
     const sorted = payload ? [...payload].sort((a, b) => (Number(b.value) || 0) - (Number(a.value) || 0)) : null
 
+    // mouse wheel over the icon-size controls steps the logo size up/down, mirroring the
+    // line-type combo's own wheel support above (same latest-value-ref + cooldown mechanics),
+    // just scoped to this child component since that's where the target div actually lives.
+    // Wheel down shrinks the logos (the common "scroll down = zoom out" convention), wheel up
+    // grows them; onDecreaseLogoSize/onIncreaseLogoSize already clamp at MIN/MAX_LOGO_SIZE, so
+    // the handler doesn't need to duplicate that.
+    const iconSizeControlsRef = React.useRef<HTMLDivElement | null>(null)
+    const onDecreaseLogoSizeRef = React.useRef(onDecreaseLogoSize)
+    const onIncreaseLogoSizeRef = React.useRef(onIncreaseLogoSize)
+    const iconSizeLastStepAtRef = React.useRef(0)
+
+    React.useEffect(() => {
+        onDecreaseLogoSizeRef.current = onDecreaseLogoSize
+        onIncreaseLogoSizeRef.current = onIncreaseLogoSize
+    })
+
+    React.useEffect(() => {
+        const controls = iconSizeControlsRef.current
+        if (controls === null) {
+            return
+        }
+
+        const handleWheel = (event: WheelEvent) => {
+            if (Math.abs(event.deltaY) < 1) {
+                return
+            }
+            event.preventDefault()
+
+            if (event.timeStamp - iconSizeLastStepAtRef.current < WHEEL_STEP_COOLDOWN_MS) {
+                return
+            }
+            iconSizeLastStepAtRef.current = event.timeStamp
+
+            if (event.deltaY > 0) {
+                onDecreaseLogoSizeRef.current()
+            } else {
+                onIncreaseLogoSizeRef.current()
+            }
+        }
+
+        controls.addEventListener('wheel', handleWheel, {passive: false})
+        return () => controls.removeEventListener('wheel', handleWheel)
+    }, [])
+
     return (
-        <div className="h-full w-36 shrink-0 border-l flex flex-col text-xs">
-            <div className="flex-1 min-h-0 overflow-y-auto px-3 py-2">
+        <div className='h-full w-36 shrink-0 border-l flex flex-col text-xs'>
+            <div className='flex-1 min-h-0 overflow-y-auto px-3 py-2'>
                 {sorted && sorted.length > 0 ? (
                     <>
-                        <div className="mb-1 font-medium">{label && formatApiDateForDisplay(label)}</div>
-                        <div className="flex flex-col">
+                        <div className='mb-1 font-medium'>{label && formatApiDateForDisplay(label)}</div>
+                        <div className='flex flex-col'>
                             {sorted.map((item) => (
-                                <div key={item.dataKey} className="flex items-center gap-1.5 whitespace-nowrap py-0.5">
-                                    <span className="inline-block size-2 shrink-0 rounded-[2px]" style={{backgroundColor: item.color}}/>
+                                <div key={item.dataKey} className='flex items-center gap-1.5 whitespace-nowrap py-0.5'>
+                                    <span className='inline-block size-2 shrink-0 rounded-[2px]' style={{backgroundColor: item.color}}/>
                                     <span>{item.name ?? item.dataKey}: {item.value}</span>
                                 </div>
                             ))}
                         </div>
                     </>
                 ) : (
-                    <p className="text-muted-foreground">Hover the chart to see values</p>
+                    <p className='text-muted-foreground'>Hover the chart to see values</p>
                 )}
             </div>
             <Tooltip>
                 <TooltipTrigger asChild>
-                    <div className="shrink-0 border-t px-3 py-2 flex items-center justify-center gap-2">
-                        <Button variant="outline" size="icon-xs" onClick={onDecreaseLogoSize} disabled={logoSize <= MIN_LOGO_SIZE}>-</Button>
-                        <span>{logoSize}px</span>
-                        <Button variant="outline" size="icon-xs" onClick={onIncreaseLogoSize} disabled={logoSize >= MAX_LOGO_SIZE}>+</Button>
+                    <div className='shrink-0 border-t px-3 py-2 flex items-center justify-center gap-2'>
+                        <div className='icon-size-controls' ref={iconSizeControlsRef}>
+                            <Button variant='outline' size='icon-xs' onClick={onDecreaseLogoSize} disabled={logoSize <= MIN_LOGO_SIZE}>-</Button>
+                            <span className='pl-1 pr-1'>{logoSize}px</span>
+                            <Button variant='outline' size='icon-xs' onClick={onIncreaseLogoSize} disabled={logoSize >= MAX_LOGO_SIZE}>+</Button>
+                        </div>
                     </div>
                 </TooltipTrigger>
                 <TooltipContent>Adjust the size of team logos on the chart.</TooltipContent>
@@ -382,7 +428,7 @@ export default function TeamStandingsChart() {
     const [hoveredPayload, setHoveredPayload] = React.useState<ChartTooltipPayloadItem[] | null>(null)
     const [hoveredLabel, setHoveredLabel] = React.useState<string | undefined>(undefined)
 
-    function handleChartMouseMove(state: {activePayload?: ChartTooltipPayloadItem[], activeLabel?: string}) {
+    function handleChartMouseMove(state: { activePayload?: ChartTooltipPayloadItem[], activeLabel?: string }) {
         if (state.activePayload && state.activePayload.length > 0) {
             setHoveredPayload(state.activePayload)
             setHoveredLabel(state.activeLabel)
@@ -400,36 +446,36 @@ export default function TeamStandingsChart() {
     // the "from" and "to" dates are never allowed to cross (from after to) or land on the same
     // day - whichever end the user just moved "wins", and the other end gets nudged out of the way
     const handleFromDateSelect = (selected: Date | undefined) => {
-        const newFrom = selected ?? new Date();
-        setFromDate(newFrom);
+        const newFrom = selected ?? new Date()
+        setFromDate(newFrom)
         if (isAfter(newFrom, toDate) || isSameDay(newFrom, toDate)) {
-            setToDate(addDays(newFrom, 7));
+            setToDate(addDays(newFrom, 7))
         }
-    };
+    }
 
     const handleToDateSelect = (selected: Date | undefined) => {
-        const newTo = selected ?? new Date();
-        setToDate(newTo);
+        const newTo = selected ?? new Date()
+        setToDate(newTo)
         if (isBefore(newTo, fromDate) || isSameDay(newTo, fromDate)) {
-            setFromDate(subDays(newTo, 7));
+            setFromDate(subDays(newTo, 7))
         }
-    };
+    }
 
     const handleLineTypeChange = (value: string) => {
         if (isLineType(value)) {
-            setLineType(value);
+            setLineType(value)
         }
-    };
+    }
 
     const fromDateContextValue = {
         date: fromDate,
         setDate: handleFromDateSelect
-    };
+    }
 
     const toDateContextValue = {
         date: toDate,
         setDate: handleToDateSelect
-    };
+    }
 
     const {data: teamStats, isPending, isPlaceholderData, error} = useTeamStats(fromDate, toDate)
 
@@ -437,14 +483,14 @@ export default function TeamStandingsChart() {
     // never remounts (and loses its committed selection) on refetch; only the chart area swaps out
     let chartArea: React.ReactNode
     if (selectedTeams.length === 0) {
-        chartArea = <p className="p-4 text-center">No teams selected</p>
+        chartArea = <p className='p-4 text-center'>No teams selected</p>
     } else if (isPending || isPlaceholderData) {
         // useTeamStats keeps the previous date range's data as placeholderData so React Query has
         // something to show during a refetch; for the chart we'd rather blank it out immediately and
         // show "Loading..." than leave stale points on screen while the new range loads
-        chartArea = <p className="p-4 text-center">Loading...</p>
+        chartArea = <p className='p-4 text-center'>Loading...</p>
     } else if (error) {
-        chartArea = <p className="p-4 text-center">An error occurred: {error.message}</p>
+        chartArea = <p className='p-4 text-center'>An error occurred: {error.message}</p>
     } else {
         // clear out any old data
         const chartData: Record<string, string | number>[] = []
@@ -453,7 +499,7 @@ export default function TeamStandingsChart() {
 
         teamStats.forEach((teamStatEntry: TeamStatEntry) => {
             // get data entry for the given date
-            let existingDate = chartData.find((entry) => entry["date"] == teamStatEntry.date)
+            let existingDate = chartData.find((entry) => entry['date'] == teamStatEntry.date)
             if (!existingDate) {
                 existingDate = {date: teamStatEntry.date}
                 chartData.push(existingDate)
@@ -501,7 +547,7 @@ export default function TeamStandingsChart() {
             // Recharts' activeDot type only accepts (props: unknown) => JSX.Element here - its own
             // DotProps type doesn't even declare the index/value fields it actually passes at runtime
             return (props: unknown) => {
-                const {key, cx, cy, index, value} = props as {key?: string, cx?: number, cy?: number, index?: number, value?: number}
+                const {key, cx, cy, index, value} = props as { key?: string, cx?: number, cy?: number, index?: number, value?: number }
                 const logoFilename = teamLogoByAbbrev.get(abbrev)
 
                 if (typeof value === 'number' && typeof index === 'number' && logoFilename) {
@@ -524,8 +570,8 @@ export default function TeamStandingsChart() {
         }
 
         chartArea = (
-            <div className="flex h-full w-full flex-row">
-                <ChartContainer config={chartConfig} className="h-full flex-1 aspect-auto">
+            <div className='flex h-full w-full flex-row'>
+                <ChartContainer config={chartConfig} className='h-full flex-1 aspect-auto'>
                     <LineChart
                         accessibilityLayer
                         data={chartData}
@@ -538,9 +584,9 @@ export default function TeamStandingsChart() {
                             right: 12 + logoSize / 2,
                         }}
                     >
-                        <CartesianGrid vertical={false} stroke="var(--navbar-bg)"/>
+                        <CartesianGrid vertical={false} stroke='var(--navbar-bg)'/>
                         <XAxis
-                            dataKey="date"
+                            dataKey='date'
                             tickLine={true}
                             axisLine={true}
                             tickMargin={8}
@@ -587,17 +633,17 @@ export default function TeamStandingsChart() {
     }
 
     return (
-        <div className="h-full flex flex-col">
-            <div className="w-full flex flex-row flex-wrap items-center justify-start gap-x-4 gap-y-2 py-2 shrink-0">
+        <div className='h-full flex flex-col'>
+            <div className='w-full flex flex-row flex-wrap items-center justify-start gap-x-4 gap-y-2 py-2 shrink-0'>
                 <SeasonSelect value={resolvedSeason} onChange={setSeason}/>
-                <div className="flex flex-row items-center gap-2 shrink-0">
-                    <FieldLabel className="justify-start whitespace-nowrap">Date Range:</FieldLabel>
+                <div className='flex flex-row items-center gap-2 shrink-0'>
+                    <FieldLabel className='justify-start whitespace-nowrap'>Date Range:</FieldLabel>
                     <DateContext value={fromDateContextValue}>
-                        <DatePickerWithNav id="date-picker-from" tooltip="From" minDate={minDate} maxDate={maxDate}/>
+                        <DatePickerWithNav id='date-picker-from' tooltip='From' minDate={minDate} maxDate={maxDate}/>
                     </DateContext>
-                    <ArrowRightLeftIcon className="size-4 shrink-0 text-muted-foreground"/>
+                    <ArrowRightLeftIcon className='size-4 shrink-0 text-muted-foreground'/>
                     <DateContext value={toDateContextValue}>
-                        <DatePickerWithNav id="date-picker-to" tooltip="To" minDate={minDate} maxDate={maxDate}/>
+                        <DatePickerWithNav id='date-picker-to' tooltip='To' minDate={minDate} maxDate={maxDate}/>
                     </DateContext>
                 </div>
                 <TeamChooser season={resolvedSeason} selected={selectedTeams} onChange={setSelectedTeams}/>
@@ -605,7 +651,7 @@ export default function TeamStandingsChart() {
                 <span
                     ref={lineTypeSizerRef}
                     aria-hidden
-                    className="pointer-events-none invisible absolute px-3 text-sm whitespace-nowrap"
+                    className='pointer-events-none invisible absolute px-3 text-sm whitespace-nowrap'
                 >
                     {longestLineType}
                 </span>
@@ -614,7 +660,7 @@ export default function TeamStandingsChart() {
                         is fixed (sized to "monotone"), so unlike EraSelect/SeasonSelect there's no
                         variable-width neighbor that could shift it */}
                     <TooltipTrigger asChild>
-                        <div ref={lineTypeWrapperRef} className="flex">
+                        <div ref={lineTypeWrapperRef} className='flex'>
                             <Combobox
                                 items={lineTypes}
                                 value={lineType}
@@ -625,12 +671,12 @@ export default function TeamStandingsChart() {
                                 autoHighlight
                             >
                                 <ComboboxInput
-                                    placeholder="Select a line type"
+                                    placeholder='Select a line type'
                                     // the input is flex-1 with a 0% flex-basis, so a plain min-width can't win
                                     // against its browser-default intrinsic size (~20ch) once content is
                                     // shorter than that; pin flex:none so the exact measured width applies
                                     style={lineTypeInputWidth !== undefined ? {flex: 'none', width: `${lineTypeInputWidth}px`} : undefined}
-                                    className="border-neutral-800 bg-background hover:bg-accent hover:text-accent-foreground dark:hover:bg-input/50"
+                                    className='border-neutral-800 bg-background hover:bg-accent hover:text-accent-foreground dark:hover:bg-input/50'
                                 />
                                 <ComboboxContent>
                                     <ComboboxEmpty>No items found.</ComboboxEmpty>
@@ -645,35 +691,35 @@ export default function TeamStandingsChart() {
                             </Combobox>
                         </div>
                     </TooltipTrigger>
-                    <TooltipContent side="top">Line Type</TooltipContent>
+                    <TooltipContent side='top'>Line Type</TooltipContent>
                 </Tooltip>
-                <FieldGroup className="w-auto shrink-0">
-                    <Field orientation='horizontal' className="gap-0.5">
+                <FieldGroup className='w-auto shrink-0'>
+                    <Field orientation='horizontal' className='gap-0.5'>
                         <Checkbox
                             id='show-dots-checkbox-basic'
                             name='show-dots-checkbox-basic'
                             checked={showDots}
                             onCheckedChange={(checked) => setShowDots(checked === true)}
-                            className="border-neutral-800"
+                            className='border-neutral-800'
                         />
-                        <FieldLabel htmlFor='show-dots-checkbox-basic' className="whitespace-nowrap">
+                        <FieldLabel htmlFor='show-dots-checkbox-basic' className='whitespace-nowrap'>
                             Show Dots
                         </FieldLabel>
                     </Field>
                 </FieldGroup>
             </div>
-            <div className="flex-1 min-h-0 flex justify-center">
-                <Card className="w-full flex flex-col overflow-hidden">
-                    <CardHeader className="shrink-0">
+            <div className='flex-1 min-h-0 flex justify-center'>
+                <Card className='w-full flex flex-col overflow-hidden'>
+                    <CardHeader className='shrink-0'>
                         <CardTitle>Team Standings Over Time</CardTitle>
                         <CardDescription>
                         </CardDescription>
                     </CardHeader>
-                    <CardContent className="flex-1 min-h-0 overflow-hidden">
+                    <CardContent className='flex-1 min-h-0 overflow-hidden'>
                         {chartArea}
                     </CardContent>
                 </Card>
             </div>
         </div>
-    );
+    )
 }

@@ -102,7 +102,7 @@ export default function DatePickerWithNav({id, tooltip, label, minDate, maxDate}
                                 <ChevronFirstIcon />
                             </Button>
                         </TooltipTrigger>
-                        <TooltipContent>First day</TooltipContent>
+                        <TooltipContent side="top">First day</TooltipContent>
                     </Tooltip>
                 )}
                 <Tooltip>
@@ -111,7 +111,7 @@ export default function DatePickerWithNav({id, tooltip, label, minDate, maxDate}
                             <ChevronsLeftIcon />
                         </Button>
                     </TooltipTrigger>
-                    <TooltipContent>-1 week</TooltipContent>
+                    <TooltipContent side="top">-1 week</TooltipContent>
                 </Tooltip>
                 <Tooltip>
                     <TooltipTrigger asChild>
@@ -119,7 +119,7 @@ export default function DatePickerWithNav({id, tooltip, label, minDate, maxDate}
                             <ChevronLeftIcon />
                         </Button>
                     </TooltipTrigger>
-                    <TooltipContent>-1 day</TooltipContent>
+                    <TooltipContent side="top">-1 day</TooltipContent>
                 </Tooltip>
                 <Popover open={open} onOpenChange={setOpen}>
                     <Tooltip>
@@ -139,7 +139,7 @@ export default function DatePickerWithNav({id, tooltip, label, minDate, maxDate}
                                 </Button>
                             </PopoverTrigger>
                         </TooltipTrigger>
-                        <TooltipContent>{tooltip}</TooltipContent>
+                        <TooltipContent side="top">{tooltip}</TooltipContent>
                     </Tooltip>
                     <PopoverContent className="w-auto p-0" align="start">
                         <Calendar
@@ -160,7 +160,7 @@ export default function DatePickerWithNav({id, tooltip, label, minDate, maxDate}
                             <ChevronRightIcon />
                         </Button>
                     </TooltipTrigger>
-                    <TooltipContent>+1 day</TooltipContent>
+                    <TooltipContent side="top">+1 day</TooltipContent>
                 </Tooltip>
                 <Tooltip>
                     <TooltipTrigger asChild>
@@ -168,7 +168,7 @@ export default function DatePickerWithNav({id, tooltip, label, minDate, maxDate}
                             <ChevronsRightIcon />
                         </Button>
                     </TooltipTrigger>
-                    <TooltipContent>+1 week</TooltipContent>
+                    <TooltipContent side="top">+1 week</TooltipContent>
                 </Tooltip>
                 {maxDate && (
                     <Tooltip>
@@ -177,7 +177,7 @@ export default function DatePickerWithNav({id, tooltip, label, minDate, maxDate}
                                 <ChevronLastIcon />
                             </Button>
                         </TooltipTrigger>
-                        <TooltipContent>Last day</TooltipContent>
+                        <TooltipContent side="top">Last day</TooltipContent>
                     </Tooltip>
                 )}
             </div>
