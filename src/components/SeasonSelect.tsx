@@ -4,6 +4,7 @@ import {useEffect, useRef} from 'react'
 
 import {Combobox, ComboboxContent, ComboboxEmpty, ComboboxInput, ComboboxItem, ComboboxList} from '@/components/ui/combobox'
 import {FieldLabel} from '@/components/ui/field.tsx'
+import {Tooltip, TooltipContent, TooltipTrigger} from '@/components/ui/tooltip'
 import {useLatestSeasonId} from '@/hooks/useSeasonInfo.ts'
 import {buildSeasonIds, seasonIdToLabel} from '@/lib/season.ts'
 
@@ -102,32 +103,39 @@ export function SeasonSelect({value, onChange}: SeasonSelectProps) {
     return (
         <div ref={wrapperRef} className="flex flex-row items-center gap-2 shrink-0">
             <FieldLabel htmlFor="season-select" className="justify-start whitespace-nowrap">Season:</FieldLabel>
-            <Combobox
-                items={labels}
-                value={selectedLabel}
-                onInputValueChange={handleInputValueChange}
-                onOpenChange={(open) => {
-                    openRef.current = open
-                }}
-                autoHighlight
-            >
-                {/* matches the outline Button's hovered/unhovered look (e.g. the TeamChooser trigger):
-                    bg-background at rest, bg-accent/text-accent-foreground on hover */}
-                <ComboboxInput
-                    id="season-select"
-                    className="w-32 border-neutral-800 bg-background hover:bg-accent hover:text-accent-foreground dark:hover:bg-input/50"
-                />
-                <ComboboxContent>
-                    <ComboboxEmpty>No items found.</ComboboxEmpty>
-                    <ComboboxList>
-                        {(item) => (
-                            <ComboboxItem key={item} value={item}>
-                                {item}
-                            </ComboboxItem>
-                        )}
-                    </ComboboxList>
-                </ComboboxContent>
-            </Combobox>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <div className="flex">
+                        <Combobox
+                            items={labels}
+                            value={selectedLabel}
+                            onInputValueChange={handleInputValueChange}
+                            onOpenChange={(open) => {
+                                openRef.current = open
+                            }}
+                            autoHighlight
+                        >
+                            {/* matches the outline Button's hovered/unhovered look (e.g. the TeamChooser trigger):
+                                bg-background at rest, bg-accent/text-accent-foreground on hover */}
+                            <ComboboxInput
+                                id="season-select"
+                                className="w-32 border-neutral-800 bg-background hover:bg-accent hover:text-accent-foreground dark:hover:bg-input/50"
+                            />
+                            <ComboboxContent>
+                                <ComboboxEmpty>No items found.</ComboboxEmpty>
+                                <ComboboxList>
+                                    {(item) => (
+                                        <ComboboxItem key={item} value={item}>
+                                            {item}
+                                        </ComboboxItem>
+                                    )}
+                                </ComboboxList>
+                            </ComboboxContent>
+                        </Combobox>
+                    </div>
+                </TooltipTrigger>
+                <TooltipContent side="top">Mousewheel to browse through time</TooltipContent>
+            </Tooltip>
         </div>
     )
 }
