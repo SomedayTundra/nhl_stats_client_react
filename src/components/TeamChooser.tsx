@@ -47,7 +47,7 @@ type WheelStop = {
 // entirely for a pre-conference season, where hasConferenceInfo is false); then each division
 // alone - wrapping back to the league after that.
 function buildWheelStops(teams: TeamInfo[], conferences: TeamConferenceGroup[], hasConferenceInfo: boolean): WheelStop[] {
-    const stops: WheelStop[] = [{name: 'league', abbrevs: teams.map((team) => team.teamAbbrev)}]
+    const stops: WheelStop[] = [{name: 'League', abbrevs: teams.map((team) => team.teamAbbrev)}]
 
     if (hasConferenceInfo) {
         for (const conference of conferences) {
@@ -252,15 +252,14 @@ export default function TeamChooser({season, selected, onChange}: TeamChooserPro
                         <PopoverTrigger asChild>
                             <Button variant="outline" className="justify-between border-neutral-800">
                                 <span className={draftSelected.length === 0 ? 'text-red-600' : undefined}>
-                                    Teams ({draftSelected.length}/{teams.length})
+                                    {currentStopName ? currentStopName : "Teams"} ({draftSelected.length}/{teams.length})
                                 </span>
                                 <ChevronDownIcon/>
                             </Button>
                         </PopoverTrigger>
                     </TooltipTrigger>
                     <TooltipContent side="top">
-                        <div>Mousewheel to quick-select league, conferences,</div>
-                        <div>and divisions{currentStopName !== undefined && ` (currently ${currentStopName})`}</div>
+                        <div className='items-center'>Mousewheel to quick-select groups</div>
                     </TooltipContent>
                 </Tooltip>
                 <PopoverContent className="w-80 max-h-96 overflow-y-auto p-2" align="start">
