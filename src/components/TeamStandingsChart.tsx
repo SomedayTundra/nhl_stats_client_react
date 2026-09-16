@@ -24,6 +24,7 @@ import {useLatestSeasonId, useSeasonInfo} from '@/hooks/useSeasonInfo.ts'
 import {useTeamStats} from '@/hooks/useTeamStats.ts'
 import {getTeamLogoUrl} from '@/lib/teamLogo.ts'
 import {addDays, isAfter, isBefore, isSameDay, subDays} from 'date-fns'
+import {seasonIdToLabel} from '@/lib/season.ts'
 
 const lineTypes = [
     'basis', 'bump', 'linear', 'natural', 'monotone', 'step',
@@ -775,7 +776,7 @@ export default function TeamStandingsChart() {
             <div className='flex-1 min-h-0 flex justify-center'>
                 <Card className='w-full flex flex-col overflow-hidden'>
                     <CardHeader className='shrink-0'>
-                        <CardTitle>Team Standings Over Time</CardTitle>
+                        <CardTitle>Team Standings Over Time ({seasonIdToLabel(resolvedSeason)})</CardTitle>
                         <CardDescription>
                         </CardDescription>
                     </CardHeader>
