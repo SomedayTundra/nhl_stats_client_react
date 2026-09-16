@@ -380,7 +380,7 @@ export default function TeamStandingsChart() {
     })
     const [showDots, setShowDots] = useLocalStorageState<boolean>('nhlStats.chart.showDots', false)
     const [logoSize, setLogoSize] = useLocalStorageState<number>('nhlStats.chart.logoSize', DEFAULT_LOGO_SIZE)
-    const [selectedTeams, setSelectedTeams] = useLocalStorageState<string[]>('nhlStats.chart.selectedTeams', [])
+    const [selectedTeams, setSelectedTeams] = useLocalStorageState<string[]>('nhlStats.selectedTeams', [])  // NHL-49: have table, chart, and playoffs all sync to the same teams and season
     const [fromDate, setFromDate] = useLocalStorageState<Date>('nhlStats.chart.dateRange.from', new Date('2025-10-08'), {
         serialize: serializeDate,
         deserialize: deserializeDate,
@@ -391,7 +391,7 @@ export default function TeamStandingsChart() {
     })
 
     // '' until we've resolved a default; persisted on every change (useLocalStorageState writes back)
-    const [season, setSeason] = useLocalStorageState<string>('nhlStats.chart.season', '')
+    const [season, setSeason] = useLocalStorageState<string>('nhlStats.season', '') // NHL-49: have table, chart, and playoffs all sync to the same teams and season
     const defaultSeason = useLatestSeasonId()
     const resolvedSeason = season || defaultSeason
     const {data: selectedSeason} = useSeasonInfo(resolvedSeason || undefined)

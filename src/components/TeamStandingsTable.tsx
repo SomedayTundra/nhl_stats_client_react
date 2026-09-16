@@ -66,16 +66,15 @@ const SLOW_FETCH_MS = 1500
 
 
 export default function TeamStandingsTable() {
-    // const [teamStats, setTeamStats] = useState<TeamStatEntry[]>([]);
     const [date, setDate] = useLocalStorageState<Date>('nhlStats.table.date', new Date('2025-12-02'), {
         serialize: serializeDate,
         deserialize: deserializeDate,
     })
-    const [selectedTeams, setSelectedTeams] = useLocalStorageState<string[]>('nhlStats.table.selectedTeams', [])
+    const [selectedTeams, setSelectedTeams] = useLocalStorageState<string[]>('nhlStats.selectedTeams', [])    // NHL-49: have table, chart, and playoffs all sync to the same teams and season
     const [sorting, setSorting] = useLocalStorageState<SortingState>('nhlStats.table.sorting', [{id: 'points', desc: true}])
 
     // '' until we've resolved a default; persisted on every change (useLocalStorageState writes back)
-    const [season, setSeason] = useLocalStorageState<string>('nhlStats.table.season', '')
+    const [season, setSeason] = useLocalStorageState<string>('nhlStats.season', '') // NHL-49: have table, chart, and playoffs all sync to the same teams and season
     const defaultSeason = useLatestSeasonId()
     const resolvedSeason = season || defaultSeason
     const {data: selectedSeason} = useSeasonInfo(resolvedSeason || undefined)
