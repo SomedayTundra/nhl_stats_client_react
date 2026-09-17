@@ -20,6 +20,7 @@ import {
     useTable,
     type SortingState,
 } from '@tanstack/react-table'
+import {cn} from '@/lib/utils.ts'
 
 const CLASS_TD = 'p-2 align-middle'
 const CLASS_TD_CENTER = `${CLASS_TD} text-center`
@@ -35,27 +36,73 @@ const features = tableFeatures({
 
 const helper = createColumnHelper<typeof features, TeamStatEntry>()
 
-const columns = helper.columns([
-    helper.accessor('teamName', {
-        header: 'Team',
-        sortFn: 'alphanumeric',
-        sortDescFirst: false,
-        meta: {align: 'left', cellClassName: 'flex items-center'},
-        cell: (info) => (
-            <>
-                <img className='h-[48px] w-[48px] align-middle justify-center' src={getTeamLogoUrl(info.row.original.logo, '2x')} alt='logo'/>
-                <p className={CLASS_TD}>{info.getValue()}</p>
-            </>
-        ),
-    }),
-    helper.accessor('wins', {header: 'Wins', meta: {align: 'center', cellClassName: CLASS_TD_CENTER}}),
-    helper.accessor('losses', {header: 'Losses', meta: {align: 'center', cellClassName: CLASS_TD_CENTER}}),
-    helper.accessor('otLosses', {header: 'OT Losses', meta: {align: 'center', cellClassName: CLASS_TD_CENTER}}),
-    helper.accessor('points', {header: 'Points', meta: {align: 'center', cellClassName: CLASS_TD_CENTER}}),
-    helper.accessor('goalsFor', {header: 'Goals For', meta: {align: 'center', cellClassName: CLASS_TD_CENTER}}),
-    helper.accessor('goalsAgainst', {header: 'Goals Against', meta: {align: 'center', cellClassName: CLASS_TD_CENTER}}),
-    helper.accessor('goalDiff', {header: 'Goal Diff', meta: {align: 'center', cellClassName: CLASS_TD_CENTER}}),
-])
+const MISSING = '—'
+
+// the last-10 record as wins-losses-(OT losses or ties), normally three numbers. Which of those
+// two the third slot holds falls out of the era: pre-1999-2000 seasons have no OT losses, the
+// post-lockout shootout era has no ties. `alwaysShowFour` is true for a season where the two ever
+// overlapped for any team on any date (only possible 1999-2000 through 2003-04, the seasons where
+// both existed) - every row in such a season gets all four numbers, even a row whose own OT losses
+// or ties happens to be zero, so a team's format doesn't flip between three and four numbers as
+// its last-10 window moves through the season
+function formatLastTen({l10Wins, l10Losses, l10OtLosses, l10Ties}: TeamStatEntry, alwaysShowFour: boolean) {
+    if (l10Wins == null || l10Losses == null || l10OtLosses == null || l10Ties == null) return null
+    const record = alwaysShowFour
+        ? `${l10Wins}-${l10Losses}-${l10OtLosses}-${l10Ties}`
+        : `${l10Wins}-${l10Losses}-${l10Ties > 0 ? l10Ties : l10OtLosses}`
+    return {
+        record,
+        breakdown: alwaysShowFour ? `${l10Wins}W ${l10Losses}L ${l10OtLosses}OTL ${l10Ties}T` : ''
+    }
+}
+
+function buildColumns(alwaysShowFourL10: boolean) {
+    return helper.columns([
+        helper.accessor('teamName', {
+            header: 'Team',
+            sortFn: 'alphanumeric',
+            sortDescFirst: false,
+            meta: {align: 'left', cellClassName: 'flex items-center'},
+            cell: (info) => (
+                <>
+                    <img className='h-[48px] w-[48px] align-middle justify-center' src={getTeamLogoUrl(info.row.original.logo, '2x')} alt='logo'/>
+                    <p className={CLASS_TD}>{info.getValue()}</p>
+                </>
+            ),
+        }),
+        helper.accessor('wins', {header: 'Wins', meta: {align: 'center', cellClassName: CLASS_TD_CENTER}}),
+        helper.accessor('losses', {header: 'Losses', meta: {align: 'center', cellClassName: CLASS_TD_CENTER}}),
+        helper.accessor('otLosses', {header: 'OT Losses', meta: {align: 'center', cellClassName: CLASS_TD_CENTER}}),
+        helper.accessor('points', {header: 'Points', meta: {align: 'center', cellClassName: CLASS_TD_CENTER}}),
+        helper.accessor('goalsFor', {header: 'Goals For', meta: {align: 'center', cellClassName: CLASS_TD_CENTER}}),
+        helper.accessor('goalsAgainst', {header: 'Goals Against', meta: {align: 'center', cellClassName: CLASS_TD_CENTER}}),
+        helper.accessor('goalDiff', {header: 'Goal Diff', meta: {align: 'center', cellClassName: CLASS_TD_CENTER}}),
+        // sorts on the wins of that record, the one number a "who's hot right now" sort wants
+        helper.accessor('l10Wins', {
+            header: 'Last 10',
+            meta: {align: 'center', cellClassName: CLASS_TD_CENTER},
+            cell: (info) => {
+                const lastTen = formatLastTen(info.row.original, alwaysShowFourL10)
+                return lastTen ? <span title={lastTen.breakdown}>{lastTen.record}</span> : MISSING
+            },
+        }),
+        helper.accessor('l10GoalsFor', {
+            header: 'Last 10 GF',
+            meta: {align: 'center', cellClassName: CLASS_TD_CENTER},
+            cell: (info) => info.getValue() ?? MISSING,
+        }),
+        helper.accessor('l10GoalsAgainst', {
+            header: 'Last 10 GA',
+            meta: {align: 'center', cellClassName: CLASS_TD_CENTER},
+            cell: (info) => info.getValue() ?? MISSING,
+        }),
+        helper.accessor('l10GoalDiff', {
+            header: 'Last 10 GDiff',
+            meta: {align: 'center', cellClassName: CLASS_TD_CENTER},
+            cell: (info) => info.getValue() ?? MISSING,
+        }),
+    ])
+}
 
 const EMPTY_DATA: TeamStatEntry[] = []
 
@@ -78,6 +125,10 @@ export default function TeamStandingsTable() {
     const defaultSeason = useLatestSeasonId()
     const resolvedSeason = season || defaultSeason
     const {data: selectedSeason} = useSeasonInfo(resolvedSeason || undefined)
+    const columns = React.useMemo(
+        () => buildColumns(selectedSeason?.l10OtAndTieOverlap ?? false),
+        [selectedSeason?.l10OtAndTieOverlap],
+    )
 
     const minDate = selectedSeason ? parseApiDate(selectedSeason.startDate) : undefined
     const maxDate = selectedSeason ? parseApiDate(selectedSeason.endDate) : undefined
@@ -150,7 +201,7 @@ export default function TeamStandingsTable() {
         tableBody = table.getRowModel().rows.map((row) => (
             <tr key={row.id} className='p-0 transition-colors hover:bg-muted data-[state=selected]:bg-muted'>
                 {row.getAllCells().map((cell) => (
-                    <td key={cell.id} className={cell.column.columnDef.meta?.cellClassName ?? CLASS_TD}>
+                    <td key={cell.id} className={cn("cursor-default", cell.column.columnDef.meta?.cellClassName ?? CLASS_TD)}>
                         <table.FlexRender cell={cell}/>
                     </td>
                 ))}
