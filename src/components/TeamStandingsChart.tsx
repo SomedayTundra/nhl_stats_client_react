@@ -618,7 +618,6 @@ export default function TeamStandingsChart() {
 
                 if (typeof value === 'number' && typeof index === 'number' && logoFilename) {
                     const offset = logoStackOffset(index, abbrev)
-                    // FIXME: <image> should be replaced with <img>
                     const logo = (
                         <image
                             key={key}
