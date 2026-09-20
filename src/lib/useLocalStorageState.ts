@@ -1,6 +1,6 @@
 import * as React from 'react'
 
-type Options<T> = {
+type LocalStorageOptions<T> = {
     serialize?: (value: T) => string
     deserialize?: (raw: string) => T
 }
@@ -11,18 +11,20 @@ function readFromStorage<T>(key: string, defaultValue: T, deserialize: (raw: str
         if (raw === null) return defaultValue
         return deserialize(raw)
     } catch {
-        // corrupt/foreign value under this key, or storage unavailable (private browsing,
-        // quota exceeded) - persistence is a nice-to-have here, fall back to the default
+        // if anything went wrong trying to fetch a locally-stored value, just give back the default value
         return defaultValue
     }
 }
 
-// same shape as React.useState, but the value is read from and written back to
-// localStorage under `key` so it survives navigating away and back
+/**
+ * Same shape as React.useState, but the value is read from and written back to localStorage under `key`.
+ *
+ * This gives us a "cheap" way to make pages look the way we did when we left them, if we navigate away and back.
+ */
 export function useLocalStorageState<T>(
     key: string,
     defaultValue: T,
-    options?: Options<T>
+    options?: LocalStorageOptions<T>
 ): [T, React.Dispatch<React.SetStateAction<T>>] {
     const serialize = options?.serialize ?? ((value: T) => JSON.stringify(value))
     const deserialize = options?.deserialize ?? ((raw: string) => JSON.parse(raw) as T)
@@ -33,7 +35,7 @@ export function useLocalStorageState<T>(
         try {
             window.localStorage.setItem(key, serialize(state))
         } catch {
-            // storage unavailable/full - nothing useful to do, persistence just doesn't happen
+            // if we fail to save to local storage, no big deal, we have the default value to fall back on
         }
     }, [key, state, serialize])
 

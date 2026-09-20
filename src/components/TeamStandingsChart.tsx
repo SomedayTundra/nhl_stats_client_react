@@ -18,9 +18,9 @@ import {Button} from '@/components/ui/button'
 import {Checkbox} from '@/components/ui/checkbox'
 import {Field, FieldGroup, FieldLabel} from '@/components/ui/field.tsx'
 import {Tooltip, TooltipContent, TooltipTrigger} from '@/components/ui/tooltip'
-import {deserializeDate, formatApiDateForDisplay, formatDateForApi, parseApiDate, serializeDate} from '@/lib/date.ts'
+import {deserializeDate, formatApiDateForDisplay, formatDateForApi, parseApiDateString, serializeDate} from '@/lib/date.ts'
 import {useLocalStorageState} from '@/lib/useLocalStorageState.ts'
-import {useLatestSeasonId, useSeasonInfo} from '@/hooks/useSeasonInfo.ts'
+import {useSeasonInfo} from '@/hooks/useSeasonInfo.ts'
 import {useTeamStats} from '@/hooks/useTeamStats.ts'
 import {getTeamLogoUrl} from '@/lib/teamLogo.ts'
 import {addDays, isAfter, isBefore, isSameDay, subDays} from 'date-fns'
@@ -393,12 +393,13 @@ export default function TeamStandingsChart() {
 
     // '' until we've resolved a default; persisted on every change (useLocalStorageState writes back)
     const [season, setSeason] = useLocalStorageState<string>('nhlStats.season', '') // NHL-49: have table, chart, and playoffs all sync to the same teams and season
-    const defaultSeason = useLatestSeasonId()
+    const {data: defaultSeasonInfo} = useSeasonInfo()
+    const defaultSeason = defaultSeasonInfo ? String(defaultSeasonInfo.seasonId) : ''
     const resolvedSeason = season || defaultSeason
     const {data: selectedSeason} = useSeasonInfo(resolvedSeason || undefined)
 
-    const minDate = selectedSeason ? parseApiDate(selectedSeason.startDate) : undefined
-    const maxDate = selectedSeason ? parseApiDate(selectedSeason.endDate) : undefined
+    const minDate = selectedSeason ? parseApiDateString(selectedSeason.startDate) : undefined
+    const maxDate = selectedSeason ? parseApiDateString(selectedSeason.endDate) : undefined
 
     // sizes the line-type combo box to exactly fit "monotone" (its longest choice) rather than some
     // guessed-at width; the sizer carries the input's own px-3, so the measured width already
@@ -476,8 +477,8 @@ export default function TeamStandingsChart() {
             toKey >= selectedSeason.startDate && toKey <= selectedSeason.endDate &&
             fromKey < toKey
         if (!rangeFitsSeason) {
-            setFromDate(parseApiDate(selectedSeason.startDate))
-            setToDate(parseApiDate(selectedSeason.endDate))
+            setFromDate(parseApiDateString(selectedSeason.startDate))
+            setToDate(parseApiDateString(selectedSeason.endDate))
         }
     }
 
@@ -617,6 +618,7 @@ export default function TeamStandingsChart() {
 
                 if (typeof value === 'number' && typeof index === 'number' && logoFilename) {
                     const offset = logoStackOffset(index, abbrev)
+                    // FIXME: <image> should be replaced with <img>
                     const logo = (
                         <image
                             key={key}

@@ -1,12 +1,13 @@
 import {SeasonSelect} from '@/components/SeasonSelect.tsx'
 import PlayoffBracket from '@/components/PlayoffBracket.tsx'
-import {useLatestSeasonId} from '@/hooks/useSeasonInfo.ts'
+import {useSeasonInfo} from '@/hooks/useSeasonInfo.ts'
 import {useLocalStorageState} from '@/lib/useLocalStorageState.ts'
 
 export default function Playoffs() {
     // '' until we've resolved a default; persisted on every change, same as the table's picker
     const [season, setSeason] = useLocalStorageState<string>('nhlStats.season', '')     // NHL-49: have table, chart, and playoffs all sync to the same season
-    const defaultSeason = useLatestSeasonId()
+    const {data: defaultSeasonInfo} = useSeasonInfo()
+    const defaultSeason = defaultSeasonInfo ? String(defaultSeasonInfo.seasonId) : ''
     const resolvedSeason = season || defaultSeason
 
     return (

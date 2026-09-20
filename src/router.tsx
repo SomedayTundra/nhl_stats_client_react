@@ -58,6 +58,12 @@ export const router = createRouter({
     defaultNotFoundComponent: NotFound,
 })
 
+// IMPORTANT: IDEA doesn't think that Register or HistoryState are used, but they are;
+//            this is exactly how tanstack sets things up.  Read more about TypeScript
+//            module augmentation here:
+//
+//            https://www.typescriptlang.org/docs/handbook/declaration-merging.html
+//
 declare module '@tanstack/react-router' {
     interface Register {
         router: typeof router

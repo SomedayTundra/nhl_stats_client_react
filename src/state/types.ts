@@ -53,11 +53,6 @@ export type SeasonInfo = {
     l10OtAndTieOverlap?: boolean
 }
 
-
-export type LeagueInfo = {
-    conferences: Map<string, Conference>;
-}
-
 export type Conference = {
     divisions: Map<string, Division>;
 }

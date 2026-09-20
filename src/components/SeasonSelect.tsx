@@ -5,7 +5,7 @@ import {useEffect, useRef} from 'react'
 import {Combobox, ComboboxContent, ComboboxEmpty, ComboboxInput, ComboboxItem, ComboboxList} from '@/components/ui/combobox'
 import {FieldLabel} from '@/components/ui/field.tsx'
 import {Tooltip, TooltipContent, TooltipTrigger} from '@/components/ui/tooltip'
-import {useLatestSeasonId} from '@/hooks/useSeasonInfo.ts'
+import {useSeasonInfo} from '@/hooks/useSeasonInfo.ts'
 import {buildSeasonIds, seasonIdToLabel} from '@/lib/season.ts'
 
 type SeasonSelectProps = {
@@ -21,9 +21,10 @@ const WHEEL_STEP_COOLDOWN_MS = 120
 // "Season:" label + a combo box holding one entry per playable season from 1942-43 through the
 // current season (newest first). Controlled: the caller owns the value and persists it.
 export function SeasonSelect({value, onChange}: SeasonSelectProps) {
-    // the newest entry the picker offers: the latest season that has actually started. The
-    // upcoming season isn't listed until the calendar date reaches its startDate.
-    const latestSeasonId = useLatestSeasonId()
+    // the newest entry the picker offers: the season currently in progress, or the most recently
+    // completed one if today falls between seasons.
+    const {data: currentSeasonInfo} = useSeasonInfo()
+    const latestSeasonId = currentSeasonInfo ? String(currentSeasonInfo.seasonId) : ''
 
     // before the lookup resolves, fall back to just the selected id so the control still shows the
     // right thing

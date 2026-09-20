@@ -1,4 +1,4 @@
-// helpers for the per-year SeasonSelect picker (distinct from seasonOption.ts, which drives the
+// helpers for the per-year SeasonSelect picker (distinct from seasonId.ts, which drives the
 // era-based EraSelect used on the quiz page)
 
 // the backend has farmed data back to the 1942-43 season (server EARLIEST_SEASON_ID = 19421943)
