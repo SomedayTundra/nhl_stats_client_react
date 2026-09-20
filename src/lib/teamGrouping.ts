@@ -1,15 +1,30 @@
 import type {TeamInfo} from '@/state/types'
 
-export type TeamDivisionGroup = {
-    divisionName: string
-    teams: TeamInfo[]
-}
-
 export type TeamConferenceGroup = {
     conferenceName: string
     divisions: TeamDivisionGroup[]
 }
 
+export type TeamDivisionGroup = {
+    divisionName: string
+    teams: TeamInfo[]
+}
+
+/**
+ * Group the given collection of TeamInfo objects into a hierarchy like:
+ *
+ * TeamConferenceGroup
+ *     TeamDivisionGroup
+ *         TeamInfo
+ *         TeamInfo
+ *         ..
+ *         TeamInfo
+ *
+ * Note that some old seasons didn't have conferences at all, in which case
+ * we group things into a dummy TeamConferenceGroup with the conferenceName 'NA'.
+ *
+ * All items at the same hierarchy level are arbitrarily sorted alphabetically by name.
+ */
 export function groupTeamsByConferenceAndDivision(teams: TeamInfo[]): TeamConferenceGroup[] {
     const conferenceMap = new Map<string, Map<string, TeamInfo[]>>()
 

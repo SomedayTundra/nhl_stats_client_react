@@ -39,11 +39,6 @@ export type SeasonInfo = {
     endDate: string
 }
 
-
-export type LeagueInfo = {
-    conferences: Map<string, Conference>;
-}
-
 export type Conference = {
     divisions: Map<string, Division>;
 }

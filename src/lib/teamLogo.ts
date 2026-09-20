@@ -1,10 +1,10 @@
 import {API_BASE_URL} from '@/lib/apiConfig.ts'
 
+
 /**
- * URL for a team logo. Pass a `size` to get the backend's pre-rasterized PNG (a clean
- * lanczos3 downscale) instead of the raw SVG, which the browser otherwise squashes from
- * 960x640 down to display size in a single pass — scratchy on the detailed crests.
- * The backend falls back to the SVG if that PNG wasn't generated.
+ * Build a URL for a team logo, suitable for use as the 'src' of <img> elements.
+ * @param logoFilename the filename, generally gleaned from TeamInfo.logo
+ * @param size 1x or 2x to get various nicely-scaled PNG versions of the source SVG logos that the NHL API handed us
  */
 export function getTeamLogoUrl(logoFilename: string, size?: '1x' | '2x'): string {
     const sizeParam = size ? `&size=${size}` : ''
