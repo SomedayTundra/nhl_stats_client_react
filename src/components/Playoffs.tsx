@@ -4,19 +4,23 @@ import {useSeasonInfo} from '@/hooks/useSeasonInfo.ts'
 import {useLocalStorageState} from '@/lib/useLocalStorageState.ts'
 
 export default function Playoffs() {
-    // '' until we've resolved a default; persisted on every change, same as the table's picker
-    const [season, setSeason] = useLocalStorageState<string>('nhlStats.season', '')     // NHL-49: have table, chart, and playoffs all sync to the same season
+    // NHL-49: have table, chart, and playoffs all sync to the same season 'nhlStats.season'
+    const [season, setSeasonId] = useLocalStorageState<string>('nhlStats.season', '')
+
+    // defaultSeasonInfo = get the "current" seasonInfo by calling useSeasonInfo with no seasonId specified
     const {data: defaultSeasonInfo} = useSeasonInfo()
-    const defaultSeason = defaultSeasonInfo ? String(defaultSeasonInfo.seasonId) : ''
-    const resolvedSeason = season || defaultSeason
+    const defaultSeasonId = defaultSeasonInfo ? String(defaultSeasonInfo.seasonId) : ''
+
+    // if we had something stored locally under 'nhlStats.season', use that seasonId, otherwise, use the defaultSeasonId
+    const resolvedSeasonId = season || defaultSeasonId
 
     return (
         <div className='h-full flex flex-col'>
             <div className='w-full flex flex-row items-center gap-4 py-2 top-controls-container shrink-0'>
-                <SeasonSelect value={resolvedSeason} onChange={setSeason}/>
+                <SeasonSelect value={resolvedSeasonId} onChange={setSeasonId}/>
             </div>
             <div className='flex-1 min-h-0 flex justify-center'>
-                <PlayoffBracket season={resolvedSeason}/>
+                <PlayoffBracket seasonId={resolvedSeasonId}/>
             </div>
         </div>
     )

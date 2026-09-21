@@ -48,7 +48,19 @@ export function SeasonSelect({value, onChange}: SeasonSelectProps) {
         }
     }
 
-    const selectedLabel = value ? (labelBySeasonId.get(value) ?? seasonIdToLabel(value)) : ''
+    // the Combobox primitive assumes its controlled `value` is always one of `items` - handing it an
+    // id that isn't a valid choice (e.g. stale localStorage from before the valid range changed, or a
+    // corrupted manual edit) breaks it hard rather than just failing open. Show nothing selected for
+    // the one render where that's true, and self-correct the persisted value below so everything
+    // downstream that reads it recovers too, not just this control's display.
+    const isKnownValue = ids.includes(value)
+    const selectedLabel = isKnownValue ? (labelBySeasonId.get(value) ?? seasonIdToLabel(value)) : ''
+
+    useEffect(() => {
+        if (value && latestSeasonId && !ids.includes(value)) {
+            onChange(ids[0])
+        }
+    }, [value, latestSeasonId, ids, onChange])
 
     // latest-value refs so the wheel listener can be bound once instead of re-subscribed on every
     // step (the selection changes on each wheel tick)
