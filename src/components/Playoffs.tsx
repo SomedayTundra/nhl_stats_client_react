@@ -14,6 +14,11 @@ export default function Playoffs() {
     // if we had something stored locally under 'nhlStats.season', use that seasonId, otherwise, use the defaultSeasonId
     const resolvedSeasonId = season || defaultSeasonId
 
+    //
+    // a SeasonSelect at the top left
+    //
+    // a Playoff component, showing all playoff bracket results from the selected year, takes up the rest of the space
+    //
     return (
         <div className='h-full flex flex-col'>
             <div className='w-full flex flex-row items-center gap-4 py-2 top-controls-container shrink-0'>
