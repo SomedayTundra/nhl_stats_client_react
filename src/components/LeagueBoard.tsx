@@ -65,21 +65,19 @@ export function LeagueBoard({teams, unplacedAbbrevs, showTeamNames, isPending, e
         })
     }
 
-    // FIXME: FIND A BETTER WAY TO STORE AND ITERATE THE CONFERENCE, DIVISION, AND TEAM INFO
-    //        REFERENCES LIKE "conferenceInfo[1]" SEEM RIDICULOUS
     return (
         <>
             <div className='league-ref-everything h-full flex flex-col'>
                 <h1 className='league-ref-header'>NATIONAL HOCKEY LEAGUE</h1>
                 <div className='league-ref-all-conferences-container flex-1 min-h-0'>
-                    {[...newConferences.entries()].map((conferenceInfo) => (
-                        <div key={conferenceInfo[0]} className='league-ref-one-conference-container'>
-                            <h2 className='conference-name-row'>{conferenceInfo[0] === 'NA' ? '' : `${conferenceInfo[0]} Conference`}</h2>
-                            {[...conferenceInfo[1].divisions.entries()].map((divisionInfo) => (
-                                <DivisionDropZone key={divisionInfo[0]} conferenceName={conferenceInfo[0]} divisionName={divisionInfo[0]}>
-                                    <h2 className='division-name-row'>{divisionInfo[0]} Division</h2>
+                    {[...newConferences.entries()].map(([conferenceName, conference]) => (
+                        <div key={conferenceName} className='league-ref-one-conference-container'>
+                            <h2 className='conference-name-row'>{conferenceName === 'NA' ? '' : `${conferenceName} Conference`}</h2>
+                            {[...conference.divisions.entries()].map(([divisionName, division]) => (
+                                <DivisionDropZone key={divisionName} conferenceName={conferenceName} divisionName={divisionName}>
+                                    <h2 className='division-name-row'>{divisionName} Division</h2>
                                     <div className='team-info-card-row'>
-                                        {divisionInfo[1].teams
+                                        {division.teams
                                             .filter((teamInfo) => !unplacedAbbrevs.has(teamInfo.teamAbbrev))
                                             .map((teamInfo) => (
                                                 <TeamInfoCard key={teamInfo.teamAbbrev} info={teamInfo} showTeamNames={showTeamNames} disabled/>

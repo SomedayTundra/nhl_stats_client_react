@@ -7,7 +7,7 @@ import {LeagueBoard, divisionDroppableId} from '@/components/LeagueBoard.tsx'
 import {TeamInfoCardView} from '@/components/TeamInfoCard.tsx'
 import QuizToolbar from '@/components/QuizToolbar.tsx'
 import {EraSelect} from '@/components/EraSelect.tsx'
-import {defaultSeasonOption, getSeasonEntry, isSeasonOption, seasonOptions, type SeasonOption} from '@/lib/seasonOption.ts'
+import {defaultSeasonId, getSeasonEntry, isValidSeasonId, validSeasonIds, type SeasonId} from '@/lib/seasonId.ts'
 import {teamCountForFraction, type TeamCountFraction} from '@/lib/quizTeamCount.ts'
 import type {TeamInfo} from '@/state/types'
 import {useLocalStorageState} from '@/lib/useLocalStorageState.ts'
@@ -27,10 +27,10 @@ function randomOf<T>(items: readonly T[]): T {
 }
 
 export default function LeagueShapeQuiz() {
-    const [season, setSeason] = useLocalStorageState<SeasonOption>('nhlStats.quiz.season', defaultSeasonOption, {
+    const [season, setSeason] = useLocalStorageState<SeasonId>('nhlStats.quiz.season', defaultSeasonId, {
         deserialize: (raw) => {
             const parsed = JSON.parse(raw)
-            return typeof parsed === 'string' && isSeasonOption(parsed) ? parsed : defaultSeasonOption
+            return typeof parsed === 'string' && isValidSeasonId(parsed) ? parsed : defaultSeasonId
         },
     })
 
@@ -170,7 +170,7 @@ export default function LeagueShapeQuiz() {
     // the toolbar has already rolled (and applied) the team-count fraction; roll the era +
     // show-names here, then let the effect above launch the round once the new era loads
     function handleRandomizeAndGo(fraction: TeamCountFraction) {
-        setSeason(randomOf(seasonOptions))
+        setSeason(randomOf(validSeasonIds))
         setShowTeamNames(Math.random() < 0.5)
         setPendingRandomFraction(fraction)
     }

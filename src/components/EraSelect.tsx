@@ -4,16 +4,17 @@ import {useEffect, useLayoutEffect, useRef, useState} from 'react'
 
 import {Combobox, ComboboxContent, ComboboxEmpty, ComboboxInput, ComboboxItem, ComboboxList} from '@/components/ui/combobox'
 import {Tooltip, TooltipContent, TooltipTrigger} from '@/components/ui/tooltip'
-import {getSeasonEntry, seasonEntriesNewestFirst, type SeasonOption} from '@/lib/seasonOption.ts'
+import {getSeasonEntry, seasonEntries, type SeasonId} from '@/lib/seasonId.ts'
+// import {getSeasonEntry, seasonEntriesNewestFirst, type SeasonId} from '@/lib/seasonId.ts'
 
 type EraSelectProps = {
-    season: SeasonOption
-    onSeasonChange: (season: SeasonOption) => void
+    season: SeasonId
+    onSeasonChange: (season: SeasonId) => void
 }
 
 // derived once from the static era list rather than per render
-const seasonNames = seasonEntriesNewestFirst.map((entry) => entry.name)
-const seasonEntryByName = new Map(seasonEntriesNewestFirst.map((entry) => [entry.name, entry]))
+const seasonNames = seasonEntries.map((entry) => entry.name)
+const seasonEntryByName = new Map(seasonEntries.map((entry) => [entry.name, entry]))
 const longestSeasonName = seasonNames.reduce((longest, name) => (name.length > longest.length ? name : longest), '')
 
 // a single wheel flick (especially on a trackpad) fires a burst of events; only step one entry
@@ -102,12 +103,12 @@ export function EraSelect({season, onSeasonChange}: EraSelectProps) {
                 return
             }
 
-            const currentIndex = seasonEntriesNewestFirst.findIndex((entry) => entry.seasonId === seasonRef.current)
+            const currentIndex = seasonEntries.findIndex((entry) => entry.seasonId === seasonRef.current)
             const step = event.deltaY > 0 ? 1 : -1
-            const nextIndex = Math.min(Math.max(currentIndex + step, 0), seasonEntriesNewestFirst.length - 1)
+            const nextIndex = Math.min(Math.max(currentIndex + step, 0), seasonEntries.length - 1)
             if (nextIndex !== currentIndex) {
                 lastStepAtRef.current = event.timeStamp
-                onSeasonChangeRef.current(seasonEntriesNewestFirst[nextIndex].seasonId)
+                onSeasonChangeRef.current(seasonEntries[nextIndex].seasonId)
             }
         }
 

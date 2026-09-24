@@ -6,7 +6,7 @@ import {seasonIdToLabel} from '@/lib/season.ts'
 
 type PlayoffBracketProps = {
     // the seasonId whose postseason to show, e.g. '20242025' (empty until the page resolves one)
-    season: string
+    seasonId: string
 }
 
 // keep in sync with --bracket-row-height in index.css: a series card is two of these stacked, and
@@ -139,18 +139,18 @@ function FinalTeam({team}: {team: BracketTeamView}) {
     )
 }
 
-export default function PlayoffBracket({season}: PlayoffBracketProps) {
-    const {data, isPending, isFetching, error} = usePlayoffs(season)
+export default function PlayoffBracket({seasonId}: PlayoffBracketProps) {
+    const {data, isPending, isFetching, error} = usePlayoffs(seasonId)
     const view = buildBracketView(data)
 
     let content: React.ReactNode
-    if (season === '' || isPending || isFetching) {
+    if (seasonId === '' || isPending || isFetching) {
         // a season change swaps the query key, so this covers the wait for the new year's bracket
         content = <p className='bracket-message'>Loading...</p>
     } else if (error) {
         content = <p className='bracket-message'>An error occurred: {error.message}</p>
     } else if (view === null) {
-        content = <p className='bracket-message'>No playoff results for {seasonIdToLabel(season)}.</p>
+        content = <p className='bracket-message'>No playoff results for {seasonIdToLabel(seasonId)}.</p>
     } else {
         const {final} = view
         const champion = final.top.won ? final.top : (final.bottom.won ? final.bottom : null)
