@@ -466,8 +466,12 @@ export default function TeamStandingsChart() {
 
     // when the selected season changes, snap the date range back inside it: keep the existing
     // from/to only if they already sit within the new season (and stay ordered), else fall back to
-    // the whole season. Adjusted during render, React's recommended derive-from-changing-value way.
-    const [clampedSeasonId, setClampedSeasonId] = React.useState<number | null>(null)
+    // the whole season. clampedSeasonId is persisted (not plain React state) so a page refresh -
+    // which remounts this component and would otherwise start clampedSeasonId back at null - doesn't
+    // look like a season change and reset the user's picked range; only an actual change of
+    // 'nhlStats.season' (which the Table, Chart, and Playoffs pages all share) leaves it mismatched
+    // with selectedSeason.seasonId. Adjusted during render, React's recommended derive-from-changing-value way.
+    const [clampedSeasonId, setClampedSeasonId] = useLocalStorageState<number | null>('nhlStats.chart.clampedSeasonId', null)
     if (selectedSeason && selectedSeason.seasonId !== clampedSeasonId) {
         setClampedSeasonId(selectedSeason.seasonId)
         const fromKey = formatDateForApi(fromDate)

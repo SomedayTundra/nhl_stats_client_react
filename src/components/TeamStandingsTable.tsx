@@ -135,8 +135,12 @@ export default function TeamStandingsTable() {
     const maxDate = selectedSeason ? parseApiDateString(selectedSeason.endDate) : undefined
 
     // when the selected season changes, default the picked date to the end of the new season.
+    // clampedSeasonId is persisted (not plain React state) so a page refresh - which remounts this
+    // component and would otherwise start clampedSeasonId back at null - doesn't look like a season
+    // change and reset the user's picked date; only an actual change of 'nhlStats.season' (which the
+    // Table, Chart, and Playoffs pages all share) leaves it mismatched with selectedSeason.seasonId.
     // Adjusted during render (React's recommended way to derive state from a changing value).
-    const [clampedSeasonId, setClampedSeasonId] = React.useState<number | null>(null)
+    const [clampedSeasonId, setClampedSeasonId] = useLocalStorageState<number | null>('nhlStats.table.clampedSeasonId', null)
     if (selectedSeason && selectedSeason.seasonId !== clampedSeasonId) {
         setClampedSeasonId(selectedSeason.seasonId)
         setDate(parseApiDateString(selectedSeason.endDate))
