@@ -118,6 +118,7 @@ export function EraSelect({season, onSeasonChange}: EraSelectProps) {
 
     return (
         <div ref={wrapperRef} className="relative flex flex-row items-center gap-3">
+            Era:
             {/* hidden twin of the longest entry name, measured to size the input */}
             <span
                 ref={sizerRef}
