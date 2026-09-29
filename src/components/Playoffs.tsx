@@ -20,7 +20,7 @@ export default function Playoffs() {
     // a Playoff component, showing all playoff bracket results from the selected year, takes up the rest of the space
     //
     return (
-        <div className='h-full flex flex-col'>
+        <div className='h-full flex flex-col px-4'>
             <div className='w-full flex flex-row items-center gap-4 py-2 top-controls-container shrink-0'>
                 <SeasonSelect value={resolvedSeasonId} onChange={setSeasonId}/>
             </div>

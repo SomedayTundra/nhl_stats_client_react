@@ -813,7 +813,7 @@ export default function TeamStandingsChart() {
     }
 
     return (
-        <div className='h-full flex flex-col'>
+        <div className='h-full flex flex-col px-4'>
             <div className='w-full flex flex-row flex-wrap items-center justify-start gap-x-4 gap-y-2 py-2 shrink-0'>
                 <SeasonSelect value={resolvedSeason} onChange={setSeason}/>
                 <div className='flex flex-row items-center gap-2 shrink-0'>

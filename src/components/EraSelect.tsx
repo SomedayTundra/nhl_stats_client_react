@@ -140,6 +140,7 @@ export function EraSelect({season, onSeasonChange}: EraSelectProps) {
                             onItemHighlighted={(name) => setHighlightedName(name)}
                         >
                             <ComboboxInput
+                                className="border-neutral-800 bg-background hover:bg-accent hover:text-accent-foreground dark:hover:bg-input/50"
                                 id="quiz-season"
                                 style={
                                     widestNameWidth !== undefined

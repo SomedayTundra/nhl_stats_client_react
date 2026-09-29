@@ -110,7 +110,7 @@ export default function QuizToolbar({showTeamNames, onShowTeamNamesChange, onRan
                                 onOpenChange={(open) => {comboboxOpenRef.current = open}}
                                 itemToStringLabel={(fraction) => String(teamCountForFraction(fraction, totalTeams))}
                             >
-                                <ComboboxInput id="quiz-team-count" className="w-20 gray"/>
+                                <ComboboxInput id="quiz-team-count" className="w-20 border-neutral-800 bg-background hover:bg-accent hover:text-accent-foreground dark:hover:bg-input/50"/>
                                 <ComboboxContent>
                                     <ComboboxEmpty>No items found.</ComboboxEmpty>
                                     <ComboboxList>
@@ -136,7 +136,7 @@ export default function QuizToolbar({showTeamNames, onShowTeamNamesChange, onRan
                     <TooltipTrigger asChild>
                         <Button
                             variant="outline"
-                            size="icon-xs"
+                            size="icon-sm"
                             className="rounded-r-none border-neutral-500/50"
                             onClick={handleRandomizeAndGo}
                             aria-label="Randomize and Go!"
@@ -149,13 +149,13 @@ export default function QuizToolbar({showTeamNames, onShowTeamNamesChange, onRan
                 <Tooltip>
                     <TooltipTrigger asChild>
                         <Button
-                            className="bg-green-600 text-white hover:bg-green-700"
+                            className="rounded-l-none bg-(--navbar-fg) text-white hover:text-(--navbar-fg) hover:bg-(--navbar-bg)"
                             onClick={() => onGo(teamCount)}
                         >
                             Go!
                         </Button>
                     </TooltipTrigger>
-                    <TooltipContent side="top">Go!</TooltipContent>
+                    <TooltipContent side="top">Start the quiz!</TooltipContent>
                 </Tooltip>
             </div>
         </div>

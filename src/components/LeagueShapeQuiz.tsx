@@ -177,7 +177,7 @@ export default function LeagueShapeQuiz() {
 
     return (
         <div className='h-full min-h-0 flex flex-col'>
-            <div className='flex flex-row items-center'>
+            <div className='flex flex-row py-2 items-center'>
                 <div className='w-1/3 mx-4'>
                     <QuizToolbar
                         showTeamNames={showTeamNames}
