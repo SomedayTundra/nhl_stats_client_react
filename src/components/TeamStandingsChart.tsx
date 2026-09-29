@@ -19,12 +19,19 @@ import {Checkbox} from '@/components/ui/checkbox'
 import {Field, FieldGroup, FieldLabel} from '@/components/ui/field.tsx'
 import {Tooltip, TooltipContent, TooltipTrigger} from '@/components/ui/tooltip'
 import {deserializeDate, formatApiDateForDisplay, formatDateForApi, parseApiDateString, serializeDate} from '@/lib/date.ts'
+import {cn} from '@/lib/utils'
 import {useLocalStorageState} from '@/lib/useLocalStorageState.ts'
 import {useSeasonInfo} from '@/hooks/useSeasonInfo.ts'
 import {useTeamStats} from '@/hooks/useTeamStats.ts'
+import {usePlayoffs} from '@/hooks/usePlayoffs.ts'
 import {getTeamLogoUrl} from '@/lib/teamLogo.ts'
 import {addDays, isAfter, isBefore, isSameDay, subDays} from 'date-fns'
 import {seasonIdToLabel} from '@/lib/season.ts'
+import {buildBracketView, type BracketTeamView, type NhlBracketPayload} from '@/lib/playoffBracket.ts'
+// a small (42x48, 2x a 24px CSS height) re-render of the navbar's nhl_logo.png, rather than that
+// full-size asset scaled down by the browser, so the swatch/logo toggle's icon stays crisp at
+// its actual display size instead of relying on downsampling a much larger source image
+import nhlLogoSmall from '@/assets/nhl_logo_small.png'
 
 const lineTypes = [
     'basis', 'bump', 'linear', 'natural', 'monotone', 'step',
@@ -41,6 +48,16 @@ type LineType = typeof lineTypes[number]
 
 function isLineType(value: string): value is LineType {
     return (lineTypes as readonly string[]).includes(value)
+}
+
+// which icon the docked sidebar draws to the left of each team's abbreviation - a small color
+// swatch (the original look) or that team's own logo, toggled via the control at the bottom of
+// the sidebar
+const sidebarIconModes = ['swatch', 'logo'] as const
+type SidebarIconMode = typeof sidebarIconModes[number]
+
+function isSidebarIconMode(value: string): value is SidebarIconMode {
+    return (sidebarIconModes as readonly string[]).includes(value)
 }
 
 // size (in px) of the team logo rendered at the end of each line, adjustable via the "Logos"
@@ -270,6 +287,17 @@ function colorForTeam(abbrev: string): string {
     return HARDCODED_TEAM_COLORS[abbrev as keyof typeof HARDCODED_TEAM_COLORS]?.color ?? randomColorForTeam(abbrev)
 }
 
+// pulls the winning team out of a playoffs payload, the same way PlayoffBracket.tsx does:
+// the series winner if the final is decided, else null (an in-progress or not-yet-played
+// postseason has no champion - buildBracketView itself returns null for an empty series list)
+function championFromBracket(data: NhlBracketPayload | undefined): BracketTeamView | null {
+    const view = buildBracketView(data)
+    if (view === null) {
+        return null
+    }
+    return view.final.top.won ? view.final.top : (view.final.bottom.won ? view.final.bottom : null)
+}
+
 type ChartTooltipPayloadItem = {
     dataKey?: string | number
     value?: number | string
@@ -277,97 +305,64 @@ type ChartTooltipPayloadItem = {
     name?: string | number
 }
 
+// pads a point total's string form out to 3 characters so 1- and 2-digit totals right-align
+// under 3-digit ones in the docked sidebar below. U+2007 (figure space) rather than a plain
+// space or '0': it's a space character reserved to be digit-width, so it pads cleanly even if
+// --mono's webfont fails to load and a proportional fallback takes over
+const POINTS_PAD_CHAR = ' '
+
+function formatPaddedPoints(value: number | string | undefined): string {
+    return value === undefined ? '' : String(value).padStart(3, POINTS_PAD_CHAR)
+}
+
 type DockedTooltipPanelProps = {
     payload: ChartTooltipPayloadItem[] | null
     label?: string
-    logoSize: number
-    onDecreaseLogoSize: () => void
-    onIncreaseLogoSize: () => void
+    scrollContainerRef: React.RefObject<HTMLDivElement | null>
+    teamLogoByAbbrev: Map<string, string>
+    sidebarIconMode: SidebarIconMode
 }
 
 // docked along the chart's right edge instead of following the cursor, stretched to the chart's
 // full height; rows always start at the top and stack downward in a single column (the panel's
 // own height/scroll - not a fixed row/column grid - is what keeps a full 32-team list readable).
-// the "Logos" size control is a persistent chart setting rather than tooltip content, so it's
-// pinned to the bottom of the panel, outside the scrolling hover-content area
-function DockedTooltipPanel({payload, label, logoSize, onDecreaseLogoSize, onIncreaseLogoSize}: DockedTooltipPanelProps) {
+// the swatch/logo toggle that used to live pinned to the bottom of this panel now lives in the
+// chart's top toolbar instead (see the right-justified control cluster there) - this component
+// only reads sidebarIconMode to decide what each row draws
+function DockedTooltipPanel({payload, label, scrollContainerRef, teamLogoByAbbrev, sidebarIconMode}: DockedTooltipPanelProps) {
     const sorted = payload ? [...payload].sort((a, b) => (Number(b.value) || 0) - (Number(a.value) || 0)) : null
-
-    // mouse wheel over the icon-size controls steps the logo size up/down, mirroring the
-    // line-type combo's own wheel support above (same latest-value-ref + cooldown mechanics),
-    // just scoped to this child component since that's where the target div actually lives.
-    // Wheel down shrinks the logos (the common "scroll down = zoom out" convention), wheel up
-    // grows them; onDecreaseLogoSize/onIncreaseLogoSize already clamp at MIN/MAX_LOGO_SIZE, so
-    // the handler doesn't need to duplicate that.
-    const iconSizeControlsRef = React.useRef<HTMLDivElement | null>(null)
-    const onDecreaseLogoSizeRef = React.useRef(onDecreaseLogoSize)
-    const onIncreaseLogoSizeRef = React.useRef(onIncreaseLogoSize)
-    const iconSizeLastStepAtRef = React.useRef(0)
-
-    React.useEffect(() => {
-        onDecreaseLogoSizeRef.current = onDecreaseLogoSize
-        onIncreaseLogoSizeRef.current = onIncreaseLogoSize
-    })
-
-    React.useEffect(() => {
-        const controls = iconSizeControlsRef.current
-        if (controls === null) {
-            return
-        }
-
-        const handleWheel = (event: WheelEvent) => {
-            if (Math.abs(event.deltaY) < 1) {
-                return
-            }
-            event.preventDefault()
-
-            if (event.timeStamp - iconSizeLastStepAtRef.current < WHEEL_STEP_COOLDOWN_MS) {
-                return
-            }
-            iconSizeLastStepAtRef.current = event.timeStamp
-
-            if (event.deltaY > 0) {
-                onDecreaseLogoSizeRef.current()
-            } else {
-                onIncreaseLogoSizeRef.current()
-            }
-        }
-
-        controls.addEventListener('wheel', handleWheel, {passive: false})
-        return () => controls.removeEventListener('wheel', handleWheel)
-    }, [])
 
     return (
         <div className='h-full w-36 shrink-0 border-l flex flex-col text-xs'>
-            <div className='flex-1 min-h-0 overflow-y-auto px-3 py-2'>
+            <div ref={scrollContainerRef} className='flex-1 min-h-0 overflow-y-auto px-3 py-2'>
                 {sorted && sorted.length > 0 ? (
                     <>
                         <div className='mb-1 font-medium'>{label && formatApiDateForDisplay(label)}</div>
                         <div className='flex flex-col'>
-                            {sorted.map((item) => (
-                                <div key={item.dataKey} className='flex items-center gap-1.5 whitespace-nowrap py-0.5'>
-                                    <span className='inline-block size-2 shrink-0 rounded-[2px]' style={{backgroundColor: item.color}}/>
-                                    <span>{item.name ?? item.dataKey}: {item.value}</span>
-                                </div>
-                            ))}
+                            {sorted.map((item) => {
+                                const abbrev = String(item.name ?? item.dataKey ?? '')
+                                const logoFilename = teamLogoByAbbrev.get(abbrev)
+                                return (
+                                    <div key={item.dataKey} className='flex items-center gap-1.5 whitespace-nowrap py-0.5 [font-family:var(--mono)] tabular-nums'>
+                                        {/* height-only (no fixed width): the source crests aren't
+                                            square, so pinning both dimensions would letterbox the
+                                            visible mark down well under this height */}
+                                        {sidebarIconMode === 'logo' && logoFilename ? (
+                                            <img src={getTeamLogoUrl(logoFilename, '1x')} alt='' className='h-8 w-auto shrink-0'/>
+                                        ) : (
+                                            <span className='inline-block size-2 shrink-0 rounded-[2px]' style={{backgroundColor: item.color}}/>
+                                        )}
+                                        <span>{abbrev}</span>
+                                        <span className='ml-auto'>{formatPaddedPoints(item.value)}</span>
+                                    </div>
+                                )
+                            })}
                         </div>
                     </>
                 ) : (
                     <p className='text-muted-foreground'>Hover the chart to see values</p>
                 )}
             </div>
-            <Tooltip>
-                <TooltipTrigger asChild>
-                    <div className='shrink-0 border-t px-3 py-2 flex items-center justify-center gap-2'>
-                        <div className='icon-size-controls' ref={iconSizeControlsRef}>
-                            <Button variant='outline' size='icon-xs' onClick={onDecreaseLogoSize} disabled={logoSize <= MIN_LOGO_SIZE}>-</Button>
-                            <span className='pl-1 pr-1'>{logoSize}px</span>
-                            <Button variant='outline' size='icon-xs' onClick={onIncreaseLogoSize} disabled={logoSize >= MAX_LOGO_SIZE}>+</Button>
-                        </div>
-                    </div>
-                </TooltipTrigger>
-                <TooltipContent>Adjust the size of team logos on the chart.</TooltipContent>
-            </Tooltip>
         </div>
     )
 }
@@ -381,6 +376,12 @@ export default function TeamStandingsChart() {
     })
     const [showDots, setShowDots] = useLocalStorageState<boolean>('nhlStats.chart.showDots', false)
     const [logoSize, setLogoSize] = useLocalStorageState<number>('nhlStats.chart.logoSize', DEFAULT_LOGO_SIZE)
+    const [sidebarIconMode, setSidebarIconMode] = useLocalStorageState<SidebarIconMode>('nhlStats.chart.sidebarIconMode', 'swatch', {
+        deserialize: (raw) => {
+            const parsed = JSON.parse(raw)
+            return isSidebarIconMode(parsed) ? parsed : 'swatch'
+        },
+    })
     const [selectedTeams, setSelectedTeams] = useLocalStorageState<string[]>('nhlStats.selectedTeams', [])  // NHL-49: have table, chart, and playoffs all sync to the same teams and season
     const [fromDate, setFromDate] = useLocalStorageState<Date>('nhlStats.chart.dateRange.from', new Date('2025-10-08'), {
         serialize: serializeDate,
@@ -397,6 +398,14 @@ export default function TeamStandingsChart() {
     const defaultSeason = defaultSeasonInfo ? String(defaultSeasonInfo.seasonId) : ''
     const resolvedSeason = season || defaultSeason
     const {data: selectedSeason} = useSeasonInfo(resolvedSeason || undefined)
+
+    // the swatch/logo toggle's "Logo" mode shows the selected season's Stanley Cup winner - the
+    // same season the SeasonSelect/TeamChooser/date range above are all showing. A season still in
+    // progress (or not yet started) has no decided champion - usePlayoffs then answers with an
+    // empty series list rather than one (see usePlayoffs.ts) - so cupChampion is null and the
+    // button below falls back to the plain NHL logo rather than reaching back to an older season
+    const {data: selectedSeasonPlayoffs} = usePlayoffs(resolvedSeason)
+    const cupChampion = championFromBracket(selectedSeasonPlayoffs)
 
     const minDate = selectedSeason ? parseApiDateString(selectedSeason.startDate) : undefined
     const maxDate = selectedSeason ? parseApiDateString(selectedSeason.endDate) : undefined
@@ -464,6 +473,44 @@ export default function TeamStandingsChart() {
         return () => wrapper.removeEventListener('wheel', handleWheel)
     }, [setLineType])
 
+    // mouse wheel over the (closed) logo-size control steps it up/down, mirroring the line-type
+    // combo's wheel support just above. Wheel down shrinks the logos (the common "scroll down =
+    // zoom out" convention), wheel up grows them; setLogoSize's functional updater already clamps
+    // at MIN/MAX_LOGO_SIZE, so the handler doesn't need to duplicate that.
+    //
+    // state (a callback ref), not a plain useRef, for the same reason as chartWheelArea above:
+    // it guarantees the listener attaches (or re-attaches) exactly when the DOM node exists,
+    // rather than only if it already existed at this component's very first render.
+    const [logoSizeControls, setLogoSizeControls] = React.useState<HTMLDivElement | null>(null)
+    const logoSizeLastStepAtRef = React.useRef(0)
+    React.useEffect(() => {
+        const controls = logoSizeControls
+        if (controls === null) {
+            return
+        }
+
+        const handleWheel = (event: WheelEvent) => {
+            if (Math.abs(event.deltaY) < 1) {
+                return
+            }
+            event.preventDefault()
+
+            if (event.timeStamp - logoSizeLastStepAtRef.current < WHEEL_STEP_COOLDOWN_MS) {
+                return
+            }
+            logoSizeLastStepAtRef.current = event.timeStamp
+
+            if (event.deltaY > 0) {
+                setLogoSize((current) => Math.max(MIN_LOGO_SIZE, current - LOGO_SIZE_STEP))
+            } else {
+                setLogoSize((current) => Math.min(MAX_LOGO_SIZE, current + LOGO_SIZE_STEP))
+            }
+        }
+
+        controls.addEventListener('wheel', handleWheel, {passive: false})
+        return () => controls.removeEventListener('wheel', handleWheel)
+    }, [logoSizeControls, setLogoSize])
+
     // when the selected season changes, snap the date range back inside it: keep the existing
     // from/to only if they already sit within the new season (and stay ordered), else fall back to
     // the whole season. clampedSeasonId is persisted (not plain React state) so a page refresh -
@@ -510,8 +557,67 @@ export default function TeamStandingsChart() {
         setHoveredLabel(undefined)
     }
 
+    // the docked sidebar's row list only has content while the mouse is over the chart (it's
+    // what populates hoveredPayload above), so a user can never move the mouse onto the sidebar
+    // itself to scroll it - doing so leaves the chart and clears the very data they were trying to
+    // scroll through. Forwarding wheel events from the chart area to the sidebar's own scroll
+    // container solves that: scrolling while hovering the chart scrolls the list without the
+    // mouse ever having to leave it. Native, non-passive listener for the same reason as the
+    // line-type/logo-size wheel handlers above - React's synthetic onWheel can't preventDefault.
+    //
+    // chartWheelArea is state (a callback ref), not a plain useRef: this component itself doesn't
+    // remount when chartArea's conditional branches swap (loading/error/empty vs. the real chart),
+    // so a plain ref read inside a []-deps effect would only ever see the DOM node if it already
+    // existed at TeamStandingsChart's own first render - it's usually still null then, mid-fetch,
+    // and never gets attached once the chart later appears. State forces the effect to re-run
+    // exactly when the node actually mounts.
+    const [chartWheelArea, setChartWheelArea] = React.useState<HTMLDivElement | null>(null)
+    const sidebarScrollRef = React.useRef<HTMLDivElement | null>(null)
+    const chartCtrlWheelLastStepAtRef = React.useRef(0)
+    React.useEffect(() => {
+        if (chartWheelArea === null) {
+            return
+        }
+
+        const handleWheel = (event: WheelEvent) => {
+            if (Math.abs(event.deltaY) < 1) {
+                return
+            }
+
+            // ctrl+wheel (or a trackpad pinch, which the browser reports the same way) resizes the
+            // chart's own logos instead of scrolling the sidebar - preventDefault matters even more
+            // here, since the browser's own default for ctrl+wheel is to zoom the whole page
+            if (event.ctrlKey) {
+                event.preventDefault()
+
+                if (event.timeStamp - chartCtrlWheelLastStepAtRef.current < WHEEL_STEP_COOLDOWN_MS) {
+                    return
+                }
+                chartCtrlWheelLastStepAtRef.current = event.timeStamp
+
+                if (event.deltaY > 0) {
+                    setLogoSize((current) => Math.max(MIN_LOGO_SIZE, current - LOGO_SIZE_STEP))
+                } else {
+                    setLogoSize((current) => Math.min(MAX_LOGO_SIZE, current + LOGO_SIZE_STEP))
+                }
+                return
+            }
+
+            const sidebarScroll = sidebarScrollRef.current
+            if (sidebarScroll === null) {
+                return
+            }
+            event.preventDefault()
+            sidebarScroll.scrollTop += event.deltaY
+        }
+
+        chartWheelArea.addEventListener('wheel', handleWheel, {passive: false})
+        return () => chartWheelArea.removeEventListener('wheel', handleWheel)
+    }, [chartWheelArea, setLogoSize])
+
     const handleDecreaseLogoSize = () => setLogoSize((current) => Math.max(MIN_LOGO_SIZE, current - LOGO_SIZE_STEP))
     const handleIncreaseLogoSize = () => setLogoSize((current) => Math.min(MAX_LOGO_SIZE, current + LOGO_SIZE_STEP))
+    const handleToggleSidebarIconMode = () => setSidebarIconMode((current) => current === 'swatch' ? 'logo' : 'swatch')
 
     // the "from" and "to" dates are never allowed to cross (from after to) or land on the same
     // day - whichever end the user just moved "wins", and the other end gets nudged out of the way
@@ -641,62 +747,66 @@ export default function TeamStandingsChart() {
 
         chartArea = (
             <div className='flex h-full w-full flex-row'>
-                <ChartContainer config={chartConfig} className='h-full flex-1 aspect-auto'>
-                    <LineChart
-                        accessibilityLayer
-                        data={chartData}
-                        onMouseMove={handleChartMouseMove}
-                        onMouseLeave={handleChartMouseLeave}
-                        margin={{
-                            top: 12,
-                            bottom: 12,
-                            left: 24,
-                            right: 12 + logoSize / 2,
-                        }}
-                    >
-                        <CartesianGrid vertical={false} stroke='var(--navbar-bg)'/>
-                        <XAxis
-                            dataKey='date'
-                            tickLine={true}
-                            axisLine={true}
-                            tickMargin={8}
-                            interval={Math.max(Math.ceil(chartData.length / 11) - 1, 0)}
-                            tickFormatter={(value: string) => value.slice(5)}
-                        />
-                        <YAxis
-                            tickLine={true}
-                            axisLine={true}
-                            tickMargin={8}
-                            domain={([dataMin, dataMax]: [number, number]) => {
-                                const padding = Math.max((dataMax - dataMin) * 0.1, 1)
-                                // points are never negative, so the axis shouldn't dip below zero just
-                                // to pad the bottom of the chart; the top tracks the data exactly, with
-                                // no headroom padding above the current max
-                                return [Math.max(0, Math.floor(dataMin - padding)), dataMax]
+                {/* wraps ChartContainer (rather than ref-ing it directly) purely so the wheel
+                    listener above has a plain DOM node to attach to */}
+                <div ref={setChartWheelArea} className='h-full min-w-0 flex-1'>
+                    <ChartContainer config={chartConfig} className='h-full w-full aspect-auto'>
+                        <LineChart
+                            accessibilityLayer
+                            data={chartData}
+                            onMouseMove={handleChartMouseMove}
+                            onMouseLeave={handleChartMouseLeave}
+                            margin={{
+                                top: 12,
+                                bottom: 12,
+                                left: 24,
+                                right: 12 + logoSize / 2,
                             }}
-                            label={{value: 'Points', angle: -90, position: 'insideLeft'}}
-                        />
-                        <ChartTooltip cursor={true} content={() => null}/>
-                        {visibleTeamAbbrevs.map((abbrev) => (
-                            <Line
-                                key={abbrev}
-                                dataKey={abbrev}
-                                type={lineType}
-                                stroke={colorForTeam(abbrev)}
-                                strokeWidth={2}
-                                dot={showDots}
-                                activeDot={renderActiveDot(abbrev)}
+                        >
+                            <CartesianGrid vertical={false} stroke='var(--navbar-bg)'/>
+                            <XAxis
+                                dataKey='date'
+                                tickLine={true}
+                                axisLine={true}
+                                tickMargin={8}
+                                interval={Math.max(Math.ceil(chartData.length / 11) - 1, 0)}
+                                tickFormatter={(value: string) => value.slice(5)}
                             />
-                        ))}
-                        <g ref={setLogoOverlayNode}/>
-                    </LineChart>
-                </ChartContainer>
+                            <YAxis
+                                tickLine={true}
+                                axisLine={true}
+                                tickMargin={8}
+                                domain={([dataMin, dataMax]: [number, number]) => {
+                                    const padding = Math.max((dataMax - dataMin) * 0.1, 1)
+                                    // points are never negative, so the axis shouldn't dip below zero just
+                                    // to pad the bottom of the chart; the top tracks the data exactly, with
+                                    // no headroom padding above the current max
+                                    return [Math.max(0, Math.floor(dataMin - padding)), dataMax]
+                                }}
+                                label={{value: 'Points', angle: -90, position: 'insideLeft'}}
+                            />
+                            <ChartTooltip cursor={true} content={() => null}/>
+                            {visibleTeamAbbrevs.map((abbrev) => (
+                                <Line
+                                    key={abbrev}
+                                    dataKey={abbrev}
+                                    type={lineType}
+                                    stroke={colorForTeam(abbrev)}
+                                    strokeWidth={2}
+                                    dot={showDots}
+                                    activeDot={renderActiveDot(abbrev)}
+                                />
+                            ))}
+                            <g ref={setLogoOverlayNode}/>
+                        </LineChart>
+                    </ChartContainer>
+                </div>
                 <DockedTooltipPanel
                     payload={hoveredPayload}
                     label={hoveredLabel}
-                    logoSize={logoSize}
-                    onDecreaseLogoSize={handleDecreaseLogoSize}
-                    onIncreaseLogoSize={handleIncreaseLogoSize}
+                    scrollContainerRef={sidebarScrollRef}
+                    teamLogoByAbbrev={teamLogoByAbbrev}
+                    sidebarIconMode={sidebarIconMode}
                 />
             </div>
         )
@@ -777,6 +887,59 @@ export default function TeamStandingsChart() {
                         </FieldLabel>
                     </Field>
                 </FieldGroup>
+                {/* ml-auto pushes this cluster (and everything after it, there's nothing else) to
+                    the right edge of the toolbar row, separate from the left-justified controls above */}
+                <div className='ml-auto flex items-center gap-4 shrink-0'>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <div ref={setLogoSizeControls} className='flex items-center gap-2 shrink-0'>
+                                <Button variant='outline' size='icon-xs' onClick={handleDecreaseLogoSize} disabled={logoSize <= MIN_LOGO_SIZE}>-</Button>
+                                <span className='pl-1 pr-1'>{logoSize}px</span>
+                                <Button variant='outline' size='icon-xs' onClick={handleIncreaseLogoSize} disabled={logoSize >= MAX_LOGO_SIZE}>+</Button>
+                            </div>
+                        </TooltipTrigger>
+                        <TooltipContent side='top'>Adjust the size of team logos on the chart (CTRL+MOUSEWHEEL over chart)</TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            {/* a toggle button, not a plain click-through button: aria-pressed (and the
+                                selected-state background below) reflect sidebarIconMode directly -
+                                pressed/selected = logos in the sidebar, unpressed = swatches. Its
+                                content is always the champion logo (or the NHL fallback) regardless of
+                                that state; the toggle no longer has a text label at all */}
+                            <button
+                                type='button'
+                                onClick={handleToggleSidebarIconMode}
+                                aria-pressed={sidebarIconMode === 'logo'}
+                                aria-label={sidebarIconMode === 'logo' ? 'Showing team logos in the sidebar' : 'Showing team swatches in the sidebar'}
+                                className={cn(
+                                    'flex items-center justify-center shrink-0 rounded-md p-1 hover:bg-accent hover:text-accent-foreground',
+                                    sidebarIconMode === 'logo' && 'bg-accent text-accent-foreground',
+                                )}
+                            >
+                                {cupChampion ? (
+                                    // our own backend renders every team crest onto a fixed square
+                                    // canvas with a lot of blank padding baked in around the mark
+                                    // itself (not just aspect-ratio letterboxing) - clipping the box
+                                    // and scaling the image up crops most of that padding away rather
+                                    // than just shrinking the visible mark inside a bigger empty box
+                                    <span className='relative size-8 shrink-0 overflow-hidden rounded-sm'>
+                                        <img
+                                            src={getTeamLogoUrl(cupChampion.logoFilename, '1x')}
+                                            alt=''
+                                            className='absolute inset-0 h-full w-full scale-[1.4] object-contain'
+                                        />
+                                    </span>
+                                ) : (
+                                    // the selected season's postseason isn't decided yet (in progress,
+                                    // or not yet started) - fall back to the plain NHL logo
+                                    <img src={nhlLogoSmall} alt='' className='h-6 w-auto shrink-0'/>
+                                )}
+                            </button>
+                        </TooltipTrigger>
+                        <TooltipContent side='top'>Click to toggle between team swatches and team logos in the sidebar</TooltipContent>
+                    </Tooltip>
+                </div>
             </div>
             <div className='flex-1 min-h-0 flex justify-center'>
                 <Card className='w-full flex flex-col overflow-hidden'>
