@@ -608,7 +608,13 @@ export default function TeamStandingsChart() {
                                     activeDot={renderActiveDot(abbrev)}
                                 />
                             ))}
-                            <g ref={setLogoOverlayNode}/>
+                            {/* pointerEvents='none': these <image>s are purely decorative - hover
+                                tracking is driven by mouse position over the chart container, not by
+                                which element the cursor is over - so nothing depends on them receiving
+                                pointer events. Without this, clicking a logo lets the browser treat it
+                                as a native selectable/draggable image, which shows its own selection
+                                outline around the whole overlay group until something else clears it */}
+                            <g ref={setLogoOverlayNode} pointerEvents='none'/>
                         </LineChart>
                     </ChartContainer>
                 </div>
