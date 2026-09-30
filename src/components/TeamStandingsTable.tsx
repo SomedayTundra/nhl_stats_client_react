@@ -65,7 +65,7 @@ function buildColumns(alwaysShowFourL10: boolean) {
             meta: {align: 'left', cellClassName: 'flex items-center'},
             cell: (info) => (
                 <>
-                    <img className='h-[48px] w-[48px] align-middle justify-center' src={getTeamLogoUrl(info.row.original.logo, '2x')} alt='logo'/>
+                    <img className='h-12 w-12 align-middle justify-center' src={getTeamLogoUrl(info.row.original.logo, '2x')} alt='logo'/>
                     <p className={CLASS_TD}>{info.getValue()}</p>
                 </>
             ),

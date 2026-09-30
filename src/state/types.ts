@@ -22,6 +22,7 @@ export type TeamStatEntry = {
     teamCommonName: string,
     teamAbbrev: string,
     logo: string,
+    chartLineColor?: string | null,
     wins: number,
     losses: number,
     otLosses: number,

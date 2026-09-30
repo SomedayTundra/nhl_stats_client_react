@@ -67,210 +67,9 @@ const MAX_LOGO_SIZE = 64
 const LOGO_SIZE_STEP = 8
 const DEFAULT_LOGO_SIZE = 48
 
-// colors below were picked the same way as the rest of this map: rendering each team's logo
-// and measuring which non-white color covers the most pixel area, nudging a couple of teams
-// slightly apart from a very close sibling so lines stay readable on the chart
-const HARDCODED_TEAM_COLORS = {
-    TBL: {
-        label: 'Lightning',
-        color: '#1E5AA8',
-    },
-    BUF: {
-        label: 'Sabres',
-        color: '#003088',
-    },
-    DET: {
-        label: 'Red Wings',
-        color: '#9E1B32',
-    },
-    MTL: {
-        label: 'Canadiens',
-        color: '#A81830',
-    },
-    BOS: {
-        label: 'Bruins',
-        color: '#FFB820',
-    },
-    OTT: {
-        label: 'Senators',
-        color: '#D2232C',
-    },
-    FLA: {
-        label: 'Panthers',
-        color: '#C9A227',
-    },
-    TOR: {
-        label: 'Maple Leafs',
-        color: '#003E7E',
-    },
-    // colors below were picked by rendering each team's logo and measuring which non-white
-    // color covers the most pixel area (a couple were nudged slightly apart from a very close
-    // sibling team so lines stay readable on the chart; LAK's logo has no color at all, so it
-    // gets their well-known "Forum Blue" instead)
-    CAR: {
-        label: 'Hurricanes',
-        color: '#D00018',
-    },
-    NJD: {
-        label: 'Devils',
-        color: '#B8001C',
-    },
-    CBJ: {
-        label: 'Blue Jackets',
-        color: '#002654',
-    },
-    NYI: {
-        label: 'Islanders',
-        color: '#003087',
-    },
-    NYR: {
-        label: 'Rangers',
-        color: '#0038A8',
-    },
-    PHI: {
-        label: 'Flyers',
-        color: '#F74902',
-    },
-    PIT: {
-        label: 'Penguins',
-        color: '#FFB81C',
-    },
-    WSH: {
-        label: 'Capitals',
-        color: '#041E42',
-    },
-    CHI: {
-        label: 'Blackhawks',
-        color: '#D8A810',
-    },
-    COL: {
-        label: 'Avalanche',
-        color: '#206090',
-    },
-    DAL: {
-        label: 'Stars',
-        color: '#008840',
-    },
-    MIN: {
-        label: 'Wild',
-        color: '#184838',
-    },
-    NSH: {
-        label: 'Predators',
-        color: '#E8A415',
-    },
-    STL: {
-        label: 'Blues',
-        color: '#0068C8',
-    },
-    UTA: {
-        label: 'Mammoth',
-        color: '#70B0E8',
-    },
-    WPG: {
-        label: 'Jets',
-        color: '#10284B',
-    },
-    ANA: {
-        label: 'Ducks',
-        color: '#886050',
-    },
-    CGY: {
-        label: 'Flames',
-        color: '#C81030',
-    },
-    EDM: {
-        label: 'Oilers',
-        color: '#002058',
-    },
-    LAK: {
-        label: 'Kings',
-        color: '#6F9BD1',
-    },
-    SJS: {
-        label: 'Sharks',
-        color: '#007888',
-    },
-    SEA: {
-        label: 'Kraken',
-        color: '#68A8B8',
-    },
-    VAN: {
-        label: 'Canucks',
-        color: '#143C64',
-    },
-    VGK: {
-        label: 'Golden Knights',
-        color: '#B89858',
-    },
-    // defunct/relocated franchises below, added the same way as everything above - measured
-    // from that team's own era-correct logo (team_data's localLogo era, not necessarily the
-    // franchise's most recent one). A few needed a deliberate nudge off their computed color
-    // because it landed on top of another team's that actually overlapped them in real seasons
-    // (checked against every other team's season span in team_data, not just eyeballed):
-    // AFM/KCS/CBN/QUE all measured out to essentially the same red, and three of them
-    // (1974-75 through 1979-80) shared seasons with Atlanta's Flames, so KCS/CBN/QUE are each
-    // nudged to their own shade within the same red family. CLR and WIN both measured to the
-    // same navy and overlap each other directly (1979-82), and both also overlap Edmonton's
-    // already-hardcoded navy for their entire lifespan - nudged apart from both. ATL's measured
-    // navy landed on Washington's.
-    AFM: {
-        label: 'Flames',
-        color: '#C8102E',
-    },
-    KCS: {
-        label: 'Scouts',
-        color: '#8C0B20',
-    },
-    CBN: {
-        label: 'Barons',
-        color: '#E8455C',
-    },
-    QUE: {
-        label: 'Nordiques',
-        color: '#7A0020',
-    },
-    CLR: {
-        label: 'Rockies',
-        color: '#00476D',
-    },
-    WIN: {
-        label: 'Jets',
-        color: '#060073',
-    },
-    ATL: {
-        label: 'Thrashers',
-        color: '#053D53',
-    },
-    // the rest had no overlapping collision to nudge away from - straight off the logo
-    ARI: {
-        label: 'Coyotes',
-        color: '#862633',
-    },
-    CGS: {
-        label: 'Seals',
-        color: '#009CA6',
-    },
-    HFD: {
-        label: 'Whalers',
-        color: '#00781F',
-    },
-    MNS: {
-        label: 'North Stars',
-        color: '#009639',
-    },
-    OAK: {
-        label: 'Seals',
-        color: '#00205B',
-    },
-    PHX: {
-        label: 'Coyotes',
-        color: '#A9431E',
-    },
-} satisfies ChartConfig
-
-// safety net only: every team above now has a real color, so this should never actually run
-// unless a new team appears in the API before this map is updated for it
+// each team's line color comes from the backend (chartLineColor, measured from that season's
+// logo). This is a safety net only, for a backend that predates that field or a team it hasn't
+// colored yet
 const randomColorCache = new Map<string, string>()
 
 function randomColorForTeam(abbrev: string): string {
@@ -281,10 +80,6 @@ function randomColorForTeam(abbrev: string): string {
         randomColorCache.set(abbrev, color)
     }
     return color
-}
-
-function colorForTeam(abbrev: string): string {
-    return HARDCODED_TEAM_COLORS[abbrev as keyof typeof HARDCODED_TEAM_COLORS]?.color ?? randomColorForTeam(abbrev)
 }
 
 // pulls the winning team out of a playoffs payload, the same way PlayoffBracket.tsx does:
@@ -672,6 +467,7 @@ export default function TeamStandingsChart() {
         const chartData: Record<string, string | number>[] = []
         const teamNameByAbbrev = new Map<string, string>()
         const teamLogoByAbbrev = new Map<string, string>()
+        const teamColorByAbbrev = new Map<string, string>()
 
         teamStats.forEach((teamStatEntry: TeamStatEntry) => {
             // get data entry for the given date
@@ -685,7 +481,12 @@ export default function TeamStandingsChart() {
             existingDate[teamStatEntry.teamAbbrev] = teamStatEntry.points
             teamNameByAbbrev.set(teamStatEntry.teamAbbrev, teamStatEntry.teamName)
             teamLogoByAbbrev.set(teamStatEntry.teamAbbrev, teamStatEntry.logo)
+            if (teamStatEntry.chartLineColor) {
+                teamColorByAbbrev.set(teamStatEntry.teamAbbrev, teamStatEntry.chartLineColor)
+            }
         })
+
+        const colorForTeam = (abbrev: string) => teamColorByAbbrev.get(abbrev) ?? randomColorForTeam(abbrev)
 
         // only show teams currently selected in the TeamChooser (guaranteed non-empty here)
         const teamAbbrevsInData = Array.from(teamNameByAbbrev.keys())
@@ -697,7 +498,7 @@ export default function TeamStandingsChart() {
 
         const chartConfig: ChartConfig = {}
         visibleTeamAbbrevs.forEach((abbrev) => {
-            chartConfig[abbrev] = HARDCODED_TEAM_COLORS[abbrev as keyof typeof HARDCODED_TEAM_COLORS] ?? {
+            chartConfig[abbrev] = {
                 label: teamNameByAbbrev.get(abbrev) ?? abbrev,
                 color: colorForTeam(abbrev),
             }
