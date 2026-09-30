@@ -5,7 +5,7 @@ import {DateContext} from '@/state/DateContext.tsx'
 import DatePickerWithNav from '@/components/DatePickerWithNav.tsx'
 import {SeasonSelect} from '@/components/SeasonSelect.tsx'
 import TeamChooser from '@/components/TeamChooser.tsx'
-import {deserializeDate, parseApiDateString, serializeDate} from '@/lib/date.ts'
+import {deserializeDate, formatDateForApi, parseApiDateString, serializeDate} from '@/lib/date.ts'
 import {useLocalStorageState} from '@/lib/useLocalStorageState.ts'
 import {useSeasonInfo} from '@/hooks/useSeasonInfo.ts'
 import {useTeamStats} from '@/hooks/useTeamStats.ts'
@@ -132,7 +132,20 @@ export default function TeamStandingsTable() {
     )
 
     const minDate = selectedSeason ? parseApiDateString(selectedSeason.startDate) : undefined
-    const maxDate = selectedSeason ? parseApiDateString(selectedSeason.endDate) : undefined
+    let maxDate = selectedSeason ? parseApiDateString(selectedSeason.endDate) : undefined
+    const todayDate = new Date()
+
+    // if we're in the middle of an active season, don't let the user choose dates
+    // that haven't happened yet here in the table, since we don't have data for them;
+    // put another way, maxDate = min(today, maxDate)
+    if(minDate && maxDate) {
+        const minDateString = formatDateForApi(minDate);
+        const maxDateString = formatDateForApi(maxDate);
+        const todayDateString = formatDateForApi(todayDate);
+        if (todayDateString > minDateString && todayDateString < maxDateString) {
+            maxDate = todayDate
+        }
+    }
 
     // when the selected season changes, default the picked date to the end of the new season.
     // clampedSeasonId is persisted (not plain React state) so a page refresh - which remounts this
@@ -143,7 +156,7 @@ export default function TeamStandingsTable() {
     const [clampedSeasonId, setClampedSeasonId] = useLocalStorageState<number | null>('nhlStats.table.clampedSeasonId', null)
     if (selectedSeason && selectedSeason.seasonId !== clampedSeasonId) {
         setClampedSeasonId(selectedSeason.seasonId)
-        setDate(parseApiDateString(selectedSeason.endDate))
+        setDate(maxDate ?? parseApiDateString(selectedSeason.endDate))
     }
 
     const handleDateSelect = (selected: Date | undefined) => {

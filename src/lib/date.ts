@@ -3,8 +3,8 @@ import {format} from "date-fns"
 /**
  * Whenever our API calls deal with dates, they are of the form yyyy-MM-dd
  */
-export function formatDateForApi(date: Date): string {
-    return format(date, "yyyy-MM-dd")
+export function formatDateForApi(date: Date | undefined): string {
+    return date ? format(date, "yyyy-MM-dd") : "undefined"
 }
 
 /**
