@@ -564,7 +564,6 @@ export default function TeamStandingsChart() {
                 <div ref={setChartWheelArea} className='h-full min-w-0 flex-1'>
                     <ChartContainer config={chartConfig} className='h-full w-full aspect-auto'>
                         <LineChart
-                            accessibilityLayer
                             data={chartData}
                             onMouseMove={handleChartMouseMove}
                             onMouseLeave={handleChartMouseLeave}
