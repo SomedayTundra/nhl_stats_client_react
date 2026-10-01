@@ -752,3 +752,87 @@ p {
     color: var(--navbar-fg);
 }
 
+
+/* Patch notes (PatchNotes.tsx). The release bodies are rendered Markdown, so their elements are
+   styled here by tag rather than with Tailwind classes - Tailwind's preflight strips list bullets
+   and heading sizes, and there's no typography plugin. */
+.patch-notes-heading {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--navbar-fg);
+}
+
+.patch-notes-release {
+    border: 1px solid var(--navbar-bg);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+}
+
+.patch-notes-release-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.75rem 1.25rem;
+    background: var(--navbar-bg);
+    color: var(--navbar-fg);
+
+    h2 {
+        font-size: 1.25rem;
+        font-weight: 700;
+    }
+
+    time {
+        flex: none;
+        font-size: 0.875rem;
+        font-variant-numeric: tabular-nums;
+    }
+}
+
+.patch-notes-body {
+    padding: 1rem 1.25rem 1.25rem;
+    color: var(--text);
+    line-height: 1.55;
+
+    h2 {
+        margin: 1.25rem 0 0.4rem;
+        font-size: 0.8rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--navbar-fg);
+        border-bottom: 1px solid var(--navbar-bg);
+        padding-bottom: 0.2rem;
+    }
+
+    h2:first-child {
+        margin-top: 0;
+    }
+
+    p {
+        margin: 0.5rem 0;
+    }
+
+    ul {
+        list-style: disc;
+        padding-left: 1.25rem;
+    }
+
+    li {
+        margin: 0.3rem 0;
+    }
+
+    li::marker {
+        color: var(--navbar-fg);
+    }
+
+    strong {
+        font-weight: 600;
+    }
+
+    code {
+        font-family: var(--mono);
+        font-size: 0.9em;
+    }
+}

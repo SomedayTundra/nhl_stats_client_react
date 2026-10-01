@@ -5,6 +5,7 @@ import TeamStandingsTable from '@/components/TeamStandingsTable.tsx'
 import TeamStandingsChart from '@/components/TeamStandingsChart.tsx'
 import Playoffs from '@/components/Playoffs.tsx'
 import LeagueShapeQuiz from '@/components/LeagueShapeQuiz.tsx'
+import PatchNotes from '@/components/PatchNotes.tsx'
 import NotFound from '@/components/NotFound.tsx'
 
 const rootRoute = createRootRoute({
@@ -49,8 +50,15 @@ const quizRoute = createRoute({
     component: LeagueShapeQuiz,
 })
 
+// not linked from the nav yet; it'll move under an About section once that exists
+const patchNotesRoute = createRoute({
+    path: '/about/patch_notes',
+    getParentRoute: () => navBarRoute,
+    component: PatchNotes,
+})
+
 const routeTree = rootRoute.addChildren([
-    navBarRoute.addChildren([indexRoute, standingsRoute, chartRoute, playoffsRoute, quizRoute]),
+    navBarRoute.addChildren([indexRoute, standingsRoute, chartRoute, playoffsRoute, quizRoute, patchNotesRoute]),
 ])
 
 export const router = createRouter({
