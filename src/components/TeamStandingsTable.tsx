@@ -113,6 +113,7 @@ const SLOW_FETCH_MS = 1500
 
 
 export default function TeamStandingsTable() {
+    // FIXME: WHY THE DEFAULT OF 2025-12-02?  'TODAY' OR 'SEASON.ENDDATE' WOULD BE MORE SENSIBLE
     const [date, setDate] = useLocalStorageState<Date>('nhlStats.table.date', new Date('2025-12-02'), {
         serialize: serializeDate,
         deserialize: deserializeDate,

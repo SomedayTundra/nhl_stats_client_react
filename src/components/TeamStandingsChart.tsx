@@ -32,6 +32,7 @@ import {buildBracketView, type BracketTeamView, type NhlBracketPayload} from '@/
 // full-size asset scaled down by the browser, so the swatch/logo toggle's icon stays crisp at
 // its actual display size instead of relying on downsampling a much larger source image
 import nhlLogoSmall from '@/assets/nhl_logo_small.png'
+import {useNavigate} from '@tanstack/react-router'
 
 const lineTypes = [
     'basis', 'bump', 'linear', 'natural', 'monotone', 'step',
@@ -163,6 +164,8 @@ function DockedTooltipPanel({payload, label, scrollContainerRef, teamLogoByAbbre
 }
 
 export default function TeamStandingsChart() {
+    const navigate = useNavigate()
+
     const [lineType, setLineType] = useLocalStorageState<LineType>('nhlStats.chart.lineType', 'monotone', {
         deserialize: (raw) => {
             const parsed = JSON.parse(raw)
@@ -186,6 +189,13 @@ export default function TeamStandingsChart() {
         serialize: serializeDate,
         deserialize: deserializeDate,
     })
+
+    // double-click jumps us the the clicked-upon date in the Table
+    const [, setTableDate] = useLocalStorageState<Date>('nhlStats.table.date', new Date(), {
+        serialize: serializeDate,
+        deserialize: deserializeDate,
+    })
+    const [, setClampedTableSeasonId] = useLocalStorageState<number|null>('nhlStats.table.clampedSeasonId', null)
 
     // '' until we've resolved a default; persisted on every change (useLocalStorageState writes back)
     const [season, setSeason] = useLocalStorageState<string>('nhlStats.season', '') // NHL-49: have table, chart, and playoffs all sync to the same teams and season
@@ -361,6 +371,22 @@ export default function TeamStandingsChart() {
     function handleChartMouseLeave() {
         setHoveredPayload(null)
         setHoveredLabel(undefined)
+    }
+
+    function handleChartDoubleClick({activeLabel} : { activeLabel?: string }) {
+        if(activeLabel) {
+            // set the table date that the table uses to decide which data to show
+            setTableDate(parseApiDateString(activeLabel))
+            navigate({to: '/nhl_standings'})
+
+            // also clear out the table's "clamped" season id, so that if we changed the
+            // seasonId here on the chart to something other than the last season selected
+            // on the table, the table doesn't "stomp us" by defaulting to "last day of
+            // the selected season"
+            if(selectedSeason) {
+                setClampedTableSeasonId(selectedSeason.seasonId)
+            }
+        }
     }
 
     // the docked sidebar's row list only has content while the mouse is over the chart (it's
@@ -567,6 +593,7 @@ export default function TeamStandingsChart() {
                             data={chartData}
                             onMouseMove={handleChartMouseMove}
                             onMouseLeave={handleChartMouseLeave}
+                            onDoubleClick={handleChartDoubleClick}
                             margin={{
                                 top: 12,
                                 bottom: 12,
