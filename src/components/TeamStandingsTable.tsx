@@ -31,7 +31,7 @@ const features = tableFeatures({
     rowSortingFeature,
     sortedRowModel: createSortedRowModel(),
     sortFns: {alphanumeric: sortFn_alphanumeric},
-    columnMeta: metaHelper<{align: 'left' | 'center'; cellClassName: string}>(),
+    columnMeta: metaHelper<{ align: 'left' | 'center'; cellClassName: string }>(),
 })
 
 const helper = createColumnHelper<typeof features, TeamStatEntry>()
@@ -139,10 +139,10 @@ export default function TeamStandingsTable() {
     // if we're in the middle of an active season, don't let the user choose dates
     // that haven't happened yet here in the table, since we don't have data for them;
     // put another way, maxDate = min(today, maxDate)
-    if(minDate && maxDate) {
-        const minDateString = formatDateForApi(minDate);
-        const maxDateString = formatDateForApi(maxDate);
-        const todayDateString = formatDateForApi(todayDate);
+    if (minDate && maxDate) {
+        const minDateString = formatDateForApi(minDate)
+        const maxDateString = formatDateForApi(maxDate)
+        const todayDateString = formatDateForApi(todayDate)
         if (todayDateString > minDateString && todayDateString < maxDateString) {
             maxDate = todayDate
         }
@@ -209,18 +209,26 @@ export default function TeamStandingsTable() {
     // mounted regardless, so TeamChooser never remounts (and loses its committed selection) on refetch
     let tableBody: React.ReactNode
     if (selectedTeams.length === 0) {
-        tableBody = <tr><td colSpan={columns.length} className='p-4 text-center'>No teams selected</td></tr>
+        tableBody = <tr>
+            <td colSpan={columns.length} className='p-4 text-center'>No teams selected</td>
+        </tr>
     } else if (fetchIsSlow) {
-        tableBody = <tr><td colSpan={columns.length} className='p-4 text-center'>Loading uncached data...</td></tr>
+        tableBody = <tr>
+            <td colSpan={columns.length} className='p-4 text-center'>Loading uncached data...</td>
+        </tr>
     } else if (isPending) {
-        tableBody = <tr><td colSpan={columns.length} className='p-4 text-center'>Loading...</td></tr>
+        tableBody = <tr>
+            <td colSpan={columns.length} className='p-4 text-center'>Loading...</td>
+        </tr>
     } else if (error) {
-        tableBody = <tr><td colSpan={columns.length} className='p-4 text-center'>An error occurred: {error.message}</td></tr>
+        tableBody = <tr>
+            <td colSpan={columns.length} className='p-4 text-center'>An error occurred: {error.message}</td>
+        </tr>
     } else {
         tableBody = table.getRowModel().rows.map((row) => (
             <tr key={row.id} className='p-0 transition-colors hover:bg-muted data-[state=selected]:bg-muted'>
                 {row.getAllCells().map((cell) => (
-                    <td key={cell.id} className={cn("cursor-default", cell.column.columnDef.meta?.cellClassName ?? CLASS_TD)}>
+                    <td key={cell.id} className={cn('cursor-default', cell.column.columnDef.meta?.cellClassName ?? CLASS_TD)}>
                         <table.FlexRender cell={cell}/>
                     </td>
                 ))}
@@ -230,38 +238,41 @@ export default function TeamStandingsTable() {
 
     return (
         <DateContext value={dateContextValue}>
-            <div className='w-full flex flex-row items-center gap-4 py-2 px-4 top-controls-container'>
-                <SeasonSelect value={resolvedSeason} onChange={setSeason}/>
-                <div className='flex justify-start items-center'>
-                    <DatePickerWithNav id="date-picker" label="Date" tooltip="Date" minDate={minDate} maxDate={maxDate}/>
+            <div className='h-full flex flex-col'>
+                <div className='top-controls-container shrink-0 w-full flex flex-row items-center gap-4 py-2 px-4'>
+                    <SeasonSelect value={resolvedSeason} onChange={setSeason}/>
+                    <div className='flex justify-start items-center'>
+                        <DatePickerWithNav id='date-picker' label='Date' tooltip='Date' minDate={minDate} maxDate={maxDate}/>
+                    </div>
+                    <div className='flex justify-start'>
+                        <TeamChooser season={resolvedSeason} selected={selectedTeams} onChange={setSelectedTeams}/>
+                    </div>
                 </div>
-                <div className='flex justify-start'>
-                    <TeamChooser season={resolvedSeason} selected={selectedTeams} onChange={setSelectedTeams}/>
-                </div>
-            </div>
-            <div className='border rounded-lg overflow-hidden mx-4'>
-                <div className='relative w-full overflow-auto'>
-                    <table className='w-full caption-bottom text-sm'>
-                        <thead className='[&amp;_tr]:border-b'>
-                        {table.getHeaderGroups().map((headerGroup) => (
-                            <tr key={headerGroup.id} className='border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted'>
-                                {headerGroup.headers.map((header) => (
-                                    <th
-                                        key={header.id}
-                                        className={header.column.columnDef.meta?.align === 'left' ? CLASS_TH_LEFT : CLASS_TH_CENTER}
-                                        onClick={header.column.getToggleSortingHandler()}
-                                    >
-                                        {!header.isPlaceholder && <table.FlexRender header={header}/>}
-                                        {header.column.getIsSorted() === 'asc' ? ' ▲' : header.column.getIsSorted() === 'desc' ? ' ▼' : null}
-                                    </th>
-                                ))}
-                            </tr>
-                        ))}
-                        </thead>
-                        <tbody className='[&amp;_tr:last-child]:border-0'>
-                        {tableBody}
-                        </tbody>
-                    </table>
+                <div className='main-table-container border rounded-lg overflow-hidden mx-4 flex-1 min-h-0 flex flex-col '>
+                    <div className='inner-table-container relative w-full overflow-auto flex-1 min-h-0'>
+                        <table className='w-full caption-bottom text-sm'>
+                            <thead>
+                            {table.getHeaderGroups().map((headerGroup) => (
+                                <tr key={headerGroup.id} className='transition-colors data-[state=selected]:bg-muted'>
+                                    {headerGroup.headers.map((header) => (
+                                        <th
+                                            key={header.id}
+                                            className={cn(header.column.columnDef.meta?.align === 'left' ? CLASS_TH_LEFT : CLASS_TH_CENTER,
+                                                'shadow-[inset_0_-1px_0_var(--table-border)] sticky top-0 z-10 bg-background')}
+                                            onClick={header.column.getToggleSortingHandler()}
+                                        >
+                                            {!header.isPlaceholder && <table.FlexRender header={header}/>}
+                                            {header.column.getIsSorted() === 'asc' ? ' ▲' : header.column.getIsSorted() === 'desc' ? ' ▼' : null}
+                                        </th>
+                                    ))}
+                                </tr>
+                            ))}
+                            </thead>
+                            <tbody>
+                            {tableBody}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </DateContext>
