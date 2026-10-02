@@ -756,6 +756,11 @@ p {
 /* Patch notes (PatchNotes.tsx). The release bodies are rendered Markdown, so their elements are
    styled here by tag rather than with Tailwind classes - Tailwind's preflight strips list bullets
    and heading sizes, and there's no typography plugin. */
+/* #root centers all text; the panel stays centered on the page, its contents don't */
+.patch-notes {
+    text-align: left;
+}
+
 .patch-notes-heading {
     font-size: 1.75rem;
     font-weight: 700;
@@ -788,6 +793,19 @@ p {
         font-size: 0.875rem;
         font-variant-numeric: tabular-nums;
     }
+}
+
+.patch-notes-tag {
+    display: inline-block;
+    margin-right: 0.35rem;
+    padding: 0.05rem 0.55rem;
+    border-radius: 999px;
+    background: #e5e7eb;
+    color: #4b5563;
+    font-size: 0.75rem;
+    font-weight: 500;
+    line-height: 1.4;
+    white-space: nowrap;
 }
 
 .patch-notes-body {

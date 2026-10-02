@@ -1,13 +1,26 @@
-import Markdown from 'react-markdown'
+import Markdown, {type Components} from 'react-markdown'
 import {formatApiDateForDisplay} from '@/lib/date.ts'
 import {patchNotes} from '@/lib/patchNotes.ts'
+
+// The notes mark which repo a change came from with an inline-code label at the start of a bullet
+// (`client`, `server`, `client + server`). Those exact labels render as grey pills; any other
+// inline code is left as ordinary code.
+const REPO_LABELS = new Set(['client', 'server', 'client + server'])
+
+const markdownComponents: Components = {
+    code({children, className}) {
+        if (typeof children === 'string' && REPO_LABELS.has(children)) {
+            return <span className='patch-notes-tag'>{children}</span>
+        }
+        return <code className={className}>{children}</code>
+    },
+}
 
 // One card per published release, newest first. The notes are bundled at build time (see
 // patchNotes.ts), so there's nothing to fetch and nothing that can fail to load.
 export default function PatchNotes() {
     return (
-        <div className='patch-notes max-w-3xl px-4 py-6 flex flex-col gap-6'>
-            <h1 className='patch-notes-heading'>Patch Notes</h1>
+        <div className='patch-notes mx-auto max-w-3xl px-4 py-6 flex flex-col gap-6'>
             {patchNotes.length === 0 && <p>No patch notes have been published yet.</p>}
             {patchNotes.map(note => (
                 <article key={note.id} className='patch-notes-release'>
@@ -16,7 +29,7 @@ export default function PatchNotes() {
                         <time dateTime={note.date}>{formatApiDateForDisplay(note.date)}</time>
                     </header>
                     <div className='patch-notes-body'>
-                        <Markdown>{note.body}</Markdown>
+                        <Markdown components={markdownComponents}>{note.body}</Markdown>
                     </div>
                 </article>
             ))}
