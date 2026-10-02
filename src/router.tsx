@@ -50,7 +50,7 @@ const quizRoute = createRoute({
     component: LeagueShapeQuiz,
 })
 
-// not linked from the nav yet; it'll move under an About section once that exists
+// linked from the far right of the NavBar for now; it'll move under an About section once that exists
 const patchNotesRoute = createRoute({
     path: '/about/patch_notes',
     getParentRoute: () => navBarRoute,
