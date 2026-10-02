@@ -6,7 +6,7 @@ import {patchNotes} from '@/lib/patchNotes.ts'
 // patchNotes.ts), so there's nothing to fetch and nothing that can fail to load.
 export default function PatchNotes() {
     return (
-        <div className='patch-notes mx-auto max-w-3xl px-4 py-6 flex flex-col gap-6'>
+        <div className='patch-notes max-w-3xl px-4 py-6 flex flex-col gap-6'>
             <h1 className='patch-notes-heading'>Patch Notes</h1>
             {patchNotes.length === 0 && <p>No patch notes have been published yet.</p>}
             {patchNotes.map(note => (
