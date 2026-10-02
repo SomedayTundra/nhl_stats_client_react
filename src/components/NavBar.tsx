@@ -4,7 +4,7 @@ import {ReactQueryDevtools} from '@tanstack/react-query-devtools'
 
 const NavBar = () => {
 
-    const inactiveClass = 'text[no -[var(--navbar-fg)] hover:bg-[var(--navbar-fg)] hover:text-[var(--navbar-bg)] rounded-md px-3 py-2';
+    const inactiveClass = 'text-[var(--navbar-fg)] hover:bg-[var(--navbar-fg)] hover:text-[var(--navbar-bg)] rounded-md px-3 py-2';
     const activeClass = 'text-white bg-[var(--navbar-fg)] hover:bg-[var(--navbar-fg)] hover:text-white rounded-md px-3 py-2';
 
     return (
@@ -27,6 +27,7 @@ const NavBar = () => {
                             <Link className={inactiveClass} activeProps={{className: activeClass}} to="/nhl_stats_chart">Chart</Link>
                             <Link className={inactiveClass} activeProps={{className: activeClass}} to="/nhl_playoffs">Playoffs</Link>
                             <Link className={inactiveClass} activeProps={{className: activeClass}} to="/league_shape_quiz">Quiz</Link>
+                            <Link className={`${inactiveClass} ml-auto`} activeProps={{className: `${activeClass} ml-auto`}} to="/about/patch_notes">Patch Notes</Link>
                             {import.meta.env.DEV && <ReactQueryDevtools/>}
                         </div>
                     </div>
