@@ -250,7 +250,7 @@ export default function TeamChooser({season, selected, onChange}: TeamChooserPro
                 <Tooltip>
                     <TooltipTrigger asChild>
                         <PopoverTrigger asChild>
-                            <Button variant="outline" className="justify-between border-neutral-800">
+                            <Button variant="outline" className="justify-between select-none border-neutral-800">
                                 <span className={draftSelected.length === 0 ? 'text-red-600' : undefined}>
                                     {currentStopName ? currentStopName : "Teams"} ({draftSelected.length}/{teams.length})
                                 </span>

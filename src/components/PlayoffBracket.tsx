@@ -150,7 +150,7 @@ export default function PlayoffBracket({seasonId}: PlayoffBracketProps) {
     } else if (error) {
         content = <p className='bracket-message'>An error occurred: {error.message}</p>
     } else if (view === null) {
-        content = <p className='bracket-message'>No playoff results for {seasonIdToLabel(seasonId)}.</p>
+        content = <p className='bracket-message'>No playoff results for {seasonIdToLabel(seasonId)}</p>
     } else {
         const {final} = view
         const champion = final.top.won ? final.top : (final.bottom.won ? final.bottom : null)

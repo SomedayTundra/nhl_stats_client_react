@@ -128,7 +128,7 @@ export default function DatePickerWithNav({id, tooltip, label, minDate, maxDate}
                                 <Button
                                     variant="outline"
                                     id={id}
-                                    className="justify-start border-neutral-800 px-2.5 font-normal"
+                                    className="justify-start select-none border-neutral-800 px-2.5 font-normal"
                                 >
                                     <CalendarIcon />
                                     {dc.date ? (

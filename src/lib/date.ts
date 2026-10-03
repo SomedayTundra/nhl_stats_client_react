@@ -27,6 +27,28 @@ export function parseApiDateString(apiDate: string): Date {
 }
 
 /**
+ * If the given date is after yesterday, "scoot it back" to yesterday.
+ * @param proposedDate
+ * @return the proposedDate, unless it is after yesterday, in which case we return yesterday
+ */
+export function limitDateToYesterday(proposedDate: Date) : Date {
+    let limitedDate = proposedDate
+
+    const todayDate = new Date()
+    const yesterdayDate = new Date(todayDate.getFullYear(), todayDate.getMonth(), todayDate.getDate() - 1)
+
+    if (limitedDate) {
+        const limitedDateString = formatDateForApi(limitedDate)
+        const yesterdayDateString = formatDateForApi(yesterdayDate)
+        if (yesterdayDateString < limitedDateString) {
+            limitedDate = yesterdayDate
+        }
+    }
+
+    return limitedDate
+}
+
+/**
  * Basic serialization of a Date, used when we store selected dates to local storage
  * to preserve the state of a page as we navigate away from it and then back again.
  *

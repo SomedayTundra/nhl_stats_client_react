@@ -18,7 +18,7 @@ import {Button} from '@/components/ui/button'
 import {Checkbox} from '@/components/ui/checkbox'
 import {Field, FieldGroup, FieldLabel} from '@/components/ui/field.tsx'
 import {Tooltip, TooltipContent, TooltipTrigger} from '@/components/ui/tooltip'
-import {deserializeDate, formatApiDateForDisplay, formatDateForApi, parseApiDateString, serializeDate} from '@/lib/date.ts'
+import {deserializeDate, formatApiDateForDisplay, formatDateForApi, limitDateToYesterday, parseApiDateString, serializeDate} from '@/lib/date.ts'
 import {cn} from '@/lib/utils'
 import {useLocalStorageState} from '@/lib/useLocalStorageState.ts'
 import {useSeasonInfo} from '@/hooks/useSeasonInfo.ts'
@@ -219,14 +219,8 @@ export default function TeamStandingsChart() {
     // clamp maxDate to today for a season in progress - there's no data yet for the dates between
     // tomorrow and the season's real endDate, so there's no point offering those days in the picker
     let maxDate = selectedSeason ? parseApiDateString(selectedSeason.endDate) : undefined
-    const todayDate = new Date()
-    if (minDate && maxDate) {
-        const minDateString = formatDateForApi(minDate)
-        const maxDateString = formatDateForApi(maxDate)
-        const todayDateString = formatDateForApi(todayDate)
-        if (todayDateString > minDateString && todayDateString < maxDateString) {
-            maxDate = todayDate
-        }
+    if(maxDate) {
+        maxDate = limitDateToYesterday(maxDate)
     }
 
     // sizes the line-type select to exactly fit "monotone" (its longest choice) rather than some
