@@ -132,7 +132,8 @@ export function SeasonSelect({value, onChange}: SeasonSelectProps) {
                                 bg-background at rest, bg-accent/text-accent-foreground on hover */}
                             <ComboboxInput
                                 id="season-select"
-                                className="w-32 border-neutral-800 bg-background hover:bg-accent hover:text-accent-foreground dark:hover:bg-input/50"
+                                readOnly
+                                className="w-32 caret-transparent border-neutral-800 bg-background hover:bg-accent hover:text-accent-foreground dark:hover:bg-input/50 [&_input]:cursor-default"
                             />
                             <ComboboxContent>
                                 <ComboboxEmpty>No items found.</ComboboxEmpty>
