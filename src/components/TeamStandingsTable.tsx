@@ -137,20 +137,6 @@ export default function TeamStandingsTable() {
     if(maxDate) {
         maxDate = limitDateToYesterday(maxDate)
     }
-    // const todayDate = new Date()
-    // const yesterdayDate = new Date(todayDate.getFullYear(), todayDate.getMonth(), todayDate.getDate() - 1)
-    //
-    // // if we're in the middle of an active season, don't let the user choose dates
-    // // that haven't happened yet here in the table, since we don't have data for them;
-    // // put another way, maxDate = min(today, maxDate)
-    // if (minDate && maxDate) {
-    //     const minDateString = formatDateForApi(minDate)
-    //     const maxDateString = formatDateForApi(maxDate)
-    //     const yesterdayDateString = formatDateForApi(yesterdayDate)
-    //     if (yesterdayDateString > minDateString && yesterdayDateString < maxDateString) {
-    //         maxDate = yesterdayDate
-    //     }
-    // }
 
     // when the selected season changes, default the picked date to the end of the new season.
     // clampedSeasonId is persisted (not plain React state) so a page refresh - which remounts this

@@ -213,22 +213,12 @@ export default function TeamStandingsChart() {
     const cupChampion = championFromBracket(selectedSeasonPlayoffs)
 
     const minDate = selectedSeason ? parseApiDateString(selectedSeason.startDate) : undefined
-    // clamp maxDate to today for a season in progress - there's no data yet for the dates between
+    // clamp maxDate to yesterday for a season in progress - there's no data yet for the dates between
     // tomorrow and the season's real endDate, so there's no point offering those days in the picker
     let maxDate = selectedSeason ? parseApiDateString(selectedSeason.endDate) : undefined
     if(maxDate) {
         maxDate = limitDateToYesterday(maxDate)
     }
-    // const todayDate = new Date()
-    // const yesterdayDate = new Date(todayDate.getFullYear(), todayDate.getMonth(), todayDate.getDate() - 1)
-    // if (minDate && maxDate) {
-    //     const minDateString = formatDateForApi(minDate)
-    //     const maxDateString = formatDateForApi(maxDate)
-    //     const yesterdayDateString = formatDateForApi(yesterdayDate)
-    //     if (yesterdayDateString > minDateString && yesterdayDateString < maxDateString) {
-    //         maxDate = yesterdayDate
-    //     }
-    // }
 
     // sizes the line-type combo box to exactly fit "monotone" (its longest choice) rather than some
     // guessed-at width; the sizer carries the input's own px-3, so the measured width already
