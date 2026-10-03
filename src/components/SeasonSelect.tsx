@@ -2,8 +2,8 @@
 
 import {useEffect, useRef} from 'react'
 
-import {Combobox, ComboboxContent, ComboboxEmpty, ComboboxInput, ComboboxItem, ComboboxList} from '@/components/ui/combobox'
 import {FieldLabel} from '@/components/ui/field.tsx'
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select'
 import {Tooltip, TooltipContent, TooltipTrigger} from '@/components/ui/tooltip'
 import {useSeasonInfo} from '@/hooks/useSeasonInfo.ts'
 import {buildSeasonIds, seasonIdToLabel} from '@/lib/season.ts'
@@ -18,7 +18,7 @@ type SeasonSelectProps = {
 // per this window so one gesture doesn't skip across several seasons
 const WHEEL_STEP_COOLDOWN_MS = 120
 
-// "Season:" label + a combo box holding one entry per playable season from 1942-43 through the
+// "Season:" label + a select holding one entry per playable season from 1942-43 through the
 // current season (newest first). Controlled: the caller owns the value and persists it.
 export function SeasonSelect({value, onChange}: SeasonSelectProps) {
     // the newest entry the picker offers: the season currently in progress, or the most recently
@@ -32,29 +32,11 @@ export function SeasonSelect({value, onChange}: SeasonSelectProps) {
         ? buildSeasonIds(latestSeasonId)
         : (value ? [value] : [])
 
-    const seasonIdByLabel = new Map<string, string>()
-    const labelBySeasonId = new Map<string, string>()
-    for (const id of ids) {
-        const label = seasonIdToLabel(id)
-        seasonIdByLabel.set(label, id)
-        labelBySeasonId.set(id, label)
-    }
-    const labels = ids.map(seasonIdToLabel)
-
-    const handleInputValueChange = (label: string) => {
-        const id = seasonIdByLabel.get(label)
-        if (id !== undefined) {
-            onChange(id)
-        }
-    }
-
-    // the Combobox primitive assumes its controlled `value` is always one of `items` - handing it an
-    // id that isn't a valid choice (e.g. stale localStorage from before the valid range changed, or a
-    // corrupted manual edit) breaks it hard rather than just failing open. Show nothing selected for
-    // the one render where that's true, and self-correct the persisted value below so everything
-    // downstream that reads it recovers too, not just this control's display.
+    // an id that isn't a valid choice (e.g. stale localStorage from before the valid range changed,
+    // or a corrupted manual edit) shows as nothing selected for the one render where that's true;
+    // the effect below self-corrects the persisted value so everything downstream that reads it
+    // recovers too, not just this control's display.
     const isKnownValue = ids.includes(value)
-    const selectedLabel = isKnownValue ? (labelBySeasonId.get(value) ?? seasonIdToLabel(value)) : ''
 
     useEffect(() => {
         if (value && latestSeasonId && !ids.includes(value)) {
@@ -119,33 +101,24 @@ export function SeasonSelect({value, onChange}: SeasonSelectProps) {
             <Tooltip>
                 <TooltipTrigger asChild>
                     <div className="flex">
-                        <Combobox
-                            items={labels}
-                            value={selectedLabel}
-                            onInputValueChange={handleInputValueChange}
+                        <Select
+                            value={isKnownValue ? value : ''}
+                            onValueChange={onChange}
                             onOpenChange={(open) => {
                                 openRef.current = open
                             }}
-                            autoHighlight
                         >
-                            {/* matches the outline Button's hovered/unhovered look (e.g. the TeamChooser trigger):
-                                bg-background at rest, bg-accent/text-accent-foreground on hover */}
-                            <ComboboxInput
-                                id="season-select"
-                                readOnly
-                                className="w-32 caret-transparent border-neutral-800 bg-background hover:bg-accent hover:text-accent-foreground dark:hover:bg-input/50 [&_input]:cursor-default"
-                            />
-                            <ComboboxContent>
-                                <ComboboxEmpty>No items found.</ComboboxEmpty>
-                                <ComboboxList>
-                                    {(item) => (
-                                        <ComboboxItem key={item} value={item}>
-                                            {item}
-                                        </ComboboxItem>
-                                    )}
-                                </ComboboxList>
-                            </ComboboxContent>
-                        </Combobox>
+                            <SelectTrigger id="season-select" className="w-32">
+                                <SelectValue/>
+                            </SelectTrigger>
+                            <SelectContent>
+                                {ids.map((id) => (
+                                    <SelectItem key={id} value={id}>
+                                        {seasonIdToLabel(id)}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                     </div>
                 </TooltipTrigger>
                 <TooltipContent side="top">Mousewheel to browse through time</TooltipContent>

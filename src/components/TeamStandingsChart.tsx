@@ -8,7 +8,7 @@ import {CartesianGrid, Dot, Line, LineChart, XAxis, YAxis} from 'recharts'
 import {Card, CardContent, CardDescription, CardHeader, CardTitle,} from './ui/card'
 import {type ChartConfig, ChartContainer, ChartTooltip} from './ui/chart'
 
-import {Combobox, ComboboxContent, ComboboxEmpty, ComboboxInput, ComboboxItem, ComboboxList,} from './ui/combobox'
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from './ui/select'
 import {ArrowRightLeftIcon} from 'lucide-react'
 import {DateContext} from '@/state/DateContext.tsx'
 import DatePickerWithNav from '@/components/DatePickerWithNav.tsx'
@@ -44,6 +44,9 @@ const longestLineType = lineTypes.reduce((longest, type) => (type.length > longe
 // a single wheel flick (especially on a trackpad) fires a burst of events; only step one entry
 // per this window so one gesture doesn't skip across several line types
 const WHEEL_STEP_COOLDOWN_MS = 120
+
+// the line-type trigger holds a chevron (size-4) plus the gap-2 before it on top of the measured text
+const LINE_TYPE_CHEVRON_ALLOWANCE_PX = 24
 
 type LineType = typeof lineTypes[number]
 
@@ -219,20 +222,11 @@ export default function TeamStandingsChart() {
     if(maxDate) {
         maxDate = limitDateToYesterday(maxDate)
     }
-    // const todayDate = new Date()
-    // const yesterdayDate = new Date(todayDate.getFullYear(), todayDate.getMonth(), todayDate.getDate() - 1)
-    // if (minDate && maxDate) {
-    //     const minDateString = formatDateForApi(minDate)
-    //     const maxDateString = formatDateForApi(maxDate)
-    //     const yesterdayDateString = formatDateForApi(yesterdayDate)
-    //     if (yesterdayDateString > minDateString && yesterdayDateString < maxDateString) {
-    //         maxDate = yesterdayDate
-    //     }
-    // }
 
-    // sizes the line-type combo box to exactly fit "monotone" (its longest choice) rather than some
-    // guessed-at width; the sizer carries the input's own px-3, so the measured width already
-    // includes horizontal padding. Re-measures via ResizeObserver in case the webfont loads late.
+    // sizes the line-type select to exactly fit "monotone" (its longest choice) rather than some
+    // guessed-at width; the sizer carries the trigger's own px-3, so the measured width already
+    // includes horizontal padding (the chevron is added separately, see LINE_TYPE_CHEVRON_ALLOWANCE_PX).
+    // Re-measures via ResizeObserver in case the webfont loads late.
     const lineTypeSizerRef = React.useRef<HTMLSpanElement | null>(null)
     const [lineTypeInputWidth, setLineTypeInputWidth] = React.useState<number | undefined>(undefined)
     React.useLayoutEffect(() => {
@@ -247,7 +241,7 @@ export default function TeamStandingsChart() {
         return () => observer.disconnect()
     }, [])
 
-    // mouse wheel over the (closed) line-type combo box steps through lineTypes, mirroring
+    // mouse wheel over the (closed) line-type select steps through lineTypes, mirroring
     // SeasonSelect/EraSelect. Latest-value refs so the native listener can be bound once instead of
     // re-subscribed on every step (setLineType is React-stable, so it needs no ref).
     const lineTypeWrapperRef = React.useRef<HTMLDivElement | null>(null)
@@ -675,7 +669,7 @@ export default function TeamStandingsChart() {
                     </DateContext>
                 </div>
                 <TeamChooser season={resolvedSeason} selected={selectedTeams} onChange={setSelectedTeams}/>
-                {/* hidden twin of the longest line-type choice, measured to size the combo box */}
+                {/* hidden twin of the longest line-type choice, measured to size the select */}
                 <span
                     ref={lineTypeSizerRef}
                     aria-hidden
@@ -684,40 +678,32 @@ export default function TeamStandingsChart() {
                     {longestLineType}
                 </span>
                 <Tooltip>
-                    {/* trigger wraps only the combo box, so the tooltip stays put - the box's width
+                    {/* trigger wraps only the select, so the tooltip stays put - the box's width
                         is fixed (sized to "monotone"), so unlike EraSelect/SeasonSelect there's no
                         variable-width neighbor that could shift it */}
                     <TooltipTrigger asChild>
                         <div ref={lineTypeWrapperRef} className='flex'>
-                            <Combobox
-                                items={lineTypes}
+                            <Select
                                 value={lineType}
-                                onInputValueChange={handleLineTypeChange}
+                                onValueChange={handleLineTypeChange}
                                 onOpenChange={(open) => {
                                     lineTypeOpenRef.current = open
                                 }}
-                                autoHighlight
                             >
-                                <ComboboxInput
-                                    placeholder='Select a line type'
-                                    readOnly
-                                    // the input is flex-1 with a 0% flex-basis, so a plain min-width can't win
-                                    // against its browser-default intrinsic size (~20ch) once content is
-                                    // shorter than that; pin flex:none so the exact measured width applies
-                                    style={lineTypeInputWidth !== undefined ? {flex: 'none', width: `${lineTypeInputWidth}px`} : undefined}
-                                    className='caret-transparent border-neutral-800 bg-background hover:bg-accent hover:text-accent-foreground dark:hover:bg-input/50 [&_input]:cursor-default'
-                                />
-                                <ComboboxContent>
-                                    <ComboboxEmpty>No items found.</ComboboxEmpty>
-                                    <ComboboxList>
-                                        {(item) => (
-                                            <ComboboxItem key={item} value={item}>
-                                                {item}
-                                            </ComboboxItem>
-                                        )}
-                                    </ComboboxList>
-                                </ComboboxContent>
-                            </Combobox>
+                                <SelectTrigger
+                                    style={lineTypeInputWidth !== undefined ? {width: `${lineTypeInputWidth + LINE_TYPE_CHEVRON_ALLOWANCE_PX}px`} : undefined}
+                                >
+                                    <SelectValue placeholder='Select a line type'/>
+                                </SelectTrigger>
+                                <SelectContent position='popper'>
+
+                                    {lineTypes.map((item) => (
+                                        <SelectItem key={item} value={item}>
+                                            {item}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
                     </TooltipTrigger>
                     <TooltipContent side='top'>Line Type</TooltipContent>

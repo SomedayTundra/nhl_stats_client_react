@@ -5,7 +5,7 @@ import {Dice5Icon} from 'lucide-react'
 import {Button} from '@/components/ui/button'
 import {Checkbox} from '@/components/ui/checkbox'
 import {FieldLabel} from '@/components/ui/field.tsx'
-import {Combobox, ComboboxContent, ComboboxEmpty, ComboboxInput, ComboboxItem, ComboboxList} from '@/components/ui/combobox'
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select'
 import {Tooltip, TooltipContent, TooltipTrigger} from '@/components/ui/tooltip'
 import {isTeamCountFraction, teamCountForFraction, teamCountFractions, type TeamCountFraction} from '@/lib/quizTeamCount.ts'
 import {useLocalStorageState} from '@/lib/useLocalStorageState.ts'
@@ -41,8 +41,8 @@ export default function QuizToolbar({showTeamNames, onShowTeamNamesChange, onRan
     // selection is keyed by fraction, not by the displayed team count - the count for each
     // fraction shifts whenever totalTeams changes (i.e. the season changes), so tying selection
     // to the numeric label would silently lose the user's choice the moment the numbers moved
-    const handleTeamCountFractionChange = (value: TeamCountFraction | null) => {
-        if (value !== null) {
+    const handleTeamCountFractionChange = (value: string) => {
+        if (isTeamCountFraction(value)) {
             setTeamCountFraction(value)
         }
     }
@@ -60,7 +60,7 @@ export default function QuizToolbar({showTeamNames, onShowTeamNamesChange, onRan
     // (React's synthetic onWheel is passive, so it can't preventDefault the page scroll); attached
     // once since setTeamCountFraction is stable and the step uses the functional updater form.
     const wheelWrapperRef = useRef<HTMLDivElement | null>(null)
-    const comboboxOpenRef = useRef(false)
+    const selectOpenRef = useRef(false)
     const lastWheelStepAtRef = useRef(0)
 
     useEffect(() => {
@@ -70,7 +70,7 @@ export default function QuizToolbar({showTeamNames, onShowTeamNamesChange, onRan
         }
 
         const handleWheel = (event: WheelEvent) => {
-            if (comboboxOpenRef.current || Math.abs(event.deltaY) < 1) {
+            if (selectOpenRef.current || Math.abs(event.deltaY) < 1) {
                 return
             }
             event.preventDefault()
@@ -99,29 +99,24 @@ export default function QuizToolbar({showTeamNames, onShowTeamNamesChange, onRan
                 <Tooltip>
                     <TooltipTrigger asChild>
                         <div ref={wheelWrapperRef} className="flex">
-                            <Combobox<TeamCountFraction>
-                                // remount when totalTeams changes - the combobox only recomputes its displayed
-                                // input text from itemToStringLabel when the selected value itself changes, so
-                                // without this key the input would keep showing the previous season's number
-                                key={totalTeams}
-                                items={teamCountFractions}
+                            <Select
                                 value={teamCountFraction}
                                 onValueChange={handleTeamCountFractionChange}
-                                onOpenChange={(open) => {comboboxOpenRef.current = open}}
-                                itemToStringLabel={(fraction) => String(teamCountForFraction(fraction, totalTeams))}
+                                onOpenChange={(open) => {selectOpenRef.current = open}}
                             >
-                                <ComboboxInput id="quiz-team-count" className="w-20 border-neutral-800 bg-background hover:bg-accent hover:text-accent-foreground dark:hover:bg-input/50"/>
-                                <ComboboxContent>
-                                    <ComboboxEmpty>No items found.</ComboboxEmpty>
-                                    <ComboboxList>
-                                        {(fraction: TeamCountFraction) => (
-                                            <ComboboxItem key={fraction} value={fraction}>
-                                                {teamCountForFraction(fraction, totalTeams)}
-                                            </ComboboxItem>
-                                        )}
-                                    </ComboboxList>
-                                </ComboboxContent>
-                            </Combobox>
+                                <SelectTrigger id="quiz-team-count" className="w-20">
+                                    {/* the shown number is derived from totalTeams, so render it directly
+                                        rather than relying on the selected item's text */}
+                                    <SelectValue>{teamCount}</SelectValue>
+                                </SelectTrigger>
+                                <SelectContent position='popper'>
+                                    {teamCountFractions.map((fraction) => (
+                                        <SelectItem key={fraction} value={fraction}>
+                                            {teamCountForFraction(fraction, totalTeams)}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
                     </TooltipTrigger>
                     <TooltipContent side="top">100%, 75%, 50%, or 25%</TooltipContent>

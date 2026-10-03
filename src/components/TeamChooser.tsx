@@ -262,7 +262,13 @@ export default function TeamChooser({season, selected, onChange}: TeamChooserPro
                         <div className='items-center'>Mousewheel to quick-select groups</div>
                     </TooltipContent>
                 </Tooltip>
-                <PopoverContent className="w-80 max-h-96 overflow-y-auto p-2" align="start">
+                {/* grows to fit every team, capped at the room radix measures between the trigger and
+                    the viewport edge (less collisionPadding) - only past that does it scroll */}
+                <PopoverContent
+                    className="w-80 max-h-(--radix-popover-content-available-height) overflow-y-auto p-2"
+                    align="start"
+                    collisionPadding={8}
+                >
                     <label className="flex items-center gap-2 py-1 mb-2 pb-2 border-b font-bold cursor-pointer">
                         <Checkbox
                             checked={leagueChecked}
