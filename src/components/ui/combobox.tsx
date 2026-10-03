@@ -64,9 +64,9 @@ function ComboboxInput({
   showClear?: boolean
 }) {
   return (
-    <InputGroup className={cn("w-auto", className)}>
+    <InputGroup className={cn("w-auto has-focus-visible:bg-accent has-focus-visible:text-accent-foreground dark:has-focus-visible:bg-input/50", className)}>
       <ComboboxPrimitive.Input
-        render={<InputGroupInput disabled={disabled} />}
+        render={<InputGroupInput className='select-none selection:bg-transparent selection:text-inherit' disabled={disabled} />}
         {...props}
       />
       <InputGroupAddon align="inline-end">

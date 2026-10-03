@@ -5,7 +5,7 @@ import {DateContext} from '@/state/DateContext.tsx'
 import DatePickerWithNav from '@/components/DatePickerWithNav.tsx'
 import {SeasonSelect} from '@/components/SeasonSelect.tsx'
 import TeamChooser from '@/components/TeamChooser.tsx'
-import {deserializeDate, formatDateForApi, parseApiDateString, serializeDate} from '@/lib/date.ts'
+import {deserializeDate, limitDateToYesterday, parseApiDateString, serializeDate} from '@/lib/date.ts'
 import {useLocalStorageState} from '@/lib/useLocalStorageState.ts'
 import {useSeasonInfo} from '@/hooks/useSeasonInfo.ts'
 import {useTeamStats} from '@/hooks/useTeamStats.ts'
@@ -134,19 +134,23 @@ export default function TeamStandingsTable() {
 
     const minDate = selectedSeason ? parseApiDateString(selectedSeason.startDate) : undefined
     let maxDate = selectedSeason ? parseApiDateString(selectedSeason.endDate) : undefined
-    const todayDate = new Date()
-
-    // if we're in the middle of an active season, don't let the user choose dates
-    // that haven't happened yet here in the table, since we don't have data for them;
-    // put another way, maxDate = min(today, maxDate)
-    if (minDate && maxDate) {
-        const minDateString = formatDateForApi(minDate)
-        const maxDateString = formatDateForApi(maxDate)
-        const todayDateString = formatDateForApi(todayDate)
-        if (todayDateString > minDateString && todayDateString < maxDateString) {
-            maxDate = todayDate
-        }
+    if(maxDate) {
+        maxDate = limitDateToYesterday(maxDate)
     }
+    // const todayDate = new Date()
+    // const yesterdayDate = new Date(todayDate.getFullYear(), todayDate.getMonth(), todayDate.getDate() - 1)
+    //
+    // // if we're in the middle of an active season, don't let the user choose dates
+    // // that haven't happened yet here in the table, since we don't have data for them;
+    // // put another way, maxDate = min(today, maxDate)
+    // if (minDate && maxDate) {
+    //     const minDateString = formatDateForApi(minDate)
+    //     const maxDateString = formatDateForApi(maxDate)
+    //     const yesterdayDateString = formatDateForApi(yesterdayDate)
+    //     if (yesterdayDateString > minDateString && yesterdayDateString < maxDateString) {
+    //         maxDate = yesterdayDate
+    //     }
+    // }
 
     // when the selected season changes, default the picked date to the end of the new season.
     // clampedSeasonId is persisted (not plain React state) so a page refresh - which remounts this

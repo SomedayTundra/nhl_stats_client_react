@@ -18,7 +18,7 @@ import {Button} from '@/components/ui/button'
 import {Checkbox} from '@/components/ui/checkbox'
 import {Field, FieldGroup, FieldLabel} from '@/components/ui/field.tsx'
 import {Tooltip, TooltipContent, TooltipTrigger} from '@/components/ui/tooltip'
-import {deserializeDate, formatApiDateForDisplay, formatDateForApi, parseApiDateString, serializeDate} from '@/lib/date.ts'
+import {deserializeDate, formatApiDateForDisplay, formatDateForApi, limitDateToYesterday, parseApiDateString, serializeDate} from '@/lib/date.ts'
 import {cn} from '@/lib/utils'
 import {useLocalStorageState} from '@/lib/useLocalStorageState.ts'
 import {useSeasonInfo} from '@/hooks/useSeasonInfo.ts'
@@ -216,15 +216,19 @@ export default function TeamStandingsChart() {
     // clamp maxDate to today for a season in progress - there's no data yet for the dates between
     // tomorrow and the season's real endDate, so there's no point offering those days in the picker
     let maxDate = selectedSeason ? parseApiDateString(selectedSeason.endDate) : undefined
-    const todayDate = new Date()
-    if (minDate && maxDate) {
-        const minDateString = formatDateForApi(minDate)
-        const maxDateString = formatDateForApi(maxDate)
-        const todayDateString = formatDateForApi(todayDate)
-        if (todayDateString > minDateString && todayDateString < maxDateString) {
-            maxDate = todayDate
-        }
+    if(maxDate) {
+        maxDate = limitDateToYesterday(maxDate)
     }
+    // const todayDate = new Date()
+    // const yesterdayDate = new Date(todayDate.getFullYear(), todayDate.getMonth(), todayDate.getDate() - 1)
+    // if (minDate && maxDate) {
+    //     const minDateString = formatDateForApi(minDate)
+    //     const maxDateString = formatDateForApi(maxDate)
+    //     const yesterdayDateString = formatDateForApi(yesterdayDate)
+    //     if (yesterdayDateString > minDateString && yesterdayDateString < maxDateString) {
+    //         maxDate = yesterdayDate
+    //     }
+    // }
 
     // sizes the line-type combo box to exactly fit "monotone" (its longest choice) rather than some
     // guessed-at width; the sizer carries the input's own px-3, so the measured width already
@@ -696,11 +700,12 @@ export default function TeamStandingsChart() {
                             >
                                 <ComboboxInput
                                     placeholder='Select a line type'
+                                    readOnly
                                     // the input is flex-1 with a 0% flex-basis, so a plain min-width can't win
                                     // against its browser-default intrinsic size (~20ch) once content is
                                     // shorter than that; pin flex:none so the exact measured width applies
                                     style={lineTypeInputWidth !== undefined ? {flex: 'none', width: `${lineTypeInputWidth}px`} : undefined}
-                                    className='border-neutral-800 bg-background hover:bg-accent hover:text-accent-foreground dark:hover:bg-input/50'
+                                    className='caret-transparent border-neutral-800 bg-background hover:bg-accent hover:text-accent-foreground dark:hover:bg-input/50 [&_input]:cursor-default'
                                 />
                                 <ComboboxContent>
                                     <ComboboxEmpty>No items found.</ComboboxEmpty>
