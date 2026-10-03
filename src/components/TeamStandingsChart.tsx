@@ -216,7 +216,7 @@ export default function TeamStandingsChart() {
     const cupChampion = championFromBracket(selectedSeasonPlayoffs)
 
     const minDate = selectedSeason ? parseApiDateString(selectedSeason.startDate) : undefined
-    // clamp maxDate to today for a season in progress - there's no data yet for the dates between
+    // clamp maxDate to yesterday for a season in progress - there's no data yet for the dates between
     // tomorrow and the season's real endDate, so there's no point offering those days in the picker
     let maxDate = selectedSeason ? parseApiDateString(selectedSeason.endDate) : undefined
     if(maxDate) {
