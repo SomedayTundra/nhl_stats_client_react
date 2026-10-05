@@ -1,12 +1,16 @@
 // Drafts user-facing patch notes from commits that landed on main since the last published notes,
 // for .github/workflows/patch-notes-draft.yml. Run from the client repo root.
 //
-// Published notes are patch-notes/YYYY-MM-DD.md files on main. Each one's frontmatter carries
-// clientToSha/serverToSha: the last commit of each repo it covers. The next draft starts there.
+// Published notes are patch-notes/YYYY-MM-DD.md files on main, at most one per day. Each one's
+// frontmatter carries clientToSha/serverToSha: the last commit of each repo it covers. The next
+// draft starts there. A draft made on a day that already has published notes edits that day's
+// file rather than starting a second one, so the page shows one card per day.
 //
 // The draft lives on the patch-notes/draft branch (one open PR, updated in place). If that branch
 // already holds a draft, it was probably hand-edited, so this script never rewrites its text.
-// It only appends notes for commits newer than the draft's own cursors and moves the cursors on.
+// It only merges in notes for commits newer than the draft's own cursors and moves the cursors on.
+// The same goes for a published file being added to: new bullets land under the matching
+// heading, and existing text is left as written.
 //
 // Env: ANTHROPIC_API_KEY (required), SERVER_DIR (server repo checkout, default ../nhl_stats_server_fastapi),
 //      DRAFT_REF (default origin/patch-notes/draft), PATCH_NOTES_MODEL (default claude-opus-5-5),
@@ -21,7 +25,8 @@ const NOTES_DIR = 'patch-notes'
 const SERVER_DIR = process.env.SERVER_DIR ?? '../nhl_stats_server_fastapi'
 const DRAFT_REF = process.env.DRAFT_REF ?? 'origin/patch-notes/draft'
 const MODEL = process.env.PATCH_NOTES_MODEL ?? 'claude-opus-5-5'
-const NOTE_FILE = /^\d{4}-\d{2}-\d{2}(-\d+)?\.md$/
+const NOTE_FILE = /^\d{4}-\d{2}-\d{2}\.md$/
+const SECTION_ORDER = ['new', 'improved', 'fixed']
 
 const git = (cwd, ...args) => execFileSync('git', args, {cwd, encoding: 'utf8'}).trim()
 
@@ -52,17 +57,68 @@ function latestPublished() {
     return {name, ...parseNote(readFileSync(path.join(NOTES_DIR, name), 'utf8'))}
 }
 
-// The note on the draft branch that main doesn't have yet, if a draft PR is open.
+// The note the draft branch adds or changes relative to main, if a draft PR is open. A draft can
+// edit an existing day's file, so "main doesn't have it" isn't enough: a file that differs from
+// main's copy counts too, unless the branch has already been merged into main (a stale branch
+// whose file main has since edited would otherwise look like a draft).
 function existingDraft() {
     try {
         git('.', 'rev-parse', '--verify', '--quiet', DRAFT_REF)
     } catch {
         return null
     }
+    try {
+        git('.', 'merge-base', '--is-ancestor', DRAFT_REF, 'HEAD')
+        return null
+    } catch {
+        // not merged yet, so whatever it changes is still a draft
+    }
     const names = git('.', 'ls-tree', '--name-only', `${DRAFT_REF}:${NOTES_DIR}`).split('\n')
-    const name = names.find(n => NOTE_FILE.test(n) && !existsSync(path.join(NOTES_DIR, n)))
-    if (!name) return null
-    return {name, ...parseNote(git('.', 'show', `${DRAFT_REF}:${NOTES_DIR}/${name}`))}
+    for (const name of names.filter(n => NOTE_FILE.test(n))) {
+        const text = git('.', 'show', `${DRAFT_REF}:${NOTES_DIR}/${name}`)
+        const local = path.join(NOTES_DIR, name)
+        if (!existsSync(local) || readFileSync(local, 'utf8').trim() !== text.trim()) {
+            return {name, ...parseNote(text)}
+        }
+    }
+    return null
+}
+
+// Splits a note body into the text before the first `## ` heading and its sections, in order.
+function parseSections(body) {
+    const sections = []
+    let preamble = ''
+    for (const line of body.trim().split(/\r?\n/)) {
+        const heading = line.match(/^##\s+(.*?)\s*$/)
+        if (heading) sections.push({heading: heading[1], lines: []})
+        else if (sections.length) sections.at(-1).lines.push(line)
+        else preamble += `${line}\n`
+    }
+    return {preamble: preamble.trim(), sections}
+}
+
+// Adds `added`'s bullets under the matching headings of `existing`, which is kept verbatim. A
+// heading `existing` lacks is inserted in New, Improved, Fixed order.
+function mergeNotes(existing, added) {
+    const base = parseSections(existing)
+    const extra = parseSections(added)
+    const key = heading => heading.toLowerCase()
+    const rank = heading => {
+        const index = SECTION_ORDER.indexOf(key(heading))
+        return index === -1 ? SECTION_ORDER.length : index
+    }
+    for (const section of extra.sections) {
+        const match = base.sections.find(s => key(s.heading) === key(section.heading))
+        if (match) {
+            match.lines = [...match.lines.join('\n').trimEnd().split('\n'), ...section.lines.join('\n').trim().split('\n')]
+        } else {
+            const at = base.sections.findIndex(s => rank(s.heading) > rank(section.heading))
+            base.sections.splice(at === -1 ? base.sections.length : at, 0, section)
+        }
+    }
+    const preamble = [base.preamble, extra.preamble].filter(Boolean).join('\n\n')
+    return [preamble, ...base.sections.map(s => `## ${s.heading}\n\n${s.lines.join('\n').trim()}`)]
+        .filter(Boolean).join('\n\n')
 }
 
 // Non-merge commits after `since`, oldest first, with duplicate subjects collapsed (this history
@@ -150,16 +206,16 @@ if (!draft && !notes) {
     process.exit(0)
 }
 const today = new Date().toISOString().slice(0, 10)
-let name = draft?.name ?? `${today}.md`
-for (let n = 2; !draft && existsSync(path.join(NOTES_DIR, name)); n++) name = `${today}-${n}.md`
+// An open draft is added to; otherwise today's published file is, if there is one already.
+const target = draft ?? (published.name === `${today}.md` ? published : null)
+const name = target?.name ?? `${today}.md`
 
 // With an open draft, cursors advance even when nothing user-visible was added.
-const body = draft && notes
-    ? `${draft.body.trim()}\n\n<!-- added ${today}: fold these into the sections above -->\n\n${notes}`
-    : draft?.body ?? notes
+const body = target && notes ? mergeNotes(target.body, notes) : target?.body ?? notes
+// The page builds the title from the date, so only a hand-written title is carried forward.
 const meta = {
-    title: draft?.meta.title ?? `Patch notes for ${today}`,
-    date: draft?.meta.date ?? today,
+    ...(target?.meta.title ? {title: target.meta.title} : {}),
+    date: target?.meta.date ?? today,
     clientToSha: clientHead,
     serverToSha: serverHead,
 }

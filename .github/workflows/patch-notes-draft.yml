@@ -67,6 +67,7 @@ jobs:
             Drafted from commits on `main` in this repo and `nhl_stats_server_fastapi`.
 
             Edit `${{ steps.draft.outputs.file }}` here as you like, then merge to publish it.
-            New commits on `main` get appended to this PR without touching your edits. They come
-            after an `added <date>` comment, ready to fold into the sections above.
+            New commits on `main` get added to this PR without touching your edits: their bullets
+            go under the matching New / Improved / Fixed heading. If that day already had published
+            notes, this PR edits that file rather than adding a second one for the same day.
           reviewers: ${{ github.repository_owner }}
