@@ -775,10 +775,6 @@ p {
 }
 
 .patch-notes-release-header {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 1rem;
     padding: 0.75rem 1.25rem;
     background: var(--navbar-bg);
     color: var(--navbar-fg);
@@ -786,12 +782,6 @@ p {
     h2 {
         font-size: 1.25rem;
         font-weight: 700;
-    }
-
-    time {
-        flex: none;
-        font-size: 0.875rem;
-        font-variant-numeric: tabular-nums;
     }
 }
 
@@ -850,7 +840,7 @@ p {
     }
 
     code {
-        font-family: var(--mono);
+        font-family: var(--mono), monospace;
         font-size: 0.9em;
     }
 }

@@ -1,5 +1,4 @@
 import Markdown, {type Components} from 'react-markdown'
-import {formatApiDateForDisplay} from '@/lib/date.ts'
 import {patchNotes} from '@/lib/patchNotes.ts'
 
 // The notes mark which repo a change came from with an inline-code label at the start of a bullet
@@ -16,7 +15,7 @@ const markdownComponents: Components = {
     },
 }
 
-// One card per published release, newest first. The notes are bundled at build time (see
+// One card per day of published notes, newest first; the title carries the date. The notes are bundled at build time (see
 // patchNotes.ts), so there's nothing to fetch and nothing that can fail to load.
 export default function PatchNotes() {
     return (
@@ -26,7 +25,6 @@ export default function PatchNotes() {
                 <article key={note.id} className='patch-notes-release'>
                     <header className='patch-notes-release-header'>
                         <h2>{note.title}</h2>
-                        <time dateTime={note.date}>{formatApiDateForDisplay(note.date)}</time>
                     </header>
                     <div className='patch-notes-body'>
                         <Markdown components={markdownComponents}>{note.body}</Markdown>

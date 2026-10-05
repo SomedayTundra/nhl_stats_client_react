@@ -149,6 +149,9 @@ async function summarize(clientCommits, serverCommits, voiceExample) {
         '  "## New", "## Improved", "## Fixed".',
         '- One bullet per user-visible change, in plain language. Merge related commits into one bullet.',
         '- Server and client commits that implement the same feature become one bullet.',
+        '- Start every bullet with the repo its commits came from, as inline code followed by a space:',
+        '  `client`, `server`, or `client + server` when the bullet draws on commits from both lists.',
+        '  Write the label exactly as shown, e.g. "- `client` The table now ...".',
         '- Leave out changes users cannot see: CI, build tooling, dependency bumps, refactors, renames,',
         '  lint and type fixes, internal docs, and deployment plumbing.',
         '- Drop ticket prefixes such as [NHL-55] or [no JIRA].',
@@ -181,7 +184,15 @@ async function summarize(clientCommits, serverCommits, voiceExample) {
     }
     if (response.stop_reason === 'max_tokens') throw new Error('response hit max_tokens')
     const text = response.content.filter(block => block.type === 'text').map(block => block.text).join('').trim()
-    return text === 'NONE' ? '' : text
+    return text === 'NONE' ? '' : labelBullets(text, clientCommits, serverCommits)
+}
+
+// The model labels each bullet with its repo. When only one repo has commits, the label can't be
+// anything else, so a bullet the model left unlabeled gets it here.
+function labelBullets(text, clientCommits, serverCommits) {
+    if (clientCommits.length > 0 && serverCommits.length > 0) return text
+    const label = clientCommits.length > 0 ? 'client' : 'server'
+    return text.replace(/^- (?!`(?:client|server|client \+ server)` )/gm, `- \`${label}\` `)
 }
 
 const published = latestPublished()
