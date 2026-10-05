@@ -814,6 +814,25 @@ p {
         padding-bottom: 0.2rem;
     }
 
+    h2[data-category='new'] {
+        --category-color: #15803d    /* green */
+    }
+
+    h2[data-category='improved'] {
+        --category-color: #bfaf5f /* mustard */
+    }
+
+    h2[data-category='fixed'] {
+        --category-color: #cd2121 /* red */
+    }
+
+    h2[data-category] {
+        color: var(--category-color);
+        border-bottom-color: var(--category-color);
+    }
+
+    h2[data-category] + ul li::marker { color: var(--category-color); }
+
     h2:first-child {
         margin-top: 0;
     }

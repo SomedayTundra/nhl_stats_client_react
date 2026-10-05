@@ -5,6 +5,7 @@ import {patchNotes} from '@/lib/patchNotes.ts'
 // (`client`, `server`, `client + server`). Those exact labels render as grey pills; any other
 // inline code is left as ordinary code.
 const REPO_LABELS = new Set(['client', 'server', 'client + server'])
+const CATEGORIES = new Set(['new', 'improved', 'fixed'])
 
 const markdownComponents: Components = {
     code({children, className}) {
@@ -13,6 +14,10 @@ const markdownComponents: Components = {
         }
         return <code className={className}>{children}</code>
     },
+    h2({children}) {
+        const text = (typeof children === 'string') ? children.toLocaleLowerCase() : ''
+        return <h2 data-category={CATEGORIES.has(text) ? text : undefined}>{children}</h2>
+    }
 }
 
 // One card per day of published notes, newest first; the title carries the date. The notes are bundled at build time (see
