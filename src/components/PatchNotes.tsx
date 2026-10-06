@@ -4,7 +4,7 @@ import {patchNotes} from '@/lib/patchNotes.ts'
 // The notes mark which repo a change came from with an inline-code label at the start of a bullet
 // (`client`, `server`, `client + server`). Those exact labels render as grey pills; any other
 // inline code is left as ordinary code.
-const REPO_LABELS = new Set(['client', 'server', 'client + server'])
+const REPO_LABELS = new Set(['client', 'server', 'client + server', 'test'])
 const CATEGORIES = new Set(['new', 'improved', 'fixed'])
 
 const markdownComponents: Components = {
