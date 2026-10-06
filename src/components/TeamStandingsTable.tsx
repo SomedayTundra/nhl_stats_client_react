@@ -56,6 +56,11 @@ function formatLastTen({l10Wins, l10Losses, l10OtLosses, l10Ties}: TeamStatEntry
     }
 }
 
+// format percentages (like Win% and Point%) to three decimal places, and strip the inevitable leading-zero
+function formatPctg(value: number) {
+    return value.toFixed(3).replace(/^0/, '')
+}
+
 function buildColumns(alwaysShowFourL10: boolean) {
     return helper.columns([
         helper.accessor('teamName', {
@@ -70,10 +75,15 @@ function buildColumns(alwaysShowFourL10: boolean) {
                 </>
             ),
         }),
+        helper.accessor('gamesPlayed', {header: 'GP', meta: {align: 'center', cellClassName: CLASS_TD_CENTER}}),
+        helper.accessor('winPctg', {header: 'Win%', meta: {align: 'center', cellClassName: CLASS_TD_CENTER},
+            cell: (info) => {return formatPctg(info.getValue()) }}),
         helper.accessor('wins', {header: 'Wins', meta: {align: 'center', cellClassName: CLASS_TD_CENTER}}),
         helper.accessor('losses', {header: 'Losses', meta: {align: 'center', cellClassName: CLASS_TD_CENTER}}),
         helper.accessor('otLosses', {header: 'OT Losses', meta: {align: 'center', cellClassName: CLASS_TD_CENTER}}),
         helper.accessor('points', {header: 'Points', meta: {align: 'center', cellClassName: CLASS_TD_CENTER}}),
+        helper.accessor('pointPctg', {header: 'Point%', meta: {align: 'center', cellClassName: CLASS_TD_CENTER},
+            cell: (info) => {return formatPctg(info.getValue()) }}),
         helper.accessor('goalsFor', {header: 'Goals For', meta: {align: 'center', cellClassName: CLASS_TD_CENTER}}),
         helper.accessor('goalsAgainst', {header: 'Goals Against', meta: {align: 'center', cellClassName: CLASS_TD_CENTER}}),
         helper.accessor('goalDiff', {header: 'Goal Diff', meta: {align: 'center', cellClassName: CLASS_TD_CENTER}}),
