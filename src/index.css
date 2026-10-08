@@ -219,7 +219,7 @@ p {
     width: 100%;
     padding: clamp(0.1rem, 0.8cqh, 0.35rem) 0 clamp(0.1rem, 0.8cqh, 0.35rem) calc(clamp(0.4rem, 1.5cqh, 1rem) + 2rem);
     font-size: clamp(0.65rem, 2cqh, 0.9rem);
-    border-radius: 0 0 0 50vh;
+    /*border-radius: 0 0 0 50vh;*/
 }
 
 .unplaced-team-bucket-content {
