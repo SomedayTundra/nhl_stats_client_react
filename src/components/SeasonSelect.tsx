@@ -111,7 +111,7 @@ export function SeasonSelect({value, onChange}: SeasonSelectProps) {
                             <SelectTrigger id="season-select" className="w-32">
                                 <SelectValue/>
                             </SelectTrigger>
-                            <SelectContent>
+                            <SelectContent position='popper'>
                                 {ids.map((id) => (
                                     <SelectItem key={id} value={id}>
                                         {seasonIdToLabel(id)}

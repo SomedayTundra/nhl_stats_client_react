@@ -38,7 +38,7 @@ const lineTypes = [
     'basis', 'bump', 'linear', 'natural', 'monotone', 'step',
 ] as const
 
-// used to size the line-type combo box to exactly fit its longest choice, whichever one that is
+// used to size the line-type select control to exactly fit its longest choice, whichever one that is
 const longestLineType = lineTypes.reduce((longest, type) => (type.length > longest.length ? type : longest), '')
 
 // a single wheel flick (especially on a trackpad) fires a burst of events; only step one entry
@@ -673,7 +673,7 @@ export default function TeamStandingsChart() {
                 <span
                     ref={lineTypeSizerRef}
                     aria-hidden
-                    className='pointer-events-none invisible absolute px-3 text-sm whitespace-nowrap'
+                    className='pointer-events-none invisible absolute px-6 text-sm whitespace-nowrap'
                 >
                     {longestLineType}
                 </span>
@@ -696,7 +696,6 @@ export default function TeamStandingsChart() {
                                     <SelectValue placeholder='Select a line type'/>
                                 </SelectTrigger>
                                 <SelectContent position='popper'>
-
                                     {lineTypes.map((item) => (
                                         <SelectItem key={item} value={item}>
                                             {item}

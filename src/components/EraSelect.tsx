@@ -137,7 +137,7 @@ export function EraSelect({season, onSeasonChange}: EraSelectProps) {
                             >
                                 <SelectValue/>
                             </SelectTrigger>
-                            <SelectContent>
+                            <SelectContent position='popper'>
                                 {seasonEntries.map((entry) => (
                                     // radix moves focus onto an item as the pointer or arrow keys
                                     // highlight it, so focus doubles as the highlight signal
