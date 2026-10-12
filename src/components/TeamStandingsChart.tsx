@@ -26,27 +26,27 @@ import {useTeamStats} from '@/hooks/useTeamStats.ts'
 import {usePlayoffs} from '@/hooks/usePlayoffs.ts'
 import {getTeamLogoUrl} from '@/lib/teamLogo.ts'
 import {addDays, isAfter, isBefore, isSameDay, subDays} from 'date-fns'
-import {seasonIdToLabel} from '@/lib/season.ts'
-import {buildBracketView, type BracketTeamView, type NhlBracketPayload} from '@/lib/playoffBracket.ts'
+import {type BracketTeamView, buildBracketView, type NhlBracketPayload} from '@/lib/playoffBracket.ts'
 // a small (42x48, 2x a 24px CSS height) re-render of the navbar's nhl_logo.png, rather than that
 // full-size asset scaled down by the browser, so the swatch/logo toggle's icon stays crisp at
 // its actual display size instead of relying on downsampling a much larger source image
 import nhlLogoSmall from '@/assets/nhl_logo_small.png'
 import {useNavigate} from '@tanstack/react-router'
+import {isStatType, showStatAsPercent, StatSelect, statToLabel, type StatType} from '@/components/StatSelect.tsx'
 
 const lineTypes = [
     'basis', 'bump', 'linear', 'natural', 'monotone', 'step',
 ] as const
 
 // used to size the line-type select control to exactly fit its longest choice, whichever one that is
-const longestLineType = lineTypes.reduce((longest, type) => (type.length > longest.length ? type : longest), '')
+const longestLineTypeName = lineTypes.reduce((longestLineTypeNameSoFar, lineTypeName) => (lineTypeName.length > longestLineTypeNameSoFar.length ? lineTypeName : longestLineTypeNameSoFar), '')
 
 // a single wheel flick (especially on a trackpad) fires a burst of events; only step one entry
 // per this window so one gesture doesn't skip across several line types
 const WHEEL_STEP_COOLDOWN_MS = 120
 
 // the line-type trigger holds a chevron (size-4) plus the gap-2 before it on top of the measured text
-const LINE_TYPE_CHEVRON_ALLOWANCE_PX = 24
+const SELECT_CHEVRON_ALLOWANCE_PX = 24
 
 type LineType = typeof lineTypes[number]
 
@@ -114,13 +114,19 @@ function formatPaddedPoints(value: number | string | undefined): string {
     return value === undefined ? '' : String(value).padStart(3, POINTS_PAD_CHAR)
 }
 
+// format percentages (like Win% and Point%) to three decimal places, and strip the inevitable leading-zero
+function formatPercent(value: number | string | undefined): string {
+    return (typeof value === 'number') ? value.toFixed(3).replace(/^0/, '') : ''
+}
+
+
 type DockedTooltipPanelProps = {
     payload: ChartTooltipPayloadItem[] | null
     label?: string
     scrollContainerRef: React.RefObject<HTMLDivElement | null>
     teamLogoByAbbrev: Map<string, string>
-    sidebarIconMode: SidebarIconMode
-}
+    sidebarIconMode: SidebarIconMode,
+    statType: StatType}
 
 // docked along the chart's right edge instead of following the cursor, stretched to the chart's
 // full height; rows always start at the top and stack downward in a single column (the panel's
@@ -128,7 +134,7 @@ type DockedTooltipPanelProps = {
 // the swatch/logo toggle that used to live pinned to the bottom of this panel now lives in the
 // chart's top toolbar instead (see the right-justified control cluster there) - this component
 // only reads sidebarIconMode to decide what each row draws
-function DockedTooltipPanel({payload, label, scrollContainerRef, teamLogoByAbbrev, sidebarIconMode}: DockedTooltipPanelProps) {
+function DockedTooltipPanel({payload, label, scrollContainerRef, teamLogoByAbbrev, sidebarIconMode, statType}: DockedTooltipPanelProps) {
     const sorted = payload ? [...payload].sort((a, b) => (Number(b.value) || 0) - (Number(a.value) || 0)) : null
 
     return (
@@ -152,7 +158,9 @@ function DockedTooltipPanel({payload, label, scrollContainerRef, teamLogoByAbbre
                                             <span className='inline-block size-2 shrink-0 rounded-[2px]' style={{backgroundColor: item.color}}/>
                                         )}
                                         <span>{abbrev}</span>
-                                        <span className='ml-auto'>{formatPaddedPoints(item.value)}</span>
+                                        <span className='ml-auto'>{
+                                            showStatAsPercent(statType) ? formatPercent(item.value) : formatPaddedPoints(item.value)
+                                        }</span>
                                     </div>
                                 )
                             })}
@@ -175,6 +183,14 @@ export default function TeamStandingsChart() {
             return isLineType(parsed) ? parsed : 'monotone'
         },
     })
+
+    const [statName, setStatType] = useLocalStorageState<StatType>('nhlStats.chart.statType', 'points', {
+        deserialize: (raw) => {
+            const parsed = JSON.parse(raw)
+            return isStatType(parsed) ? parsed : 'points'
+        }
+    })
+
     const [showDots, setShowDots] = useLocalStorageState<boolean>('nhlStats.chart.showDots', false)
     const [logoSize, setLogoSize] = useLocalStorageState<number>('nhlStats.chart.logoSize', DEFAULT_LOGO_SIZE)
     const [sidebarIconMode, setSidebarIconMode] = useLocalStorageState<SidebarIconMode>('nhlStats.chart.sidebarIconMode', 'swatch', {
@@ -223,7 +239,7 @@ export default function TeamStandingsChart() {
         maxDate = limitDateToYesterday(maxDate)
     }
 
-    // sizes the line-type select to exactly fit "monotone" (its longest choice) rather than some
+    // sizes the line-type select to exactly fit its longest choice (currently "monotone") rather than some
     // guessed-at width; the sizer carries the trigger's own px-3, so the measured width already
     // includes horizontal padding (the chevron is added separately, see LINE_TYPE_CHEVRON_ALLOWANCE_PX).
     // Re-measures via ResizeObserver in case the webfont loads late.
@@ -473,6 +489,12 @@ export default function TeamStandingsChart() {
         }
     }
 
+    const handleStatChange = (value: string) => {
+        if(isStatType(value)) {
+            setStatType(value)
+        }
+    }
+
     const fromDateContextValue = {
         date: fromDate,
         setDate: handleFromDateSelect
@@ -513,7 +535,7 @@ export default function TeamStandingsChart() {
             }
 
             // add an entry associating this team's abbreviation with this team's points
-            existingDate[teamStatEntry.teamAbbrev] = teamStatEntry.points
+            existingDate[teamStatEntry.teamAbbrev] = teamStatEntry[statName]
             teamNameByAbbrev.set(teamStatEntry.teamAbbrev, teamStatEntry.teamName)
             teamLogoByAbbrev.set(teamStatEntry.teamAbbrev, teamStatEntry.logo)
             if (teamStatEntry.chartLineColor) {
@@ -539,7 +561,7 @@ export default function TeamStandingsChart() {
             }
         })
 
-        // teams tied on points at whichever date is currently hovered would render their active-dot
+        // teams tied on the selected stat at whichever date is currently hovered would render their active-dot
         // logos on top of each other; group them by that date's value and give each one after the
         // first an increasing leftward offset so they lay out in a row instead of overlapping
         function logoStackOffset(rowIndex: number, abbrev: string): number {
@@ -613,13 +635,19 @@ export default function TeamStandingsChart() {
                                 axisLine={true}
                                 tickMargin={8}
                                 domain={([dataMin, dataMax]: [number, number]) => {
-                                    const padding = Math.max((dataMax - dataMin) * 0.1, 1)
-                                    // points are never negative, so the axis shouldn't dip below zero just
-                                    // to pad the bottom of the chart; the top tracks the data exactly, with
-                                    // no headroom padding above the current max
-                                    return [Math.max(0, Math.floor(dataMin - padding)), dataMax]
+                                    // goalDiff can go negative, so we'll not fuss with that...
+                                    if(statName === 'goalDiff') {
+                                        return [dataMin, dataMax]
+                                    }
+                                    else {
+                                        // no other stat can go negative, so the axis shouldn't dip below zero just
+                                        // to pad the bottom of the chart; the top tracks the data exactly, with
+                                        // no headroom padding above the current max
+                                        const dataMinPadding = Math.max((dataMax - dataMin) * 0.1, 1)
+                                        return [Math.max(0, Math.floor(dataMin - dataMinPadding)), dataMax]
+                                    }
                                 }}
-                                label={{value: 'Points', angle: -90, position: 'insideLeft'}}
+                                label={{value: statToLabel(statName), angle: -90, position: 'insideLeft'}}
                             />
                             <ChartTooltip cursor={true} content={() => null}/>
                             {visibleTeamAbbrevs.map((abbrev) => (
@@ -649,6 +677,7 @@ export default function TeamStandingsChart() {
                     scrollContainerRef={sidebarScrollRef}
                     teamLogoByAbbrev={teamLogoByAbbrev}
                     sidebarIconMode={sidebarIconMode}
+                    statType={statName}
                 />
             </div>
         )
@@ -669,13 +698,14 @@ export default function TeamStandingsChart() {
                     </DateContext>
                 </div>
                 <TeamChooser season={resolvedSeason} selected={selectedTeams} onChange={setSelectedTeams}/>
+                <StatSelect value={statName} onChange={handleStatChange}/>
                 {/* hidden twin of the longest line-type choice, measured to size the select */}
                 <span
                     ref={lineTypeSizerRef}
                     aria-hidden
-                    className='pointer-events-none invisible absolute px-6 text-sm whitespace-nowrap'
+                    className='pointer-events-none invisible absolute px-4 text-sm whitespace-nowrap'
                 >
-                    {longestLineType}
+                    {longestLineTypeName}
                 </span>
                 <Tooltip>
                     {/* trigger wraps only the select, so the tooltip stays put - the box's width
@@ -691,7 +721,7 @@ export default function TeamStandingsChart() {
                                 }}
                             >
                                 <SelectTrigger
-                                    style={lineTypeInputWidth !== undefined ? {width: `${lineTypeInputWidth + LINE_TYPE_CHEVRON_ALLOWANCE_PX}px`} : undefined}
+                                    style={lineTypeInputWidth !== undefined ? {width: `${lineTypeInputWidth + SELECT_CHEVRON_ALLOWANCE_PX}px`} : undefined}
                                 >
                                     <SelectValue placeholder='Select a line type'/>
                                 </SelectTrigger>
@@ -778,7 +808,7 @@ export default function TeamStandingsChart() {
             <div className='flex-1 min-h-0 flex justify-center'>
                 <Card className='w-full flex flex-col overflow-hidden'>
                     <CardHeader className='shrink-0'>
-                        <CardTitle>Team Standings Over Time ({seasonIdToLabel(resolvedSeason)})</CardTitle>
+                        <CardTitle>{statToLabel(statName)}</CardTitle>
                         <CardDescription>
                         </CardDescription>
                     </CardHeader>
