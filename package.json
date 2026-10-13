@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "engines": {
-    "node": ">=24"
+    "node": "24.x"
   },
   "scripts": {
     "dev": "vite",
@@ -58,5 +58,8 @@
   },
   "overrides": {
     "react-is": "^19.0.0-rc-69d4b800-20241021"
+  },
+  "allowScripts": {
+    "esbuild@0.28.1": true
   }
 }
