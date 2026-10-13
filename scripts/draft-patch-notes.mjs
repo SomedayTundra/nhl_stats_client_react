@@ -6,15 +6,19 @@
 // draft starts there. A draft made on a day that already has published notes edits that day's
 // file rather than starting a second one, so the page shows one card per day.
 //
-// The draft lives on the patch-notes/draft branch (one open PR, updated in place). If that branch
+// Each day's draft lives on its own patch-notes/draft-YYYY-MM-DD branch, with its own PR, updated
+// in place for the rest of that day. A draft left unmerged doesn't absorb later days' changes:
+// the next day's commits start a new file on a new branch, and its cursors pick up where the
+// newest open draft's leave off, so the two never cover the same commits. If today's branch
 // already holds a draft, it was probably hand-edited, so this script never rewrites its text.
 // It only merges in notes for commits newer than the draft's own cursors and moves the cursors on.
 // The same goes for a published file being added to: new bullets land under the matching
 // heading, and existing text is left as written.
 //
 // Env: ANTHROPIC_API_KEY (required), SERVER_DIR (server repo checkout, default ../nhl_stats_server_fastapi),
-//      DRAFT_REF (default origin/patch-notes/draft), PATCH_NOTES_MODEL (default claude-opus-5-5),
-//      GITHUB_OUTPUT (set by Actions; receives changed=true|false).
+//      DRAFT_REMOTE (default origin), PATCH_NOTES_TZ (the zone "today" is taken in, default
+//      America/Chicago), PATCH_NOTES_MODEL (default claude-opus-5-5),
+//      GITHUB_OUTPUT (set by Actions; receives changed=true|false, plus file, branch, and date).
 
 import {execFileSync} from 'node:child_process'
 import {appendFileSync, existsSync, readdirSync, readFileSync, writeFileSync} from 'node:fs'
@@ -23,7 +27,11 @@ import Anthropic from '@anthropic-ai/sdk'
 
 const NOTES_DIR = 'patch-notes'
 const SERVER_DIR = process.env.SERVER_DIR ?? '../nhl_stats_server_fastapi'
-const DRAFT_REF = process.env.DRAFT_REF ?? 'origin/patch-notes/draft'
+const DRAFT_REMOTE = process.env.DRAFT_REMOTE ?? 'origin'
+const DRAFT_BRANCH_PREFIX = 'patch-notes/draft-'
+// en-CA formats dates as YYYY-MM-DD. Taken in the developer's zone rather than UTC so an evening
+// commit isn't filed under tomorrow.
+const TIME_ZONE = process.env.PATCH_NOTES_TZ ?? 'America/Chicago'
 const MODEL = process.env.PATCH_NOTES_MODEL ?? 'claude-opus-5-5'
 const NOTE_FILE = /^\d{4}-\d{2}-\d{2}\.md$/
 const SECTION_ORDER = ['new', 'improved', 'fixed']
@@ -57,31 +65,34 @@ function latestPublished() {
     return {name, ...parseNote(readFileSync(path.join(NOTES_DIR, name), 'utf8'))}
 }
 
-// The note the draft branch adds or changes relative to main, if a draft PR is open. A draft can
-// edit an existing day's file, so "main doesn't have it" isn't enough: a file that differs from
-// main's copy counts too, unless the branch has already been merged into main (a stale branch
-// whose file main has since edited would otherwise look like a draft).
-function existingDraft() {
+// The note a draft branch adds or changes, or null if it's no longer a draft. Only files the
+// branch itself changed since it forked from main count: a draft can sit open for days, and main
+// changing some other note in the meantime mustn't make that note look like the draft. A file that
+// main already has verbatim was merged (rebase and squash merges leave the branch looking
+// unmerged to git).
+function draftOn(ref) {
     try {
-        git('.', 'rev-parse', '--verify', '--quiet', DRAFT_REF)
-    } catch {
-        return null
-    }
-    try {
-        git('.', 'merge-base', '--is-ancestor', DRAFT_REF, 'HEAD')
+        git('.', 'merge-base', '--is-ancestor', ref, 'HEAD')
         return null
     } catch {
         // not merged yet, so whatever it changes is still a draft
     }
-    const names = git('.', 'ls-tree', '--name-only', `${DRAFT_REF}:${NOTES_DIR}`).split('\n')
-    for (const name of names.filter(n => NOTE_FILE.test(n))) {
-        const text = git('.', 'show', `${DRAFT_REF}:${NOTES_DIR}/${name}`)
+    const paths = git('.', 'diff', '--name-only', `HEAD...${ref}`, '--', NOTES_DIR).split('\n')
+    for (const name of paths.map(p => path.posix.basename(p)).filter(n => NOTE_FILE.test(n))) {
+        const text = git('.', 'show', `${ref}:${NOTES_DIR}/${name}`)
         const local = path.join(NOTES_DIR, name)
         if (!existsSync(local) || readFileSync(local, 'utf8').trim() !== text.trim()) {
             return {name, ...parseNote(text)}
         }
     }
     return null
+}
+
+// Every open draft, one per day, oldest first.
+function openDrafts() {
+    const refs = git('.', 'for-each-ref', '--format=%(refname:short)', `refs/remotes/${DRAFT_REMOTE}/${DRAFT_BRANCH_PREFIX}*`)
+    return refs.split('\n').filter(Boolean).map(draftOn).filter(Boolean)
+        .sort((a, b) => a.name.localeCompare(b.name))
 }
 
 // Splits a note body into the text before the first `## ` heading and its sections, in order.
@@ -195,9 +206,15 @@ function labelBullets(text, clientCommits, serverCommits) {
     return text.replace(/^- (?!`(?:client|server|client \+ server)` )/gm, `- \`${label}\` `)
 }
 
+const today = new Intl.DateTimeFormat('en-CA', {timeZone: TIME_ZONE}).format(new Date())
 const published = latestPublished()
-const draft = existingDraft()
-const base = draft ?? published
+const drafts = openDrafts()
+// Only today's draft is added to. An older one stays as it is, waiting to be merged.
+const draft = drafts.find(d => d.name === `${today}.md`) ?? null
+// Commits are taken from wherever the newest note, draft or published, leaves off. A draft wins a
+// tie with the published file for its day, since it's that file plus more.
+const newestDraft = drafts.at(-1)
+const base = newestDraft && newestDraft.name >= published.name ? newestDraft : published
 
 const clientHead = git('.', 'rev-parse', 'HEAD')
 const serverHead = git(SERVER_DIR, 'rev-parse', 'HEAD')
@@ -212,12 +229,11 @@ if (clientCommits.length === 0 && serverCommits.length === 0) {
 
 const notes = await summarize(clientCommits, serverCommits, published.body)
 if (!draft && !notes) {
-    // Nothing user-visible and no PR open: don't open one just to move cursors.
+    // Nothing user-visible and no PR open for today: don't open one just to move cursors.
     setOutput('changed', 'false')
     process.exit(0)
 }
-const today = new Date().toISOString().slice(0, 10)
-// An open draft is added to; otherwise today's published file is, if there is one already.
+// Today's open draft is added to; otherwise today's published file is, if there is one already.
 const target = draft ?? (published.name === `${today}.md` ? published : null)
 const name = target?.name ?? `${today}.md`
 
@@ -233,3 +249,5 @@ const meta = {
 writeFileSync(path.join(NOTES_DIR, name), formatNote(meta, body))
 setOutput('changed', 'true')
 setOutput('file', `${NOTES_DIR}/${name}`)
+setOutput('date', meta.date)
+setOutput('branch', `${DRAFT_BRANCH_PREFIX}${meta.date}`)

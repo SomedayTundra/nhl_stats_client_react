@@ -1,6 +1,6 @@
 # Drafts patch notes for commits that reached main since the last published notes, and opens (or
-# updates) a single PR from patch-notes/draft. GitHub's PR notification email is the "a draft is
-# ready" signal. Edit the note in the PR, then merge it to publish. See scripts/draft-patch-notes.mjs.
+# updates) that day's PR from patch-notes/draft-YYYY-MM-DD. GitHub's PR notification email is the
+# "a draft is ready" signal. Edit the note in the PR, then merge it to publish. See scripts/draft-patch-notes.mjs.
 #
 # Needs repo secrets ANTHROPIC_API_KEY and SERVER_REPO_TOKEN (a fine-grained PAT with read-only
 # Contents access to nhl_stats_server_fastapi, which is private), plus Settings > Actions >
@@ -31,7 +31,7 @@ jobs:
   draft:
     runs-on: ubuntu-latest
     steps:
-      # full history of every branch, so the script can see origin/patch-notes/draft
+      # full history of every branch, so the script can see the open origin/patch-notes/draft-* branches
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
@@ -59,15 +59,16 @@ jobs:
       - if: steps.draft.outputs.changed == 'true'
         uses: peter-evans/create-pull-request@v8
         with:
-          branch: patch-notes/draft
+          branch: ${{ steps.draft.outputs.branch }}
           add-paths: ${{ steps.draft.outputs.file }}
           commit-message: '[patch notes] draft ${{ steps.draft.outputs.file }}'
-          title: 'Patch notes draft'
+          title: 'Patch notes draft ${{ steps.draft.outputs.date }}'
           body: |
             Drafted from commits on `main` in this repo and `nhl_stats_server_fastapi`.
 
             Edit `${{ steps.draft.outputs.file }}` here as you like, then merge to publish it.
-            New commits on `main` get added to this PR without touching your edits: their bullets
-            go under the matching New / Improved / Fixed heading. If that day already had published
-            notes, this PR edits that file rather than adding a second one for the same day.
+            More commits on `main` the same day get added to this PR without touching your edits:
+            their bullets go under the matching New / Improved / Fixed heading. Commits on a later
+            day get their own file and PR instead, whether or not this one has been merged. If this
+            day already had published notes, this PR edits that file rather than adding a second one.
           reviewers: ${{ github.repository_owner }}
