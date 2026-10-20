@@ -58,6 +58,9 @@
     --text-h: #08060d;
     --bg: #fff;
     --table-border: #000;
+    /* sticky header row of the standings and Jira tables: a pale tint of the navbar blue, navbar navy text */
+    --table-header-bg: #D9E6FF;
+    --table-header-fg: var(--navbar-fg);
 
     --navbar-bg: #B0CCFF;
     --navbar-fg: #263D69;
@@ -861,5 +864,177 @@ p {
     code {
         font-family: var(--mono), monospace;
         font-size: 0.9em;
+    }
+}
+
+/* ---------- Jira issues (/jira) ---------- */
+
+.jira-status {
+    display: inline-block;
+    padding: 0.1rem 0.55rem;
+    border-radius: 0.25rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    background: #e5e7eb;
+    color: #374151;
+
+    &[data-category='indeterminate'] {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+
+    &[data-category='done'] {
+        background: #dcfce7;
+        color: #166534;
+    }
+}
+
+.jira-overlay-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    background: rgb(0 0 0 / 0.45);
+}
+
+.jira-overlay-panel {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 72rem;
+    height: 100%;
+    max-height: 56rem;
+    overflow: hidden;
+    border: 2px solid var(--navbar-fg);
+    border-radius: var(--radius-lg);
+    background: var(--bg);
+    color: var(--text);
+    box-shadow: var(--shadow);
+    text-align: left;
+}
+
+.jira-overlay-nav-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: var(--radius-md);
+    color: var(--navbar-fg);
+
+    &:hover:not(:disabled) {
+        background: var(--navbar-bg);
+    }
+
+    &:disabled {
+        opacity: 0.35;
+        cursor: default;
+    }
+}
+
+.jira-overlay-section-heading {
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--navbar-fg);
+}
+
+.jira-overlay-details {
+    display: grid;
+    grid-template-columns: 6.5rem minmax(0, 1fr);
+    gap: 0.75rem 1rem;
+    padding: 1rem;
+    border: 1px solid var(--navbar-bg);
+    border-radius: var(--radius-lg);
+    font-size: 0.875rem;
+    align-items: center;
+}
+
+.jira-comment {
+    padding-left: 0.75rem;
+    border-left: 3px solid var(--navbar-bg);
+}
+
+/* Jira's own rendered HTML; Tailwind's preflight strips list markers, margins and heading sizes, so put them back */
+.jira-rich-text {
+    line-height: 1.55;
+    overflow-wrap: anywhere;
+
+    p, ul, ol, pre, blockquote, table {
+        margin: 0.5rem 0;
+    }
+
+    > :first-child {
+        margin-top: 0;
+    }
+
+    ul {
+        list-style: disc;
+        padding-left: 1.5rem;
+    }
+
+    ol {
+        list-style: decimal;
+        padding-left: 1.5rem;
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+        margin: 1rem 0 0.4rem;
+        font-weight: 600;
+        color: var(--text-h);
+    }
+
+    h1 { font-size: 1.4rem; }
+    h2 { font-size: 1.2rem; }
+    h3 { font-size: 1.05rem; }
+
+    a[href] {
+        color: #1d4ed8;
+        text-decoration: underline;
+    }
+
+    code, tt {
+        font-family: var(--mono), monospace;
+        font-size: 0.9em;
+        padding: 0.05rem 0.25rem;
+        border-radius: 0.2rem;
+        background: #f1f5f9;
+    }
+
+    pre {
+        padding: 0.75rem;
+        border-radius: var(--radius-md);
+        background: #f1f5f9;
+        overflow-x: auto;
+
+        code {
+            padding: 0;
+            background: none;
+        }
+    }
+
+    blockquote {
+        padding-left: 0.75rem;
+        border-left: 3px solid #cbd5e1;
+        color: #475569;
+    }
+
+    table {
+        border-collapse: collapse;
+    }
+
+    th, td {
+        padding: 0.25rem 0.5rem;
+        border: 1px solid #cbd5e1;
+    }
+
+    img {
+        max-width: 100%;
     }
 }
