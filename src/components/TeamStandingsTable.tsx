@@ -13,7 +13,7 @@ import {DateRangeContext} from '@/state/DateRangeContext.tsx'
 import DatePickerWithRange from '@/components/DatePickerWithRange.tsx'
 import {useQuery} from '@tanstack/react-query'
 
-const SERVER = 'localhost:8000'
+import {API_BASE_URL} from '@/lib/apiConfig.ts'
 
 const CLASS_TD = "p-4 align-middle"
 const CLASS_TD_LEFT = `${CLASS_TD} text-left`;
@@ -24,7 +24,7 @@ const TeamStat: React.FC<TeamStatEntry> = ({date, goalDiff, goalsAgainst, goalsF
     <tr className="p-0 transition-colors data-[state=selected]:bg-muted">
         <td className={CLASS_TD_LEFT}>{date}</td>
         <td className={`flex`}>
-            <img className="h-16 w-16 align-middle justify-center" src={`http://localhost:8000/api/nhl_team_info/logo?logo_filename=${logo}`} alt="logo"></img>
+            <img className="h-16 w-16 align-middle justify-center" src={`${API_BASE_URL}/nhl_team_info/logo?logo_filename=${logo}`} alt="logo"></img>
             <p className={CLASS_TD}>{teamName} ({teamCommonName}) [{teamAbbrev}]</p>
         </td>
         <td className={CLASS_TD_CENTER}>{wins}</td>
@@ -73,7 +73,7 @@ export default function TeamStandingsTable() {
             const prettyStartDate: string|undefined = changeDateToMyPreferredStringFormat(date.from as Date);
             const prettyEndDate: string|undefined = changeDateToMyPreferredStringFormat(date.to as Date);
 
-            const response = await fetch(`http://${SERVER}/api/nhl_standings/?start_date=${prettyStartDate}&end_date=${prettyEndDate}`);
+            const response = await fetch(`${API_BASE_URL}/nhl_standings/?start_date=${prettyStartDate}&end_date=${prettyEndDate}`);
             return await response.json();
         }
     })

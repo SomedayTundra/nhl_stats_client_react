@@ -26,7 +26,7 @@ const lineTypes = [
     'basis', 'bump', 'linear', 'natural', 'monotone', 'step',
 ] as const
 
-const SERVER = 'localhost:8000'
+import {API_BASE_URL} from '@/lib/apiConfig.ts'
 
 let chartConfig = {
     TBL: {
@@ -126,7 +126,7 @@ export default function TeamStandingsChart() {
             const prettyStartDate: string | undefined = changeDateToMyPreferredStringFormat(date.from as Date);
             const prettyEndDate: string | undefined = changeDateToMyPreferredStringFormat(date.to as Date);
 
-            const response = await fetch(`http://${SERVER}/api/nhl_standings/?start_date=${prettyStartDate}&end_date=${prettyEndDate}`);
+            const response = await fetch(`${API_BASE_URL}/nhl_standings/?start_date=${prettyStartDate}&end_date=${prettyEndDate}`);
             if (!response.ok) {
                 const message = `An error occurred: ${response.statusText}`;
                 console.error(message);

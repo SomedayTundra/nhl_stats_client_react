@@ -3,7 +3,7 @@ import {type TeamInfo} from '@/state/types'
 import {useQuery} from '@tanstack/react-query'
 
 
-const SERVER = 'localhost:8000'
+import {API_BASE_URL} from '@/lib/apiConfig.ts'
 
 type Conference = {
     divisions: Map<string, Division>;
@@ -22,7 +22,7 @@ export function LeagueBoard() {
         queryKey: ['leagueInfo'],
         queryFn: async () => {
             // FIXME: SWITCH TO https://
-            const response = await fetch(`http://${SERVER}/api/nhl_team_info/`)
+            const response = await fetch(`${API_BASE_URL}/nhl_team_info/`)
             return (await response.json()) as TeamInfo[]
         }
     })

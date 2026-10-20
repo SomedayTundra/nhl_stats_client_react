@@ -5,7 +5,7 @@ type TeamInfoCardProps = {
     info: TeamInfo
 }
 
-const BASE_URL = 'http://localhost:8000/api'
+import {API_BASE_URL} from '@/lib/apiConfig.ts'
 
 export function TeamInfoCard({info}: TeamInfoCardProps) {
     const verbose = false;
@@ -13,7 +13,7 @@ export function TeamInfoCard({info}: TeamInfoCardProps) {
     const {data: imageURL} = useQuery({
         queryKey: [info.teamAbbrev],
         queryFn: async () => {
-            const fetchURL = `${BASE_URL}/nhl_team_info/logo?logo_filename=${info.logo}`
+            const fetchURL = `${API_BASE_URL}/nhl_team_info/logo?logo_filename=${info.logo}`
             const response = await fetch(fetchURL)
             const imageBlob = await response.blob()
             const imageObjectURL = URL.createObjectURL(imageBlob)
