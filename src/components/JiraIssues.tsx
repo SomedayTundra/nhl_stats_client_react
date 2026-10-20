@@ -96,6 +96,9 @@ const columns = helper.columns([
 
 const EMPTY_ISSUES: JiraIssueSummary[] = []
 
+// the status filter's "To Do (all)" group; every other status goes under "Done (all)"
+const TO_DO_GROUP_STATUSES = ['To Do', 'In Progress']
+
 // A read-only window onto the NHL Stats Jira space, served through the backend's /api/jira proxy (the Jira token
 // lives there, never in this bundle). Clicking a row opens that issue in JiraIssueOverlay; the open issue's key is
 // carried in the URL (?issue=NHL-86) so an open issue can be linked to directly.
@@ -123,14 +126,16 @@ export default function JiraIssues() {
         issue.status ? selectedSet.has(issue.status.name) : selectedStatuses.length === statusNames.length)
     const setSelectedStatuses = (selected: string[]) => setHiddenStatuses(statusNames.filter(name => !selected.includes(name)))
 
-    // every not-yet-done status (to do and in progress alike) under "To Do", the rest under "Done"
+    // "To Do" and "In Progress" under "To Do (ALL)"; every other status (In Review, Done, Won't Do, and any added
+    // to the workflow later) under "Done (ALL)"
     const statusOption = (status: JiraStatus) => ({
         name: status.name,
         count: allIssues.filter(issue => issue.status?.name === status.name).length,
     })
+    const isToDoStatus = (status: JiraStatus) => TO_DO_GROUP_STATUSES.includes(status.name)
     const statusGroups = [
-        {name: 'To Do', statuses: statuses.filter(status => status.category !== 'done').map(statusOption)},
-        {name: 'Done', statuses: statuses.filter(status => status.category === 'done').map(statusOption)},
+        {name: 'To Do (ALL)', statuses: statuses.filter(isToDoStatus).map(statusOption)},
+        {name: 'Done (ALL)', statuses: statuses.filter(status => !isToDoStatus(status)).map(statusOption)},
     ].filter(group => group.statuses.length > 0)
 
     const table = useTable({
