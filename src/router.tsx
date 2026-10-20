@@ -6,6 +6,7 @@ import TeamStandingsChart from '@/components/TeamStandingsChart.tsx'
 import Playoffs from '@/components/Playoffs.tsx'
 import LeagueShapeQuiz from '@/components/LeagueShapeQuiz.tsx'
 import PatchNotes from '@/components/PatchNotes.tsx'
+import JiraIssues from '@/components/JiraIssues.tsx'
 import NotFound from '@/components/NotFound.tsx'
 
 const rootRoute = createRootRoute({
@@ -57,8 +58,18 @@ const patchNotesRoute = createRoute({
     component: PatchNotes,
 })
 
+// read-only view of the NHL Stats Jira space; ?issue=NHL-86 is the issue open in the detail overlay
+const jiraRoute = createRoute({
+    path: '/jira',
+    getParentRoute: () => navBarRoute,
+    component: JiraIssues,
+    validateSearch: (search: Record<string, unknown>): { issue?: string } => ({
+        issue: typeof search.issue === 'string' ? search.issue : undefined,
+    }),
+})
+
 const routeTree = rootRoute.addChildren([
-    navBarRoute.addChildren([indexRoute, standingsRoute, chartRoute, playoffsRoute, quizRoute, patchNotesRoute]),
+    navBarRoute.addChildren([indexRoute, standingsRoute, chartRoute, playoffsRoute, quizRoute, jiraRoute, patchNotesRoute]),
 ])
 
 export const router = createRouter({

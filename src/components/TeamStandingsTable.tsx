@@ -24,8 +24,8 @@ import {cn} from '@/lib/utils.ts'
 
 const CLASS_TD = 'p-2 align-middle'
 const CLASS_TD_CENTER = `${CLASS_TD} text-center`
-const CLASS_TH_LEFT = 'h-8 px-4 text-left align-middle font-medium text-muted-foreground cursor-pointer select-none hover:text-foreground'
-const CLASS_TH_CENTER = 'h-8 px-4 text-center align-middle font-medium text-muted-foreground cursor-pointer select-none hover:text-foreground'
+const CLASS_TH_LEFT = 'h-8 px-4 text-left align-middle font-semibold text-[var(--table-header-fg)] cursor-pointer select-none hover:text-[var(--text-h)]'
+const CLASS_TH_CENTER = 'h-8 px-4 text-center align-middle font-semibold text-[var(--table-header-fg)] cursor-pointer select-none hover:text-[var(--text-h)]'
 
 const features = tableFeatures({
     rowSortingFeature,
@@ -258,7 +258,7 @@ export default function TeamStandingsTable() {
                                         <th
                                             key={header.id}
                                             className={cn(header.column.columnDef.meta?.align === 'left' ? CLASS_TH_LEFT : CLASS_TH_CENTER,
-                                                'shadow-[inset_0_-1px_0_var(--table-border)] sticky top-0 z-10 bg-background')}
+                                                'shadow-[inset_0_-1px_0_var(--table-border)] sticky top-0 z-10 bg-[var(--table-header-bg)]')}
                                             onClick={header.column.getToggleSortingHandler()}
                                         >
                                             {!header.isPlaceholder && <table.FlexRender header={header}/>}
