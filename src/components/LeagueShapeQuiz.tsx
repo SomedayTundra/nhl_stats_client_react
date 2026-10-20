@@ -192,19 +192,29 @@ export default function LeagueShapeQuiz() {
                 </div>
             </div>
             <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-                <div className='flex flex-row flex-1 min-h-0'>
-                    <div className='w-1/3 align-top justify-end mx-4 min-h-0 overflow-hidden @container-[size]'>
-                        <UnplacedTeamBucket
-                            teams={teams ?? []}
-                            unplacedAbbrevs={unplacedAbbrevs}
-                            showTeamNames={showTeamNames}
-                            correctGuesses={correctGuesses}
-                            incorrectGuesses={incorrectGuesses}
-                            results={completedRound}
-                        />
-                    </div>
-                    <div className='w-2/3 align-top justify-start mx-4 min-h-0 overflow-hidden @container-[size]'>
-                        <LeagueBoard teams={teams ?? []} unplacedAbbrevs={unplacedAbbrevs} showTeamNames={showTeamNames} isPending={isPending} error={error}/>
+                {/* exactly the space between the toolbar and the footer, and the one size container both panels'
+                    cqh units resolve against - so cards come out the same size in each. A board that needs more
+                    room than this scrolls here, not inside the board. */}
+                <div className='flex-1 min-h-0 overflow-y-auto @container-[size]'>
+                    {/* at least the full space above, taller when the board needs it; both panels stretch to it */}
+                    <div className='min-h-full flex flex-row pb-[clamp(0.15rem,0.8cqh,0.5rem)]'>
+                        {/* the bucket sits out of the flow so its own cards never make the row taller - it takes
+                            whatever height the board gives the row and scrolls inside past that */}
+                        <div className='w-1/3 min-w-0 mx-4 relative'>
+                            <div className='absolute inset-0 @container'>
+                                <UnplacedTeamBucket
+                                    teams={teams ?? []}
+                                    unplacedAbbrevs={unplacedAbbrevs}
+                                    showTeamNames={showTeamNames}
+                                    correctGuesses={correctGuesses}
+                                    incorrectGuesses={incorrectGuesses}
+                                    results={completedRound}
+                                />
+                            </div>
+                        </div>
+                        <div className='w-2/3 min-w-0 mx-4 flex flex-col'>
+                            <LeagueBoard teams={teams ?? []} unplacedAbbrevs={unplacedAbbrevs} showTeamNames={showTeamNames} isPending={isPending} error={error}/>
+                        </div>
                     </div>
                 </div>
                 <DragOverlay>

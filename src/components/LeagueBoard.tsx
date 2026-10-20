@@ -68,9 +68,9 @@ export function LeagueBoard({teams, unplacedAbbrevs, showTeamNames, isPending, e
 
     return (
         <>
-            <div className='league-ref-everything h-full flex flex-col'>
+            <div className='league-ref-everything flex-1 flex flex-col'>
                 <h1 className='league-ref-header'>NATIONAL HOCKEY LEAGUE</h1>
-                <div className='league-ref-all-conferences-container flex-1 min-h-0'>
+                <div className='league-ref-all-conferences-container flex-1'>
                     {[...newConferences.entries()].map(([conferenceName, conference]) => (
                         <div key={conferenceName} className='league-ref-one-conference-container'>
                             <h2 className='conference-name-row'>{conferenceName === 'NA' ? '' : `${conferenceName} Conference`}</h2>

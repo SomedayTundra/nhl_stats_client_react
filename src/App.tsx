@@ -1,6 +1,5 @@
 import {Outlet} from '@tanstack/react-router'
 import {ToastContainer} from 'react-toastify'
-import logo_full from './assets/somedaytundra_full.png'
 
 const App = () => {
     return (
@@ -10,9 +9,6 @@ const App = () => {
             </div>
 
             <ToastContainer/>
-            <div className='nhl-page-footer w-'>
-                <img alt='SomedayTundra logo' className='h-[1.875rem] mx-auto' src={logo_full}></img>
-            </div>
         </div>
     )
 }

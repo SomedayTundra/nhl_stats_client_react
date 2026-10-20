@@ -24,8 +24,9 @@ import {cn} from '@/lib/utils.ts'
 
 const CLASS_TD = 'p-2 align-middle'
 const CLASS_TD_CENTER = `${CLASS_TD} text-center`
-const CLASS_TH_LEFT = 'h-8 px-4 text-left align-middle font-semibold text-[var(--table-header-fg)] cursor-pointer select-none hover:text-[var(--text-h)]'
-const CLASS_TH_CENTER = 'h-8 px-4 text-center align-middle font-semibold text-[var(--table-header-fg)] cursor-pointer select-none hover:text-[var(--text-h)]'
+const CLASS_TH_BASE   = 'h-8 px-4 align-middle font-semibold text-[var(--table-header-fg)] cursor-pointer select-none hover:text-[var(--text-h)]'
+const CLASS_TH_LEFT   = CLASS_TH_BASE + ' text-left'
+const CLASS_TH_CENTER = CLASS_TH_BASE + ' text-center'
 
 const features = tableFeatures({
     rowSortingFeature,

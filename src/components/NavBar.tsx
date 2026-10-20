@@ -23,7 +23,7 @@ const NavBar = () => {
                                     NHL Stats
                                 </span>
                             </Link>
-                            <Link className={inactiveClass} activeProps={{className: activeClass}} to="/nhl_standings">Table</Link>
+                            <Link className={inactiveClass} activeProps={{className: activeClass}} to="/nhl_standings">Standings</Link>
                             <Link className={inactiveClass} activeProps={{className: activeClass}} to="/nhl_stats_chart">Chart</Link>
                             <Link className={inactiveClass} activeProps={{className: activeClass}} to="/nhl_playoffs">Playoffs</Link>
                             <Link className={inactiveClass} activeProps={{className: activeClass}} to="/league_shape_quiz">Quiz</Link>
