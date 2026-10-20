@@ -1,8 +1,12 @@
 # Deletes the Vercel preview deployment(s) for a PR's branch once that PR closes (merged or
-# not) - previews are otherwise never cleaned up automatically. Deploys themselves are still
-# entirely Vercel's native GitHub integration (see ci.yml); this workflow only calls Vercel's
-# REST API to find and delete deployments whose git branch matches the closed PR, so it can
-# never touch a production (main) deployment.
+# not), rather than leaving them for Vercel's own retention policy to expire. Deploys themselves
+# are still entirely Vercel's native GitHub integration (see ci.yml); this workflow only calls
+# Vercel's REST API to find and delete deployments whose git branch matches the closed PR, so it
+# can never touch a production (main) deployment.
+#
+# deploy/* branches are skipped: they hold historical snapshots of the client (e.g.
+# deploy/aug-3-2026) whose previews are meant to be kept indefinitely, even if a PR is opened
+# from one just to get Vercel's "Visit Preview" link and then closed.
 
 name: Cleanup Preview Deployment
 
@@ -15,6 +19,7 @@ permissions:
 
 jobs:
   delete-preview:
+    if: ${{ !startsWith(github.event.pull_request.head.ref, 'deploy/') }}
     runs-on: ubuntu-latest
     steps:
       - name: Delete Vercel deployments for this branch
