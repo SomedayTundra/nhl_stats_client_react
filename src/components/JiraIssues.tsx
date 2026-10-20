@@ -20,8 +20,6 @@ import {compareStatuses, distinctStatuses, type JiraIssueSummary, type JiraStatu
 import {useLocalStorageState} from '@/lib/useLocalStorageState.ts'
 import {cn} from '@/lib/utils.ts'
 
-const ALL_STATUSES = '__all__'
-
 const CLASS_TH = 'h-8 px-4 text-left align-middle font-semibold text-[var(--table-header-fg)] cursor-pointer select-none hover:text-[var(--text-h)]'
 const CLASS_TD = 'px-4 py-2 text-left align-middle'
 
@@ -104,7 +102,8 @@ const EMPTY_ISSUES: JiraIssueSummary[] = []
 export default function JiraIssues() {
     const {data: issues, isPending, error} = useJiraIssues()
     const {data: workflowStatuses} = useJiraStatuses()
-    const [statusFilter, setStatusFilter] = useLocalStorageState<string>('nhlStats.jira.status', ALL_STATUSES)
+    // the statuses filtered *out*, rather than in, so a status added to the workflow later shows up by default
+    const [hiddenStatuses, setHiddenStatuses] = useLocalStorageState<string[]>('nhlStats.jira.hiddenStatuses', [])
     const [sorting, setSorting] = useLocalStorageState<SortingState>('nhlStats.jira.sorting', [{id: 'updated', desc: true}])
 
     const {issue: selectedKey} = useSearch({strict: false})
@@ -115,17 +114,24 @@ export default function JiraIssues() {
     // in that the workflow lookup didn't return (or hasn't returned yet)
     const allIssues = issues ?? EMPTY_ISSUES
     const statuses = distinctStatuses([...(workflowStatuses ?? []), ...allIssues.map(issue => issue.status)])
-    // a remembered status that no longer exists (renamed or removed from the workflow) shows everything instead
-    const resolvedFilter = statuses.some(s => s.name === statusFilter) ? statusFilter : ALL_STATUSES
-    const filteredIssues = allIssues.filter(issue => resolvedFilter === ALL_STATUSES || issue.status?.name === resolvedFilter)
+    const statusNames = statuses.map(status => status.name)
+    const hiddenSet = new Set(hiddenStatuses)
+    const selectedStatuses = statusNames.filter(name => !hiddenSet.has(name))
+    const selectedSet = new Set(selectedStatuses)
+    // an issue with no status at all only shows when nothing is filtered out
+    const filteredIssues = allIssues.filter(issue =>
+        issue.status ? selectedSet.has(issue.status.name) : selectedStatuses.length === statusNames.length)
+    const setSelectedStatuses = (selected: string[]) => setHiddenStatuses(statusNames.filter(name => !selected.includes(name)))
 
-    const statusOptions = [
-        {value: ALL_STATUSES, label: `All statuses (${allIssues.length})`},
-        ...statuses.map(status => ({
-            value: status.name,
-            label: `${status.name} (${allIssues.filter(issue => issue.status?.name === status.name).length})`,
-        })),
-    ]
+    // every not-yet-done status (to do and in progress alike) under "To Do", the rest under "Done"
+    const statusOption = (status: JiraStatus) => ({
+        name: status.name,
+        count: allIssues.filter(issue => issue.status?.name === status.name).length,
+    })
+    const statusGroups = [
+        {name: 'To Do', statuses: statuses.filter(status => status.category !== 'done').map(statusOption)},
+        {name: 'Done', statuses: statuses.filter(status => status.category === 'done').map(statusOption)},
+    ].filter(group => group.statuses.length > 0)
 
     const table = useTable({
         features,
@@ -181,7 +187,7 @@ export default function JiraIssues() {
     return (
         <div className='h-full flex flex-col'>
             <div className='top-controls-container shrink-0 w-full flex flex-row items-center gap-4 py-2 px-4'>
-                <JiraStatusSelect options={statusOptions} value={resolvedFilter} onChange={setStatusFilter}/>
+                <JiraStatusSelect groups={statusGroups} selected={selectedStatuses} onChange={setSelectedStatuses}/>
             </div>
             <div className='border rounded-lg overflow-hidden mx-4 mb-4 flex-1 min-h-0 flex flex-col'>
                 <div className='relative w-full overflow-auto flex-1 min-h-0'>
