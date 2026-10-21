@@ -3,7 +3,6 @@
 import * as React from 'react'
 import {createPortal} from 'react-dom'
 import 'react-calendar/dist/Calendar.css'
-import type {TeamStatEntry} from '@/state/types'
 import {CartesianGrid, Dot, Line, LineChart, XAxis, YAxis} from 'recharts'
 import {Card, CardContent, CardDescription, CardHeader, CardTitle,} from './ui/card'
 import {type ChartConfig, ChartContainer, ChartTooltip} from './ui/chart'
@@ -29,6 +28,7 @@ import {type BracketTeamView, buildBracketView, type NhlBracketPayload} from '@/
 import nhlLogoSmall from '@/assets/nhl_logo_small.png'
 import {useNavigate} from '@tanstack/react-router'
 import {isStatType, showStatAsPercent, StatSelect, statToLabel, type StatType} from '@/components/StatSelect.tsx'
+import type {TeamStatEntry} from '@/lib/teamStats.ts'
 
 const lineTypes = [
     'basis', 'bump', 'linear', 'natural', 'monotone', 'step',

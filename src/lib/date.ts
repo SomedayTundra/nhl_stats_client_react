@@ -26,6 +26,11 @@ export function parseApiDateString(apiDate: string): Date {
     return new Date(year, month - 1, day)
 }
 
+export function getYesterday() {
+    const today = new Date()
+    return new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1)
+}
+
 /**
  * If the given date is after yesterday, "scoot it back" to yesterday.
  * @param proposedDate
@@ -34,8 +39,7 @@ export function parseApiDateString(apiDate: string): Date {
 export function limitDateToYesterday(proposedDate: Date) : Date {
     let limitedDate = proposedDate
 
-    const todayDate = new Date()
-    const yesterdayDate = new Date(todayDate.getFullYear(), todayDate.getMonth(), todayDate.getDate() - 1)
+    const yesterdayDate = getYesterday()
 
     if (limitedDate) {
         const limitedDateString = formatDateForApi(limitedDate)

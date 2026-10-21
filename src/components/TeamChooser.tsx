@@ -7,9 +7,8 @@ import {Button} from '@/components/ui/button'
 import {Checkbox} from '@/components/ui/checkbox'
 import {Popover, PopoverContent, PopoverTrigger} from '@/components/ui/popover'
 import {Tooltip, TooltipContent, TooltipTrigger} from '@/components/ui/tooltip'
-import {groupTeamsByConferenceAndDivision, type TeamConferenceGroup, type TeamDivisionGroup} from '@/lib/teamGrouping'
+import {groupTeamsByConferenceAndDivision, type TeamConferenceGroup, type TeamDivisionGroup, type TeamInfo} from '@/lib/teamGrouping'
 import {useTeamInfo} from '@/hooks/useTeamInfo.ts'
-import type {TeamInfo} from '@/state/types'
 
 // a single wheel flick (especially on a trackpad) fires a burst of events; only step one entry
 // per this window so one gesture doesn't skip past several stops - mirrors SeasonSelect's own

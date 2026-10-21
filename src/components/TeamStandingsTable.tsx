@@ -1,10 +1,9 @@
 import * as React from 'react'
 import 'react-calendar/dist/Calendar.css'
-import type {TeamStatEntry} from '@/state/types'
 import DatePickerWithNav from '@/components/DatePickerWithNav.tsx'
 import {SeasonSelect} from '@/components/SeasonSelect.tsx'
 import TeamChooser from '@/components/TeamChooser.tsx'
-import {deserializeDate, limitDateToYesterday, parseApiDateString, serializeDate} from '@/lib/date.ts'
+import {deserializeDate, getYesterday, limitDateToYesterday, parseApiDateString, serializeDate} from '@/lib/date.ts'
 import {useLocalStorageState} from '@/lib/useLocalStorageState.ts'
 import {useSeasonInfo} from '@/hooks/useSeasonInfo.ts'
 import {useTeamStats} from '@/hooks/useTeamStats.ts'
@@ -20,6 +19,7 @@ import {
     type SortingState,
 } from '@tanstack/react-table'
 import {cn} from '@/lib/utils.ts'
+import type {TeamStatEntry} from '@/lib/teamStats.ts'
 
 const CLASS_TD = 'p-2 align-middle'
 const CLASS_TD_CENTER = `${CLASS_TD} text-center`
@@ -131,8 +131,7 @@ const SLOW_FETCH_MS = 1500
 
 
 export default function TeamStandingsTable() {
-    // FIXME: WHY THE DEFAULT OF 2025-12-02?  USE DATE.EARLIER(YESTERDAY, SEASON.ENDDATE)
-    const [date, setDate] = useLocalStorageState<Date>('nhlStats.table.date', new Date('2025-12-02'), {
+    const [date, setDate] = useLocalStorageState<Date>('nhlStats.table.date', getYesterday(), {
         serialize: serializeDate,
         deserialize: deserializeDate,
     })

@@ -1,10 +1,18 @@
-import type {TeamInfo} from '@/state/types'
-
 export type TeamConferenceGroup = {
     conferenceName: string
     divisions: TeamDivisionGroup[]
 }
 
+export type TeamInfo = {
+    teamAbbrev: string
+    teamName: string
+    teamCommonName: string
+    logo: string
+    conferenceName?: string
+    conferenceAbbrev?: string
+    divisionName: string
+    divisionAbbrev: string
+}
 export type TeamDivisionGroup = {
     divisionName: string
     teams: TeamInfo[]
@@ -56,4 +64,11 @@ export function groupTeamsByConferenceAndDivision(teams: TeamInfo[]): TeamConfer
                     teams: [...divisionTeams].sort((a, b) => a.teamName.localeCompare(b.teamName)),
                 })),
         }))
+}
+
+export type Conference = {
+    divisions: Map<string, Division>;
+}
+export type Division = {
+    teams: Array<TeamInfo>;
 }
