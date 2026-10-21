@@ -2,7 +2,8 @@ import {useDroppable} from '@dnd-kit/core'
 import {TeamInfoCard} from '@/components/TeamInfoCard.tsx'
 import {QuizResults} from '@/components/QuizResults.tsx'
 import {QuizScoreboard} from '@/components/QuizScoreboard.tsx'
-import type {TeamInfo} from '@/state/types'
+
+import type {TeamInfo} from '@/lib/teamGrouping.ts'
 
 export const UNPLACED_TEAM_BUCKET_DROPPABLE_ID = 'unplaced-team-bucket'
 

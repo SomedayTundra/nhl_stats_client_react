@@ -10,6 +10,17 @@ const CANCELLED_SEASON_IDS = new Set<string>([
     '20042005', // 2004-05 lockout: entire season cancelled
 ])
 
+// one season's date span, as served by GET /api/season_info (dates are yyyy-MM-dd strings).
+// l10OtAndTieOverlap is true for a season where some team's last-10 window has ever had a
+// non-zero OT loss and a non-zero tie at once (only possible 1999-2000 through 2003-04); absent
+// for a season the backend hasn't tagged, which is equivalent to false
+export type SeasonInfo = {
+    seasonId: number
+    startDate: string
+    endDate: string
+    l10OtAndTieOverlap?: boolean
+}
+
 // a seasonId is two consecutive years concatenated, e.g. '19421943'
 export function seasonStartYear(seasonId: string | number): number {
     return Number(String(seasonId).slice(0, 4))
@@ -33,3 +44,4 @@ export function buildSeasonIds(currentSeasonId: string | number): string[] {
     }
     return ids
 }
+

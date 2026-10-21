@@ -1,8 +1,8 @@
 import {TeamInfoCard} from '@/components/TeamInfoCard.tsx'
-import {type Conference, type TeamInfo} from '@/state/types'
 import {useDroppable} from '@dnd-kit/core'
 import * as React from 'react'
 import {CornerLeftDown, CornerRightDown} from 'lucide-react'
+import type {Conference, TeamInfo} from '@/lib/teamGrouping.ts'
 
 // a team is only considered "placed" when dropped on the division droppable whose id matches its
 // own conference/division - any other drop target (or a miss) leaves it unplaced

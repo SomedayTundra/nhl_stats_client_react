@@ -9,9 +9,9 @@ import QuizToolbar from '@/components/QuizToolbar.tsx'
 import {EraSelect} from '@/components/EraSelect.tsx'
 import {defaultSeasonId, getSeasonEntry, isValidSeasonId, validSeasonIds, type SeasonId} from '@/lib/seasonId.ts'
 import {teamCountForFraction, type TeamCountFraction} from '@/lib/quizTeamCount.ts'
-import type {TeamInfo} from '@/state/types'
 import {useLocalStorageState} from '@/lib/useLocalStorageState.ts'
 import {useTeamInfo} from '@/hooks/useTeamInfo.ts'
+import type {TeamInfo} from '@/lib/teamGrouping.ts'
 
 function pickRandomTeams(allTeams: TeamInfo[], count: number): TeamInfo[] {
     const shuffled = [...allTeams]

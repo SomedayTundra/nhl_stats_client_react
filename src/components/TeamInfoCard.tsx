@@ -1,6 +1,6 @@
 import {useDraggable} from '@dnd-kit/core'
-import type {TeamInfo} from '@/state/types';
 import {getTeamLogoUrl} from '@/lib/teamLogo.ts'
+import type {TeamInfo} from '@/lib/teamGrouping.ts'
 
 type TeamInfoCardProps = {
     info: TeamInfo

@@ -1,7 +1,8 @@
 import {keepPreviousData, useQuery} from '@tanstack/react-query'
 import {apiFetch} from '@/lib/apiFetch.ts'
 import {formatDateForApi} from '@/lib/date.ts'
-import type {TeamStatEntry} from '@/state/types'
+
+import type {TeamStatEntry} from '@/lib/teamStats.ts'
 
 // seasonId is optional; when given it's passed through to the backend, which will farm that season
 // on demand (a slow request) if it has nothing cached for it

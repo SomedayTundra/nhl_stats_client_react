@@ -1,6 +1,7 @@
 import {useQuery} from '@tanstack/react-query'
 import {apiFetch} from '@/lib/apiFetch.ts'
-import type {SeasonInfo} from '@/state/types'
+
+import type {SeasonInfo} from '@/lib/season.ts'
 
 // GET /api/season_info -> a SeasonInfo containing the seasonId, and the season's start/end dates
 //

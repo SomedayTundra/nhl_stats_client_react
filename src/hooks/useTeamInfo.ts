@@ -1,7 +1,8 @@
 import {useQuery} from '@tanstack/react-query'
 import {apiFetch} from '@/lib/apiFetch.ts'
 import {defaultSeasonId, type SeasonId} from '@/lib/seasonId.ts'
-import type {TeamInfo} from '@/state/types'
+
+import type {TeamInfo} from '@/lib/teamGrouping.ts'
 
 export function useTeamInfo(season: SeasonId = defaultSeasonId) {
     return useQuery<TeamInfo[]>({
