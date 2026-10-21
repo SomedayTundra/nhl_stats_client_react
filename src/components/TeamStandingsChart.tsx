@@ -10,7 +10,6 @@ import {type ChartConfig, ChartContainer, ChartTooltip} from './ui/chart'
 
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from './ui/select'
 import {ArrowRightLeftIcon} from 'lucide-react'
-import {DateContext} from '@/state/DateContext.tsx'
 import DatePickerWithNav from '@/components/DatePickerWithNav.tsx'
 import {SeasonSelect} from '@/components/SeasonSelect.tsx'
 import TeamChooser from '@/components/TeamChooser.tsx'
@@ -27,9 +26,6 @@ import {usePlayoffs} from '@/hooks/usePlayoffs.ts'
 import {getTeamLogoUrl} from '@/lib/teamLogo.ts'
 import {addDays, isAfter, isBefore, isSameDay, subDays} from 'date-fns'
 import {type BracketTeamView, buildBracketView, type NhlBracketPayload} from '@/lib/playoffBracket.ts'
-// a small (42x48, 2x a 24px CSS height) re-render of the navbar's nhl_logo.png, rather than that
-// full-size asset scaled down by the browser, so the swatch/logo toggle's icon stays crisp at
-// its actual display size instead of relying on downsampling a much larger source image
 import nhlLogoSmall from '@/assets/nhl_logo_small.png'
 import {useNavigate} from '@tanstack/react-router'
 import {isStatType, showStatAsPercent, StatSelect, statToLabel, type StatType} from '@/components/StatSelect.tsx'
@@ -126,7 +122,8 @@ type DockedTooltipPanelProps = {
     scrollContainerRef: React.RefObject<HTMLDivElement | null>
     teamLogoByAbbrev: Map<string, string>
     sidebarIconMode: SidebarIconMode,
-    statType: StatType}
+    statType: StatType
+}
 
 // docked along the chart's right edge instead of following the cursor, stretched to the chart's
 // full height; rows always start at the top and stack downward in a single column (the panel's
@@ -214,7 +211,7 @@ export default function TeamStandingsChart() {
         serialize: serializeDate,
         deserialize: deserializeDate,
     })
-    const [, setClampedTableSeasonId] = useLocalStorageState<number|null>('nhlStats.table.clampedSeasonId', null)
+    const [, setClampedTableSeasonId] = useLocalStorageState<number | null>('nhlStats.table.clampedSeasonId', null)
 
     // '' until we've resolved a default; persisted on every change (useLocalStorageState writes back)
     const [season, setSeason] = useLocalStorageState<string>('nhlStats.season', '') // NHL-49: have table, chart, and playoffs all sync to the same teams and season
@@ -235,7 +232,7 @@ export default function TeamStandingsChart() {
     // clamp maxDate to yesterday for a season in progress - there's no data yet for the dates between
     // tomorrow and the season's real endDate, so there's no point offering those days in the picker
     let maxDate = selectedSeason ? parseApiDateString(selectedSeason.endDate) : undefined
-    if(maxDate) {
+    if (maxDate) {
         maxDate = limitDateToYesterday(maxDate)
     }
 
@@ -387,8 +384,8 @@ export default function TeamStandingsChart() {
         setHoveredLabel(undefined)
     }
 
-    function handleChartDoubleClick({activeLabel} : { activeLabel?: string }) {
-        if(activeLabel) {
+    function handleChartDoubleClick({activeLabel}: { activeLabel?: string }) {
+        if (activeLabel) {
             // set the table date that the table uses to decide which data to show
             setTableDate(parseApiDateString(activeLabel))
             navigate({to: '/nhl_standings'})
@@ -397,7 +394,7 @@ export default function TeamStandingsChart() {
             // seasonId here on the chart to something other than the last season selected
             // on the table, the table doesn't "stomp us" by defaulting to "last day of
             // the selected season"
-            if(selectedSeason) {
+            if (selectedSeason) {
                 setClampedTableSeasonId(selectedSeason.seasonId)
             }
         }
@@ -490,19 +487,9 @@ export default function TeamStandingsChart() {
     }
 
     const handleStatChange = (value: string) => {
-        if(isStatType(value)) {
+        if (isStatType(value)) {
             setStatType(value)
         }
-    }
-
-    const fromDateContextValue = {
-        date: fromDate,
-        setDate: handleFromDateSelect
-    }
-
-    const toDateContextValue = {
-        date: toDate,
-        setDate: handleToDateSelect
     }
 
     const {data: teamStats, isPending, isPlaceholderData, error} = useTeamStats(fromDate, toDate)
@@ -636,10 +623,9 @@ export default function TeamStandingsChart() {
                                 tickMargin={8}
                                 domain={([dataMin, dataMax]: [number, number]) => {
                                     // goalDiff can go negative, so we'll not fuss with that...
-                                    if(statName === 'goalDiff') {
+                                    if (statName === 'goalDiff') {
                                         return [dataMin, dataMax]
-                                    }
-                                    else {
+                                    } else {
                                         // no other stat can go negative, so the axis shouldn't dip below zero just
                                         // to pad the bottom of the chart; the top tracks the data exactly, with
                                         // no headroom padding above the current max
@@ -689,13 +675,9 @@ export default function TeamStandingsChart() {
                 <SeasonSelect value={resolvedSeason} onChange={setSeason}/>
                 <div className='flex flex-row items-center gap-2 shrink-0'>
                     <FieldLabel className='justify-start whitespace-nowrap'>Date Range:</FieldLabel>
-                    <DateContext value={fromDateContextValue}>
-                        <DatePickerWithNav id='date-picker-from' tooltip='From' minDate={minDate} maxDate={maxDate}/>
-                    </DateContext>
+                    <DatePickerWithNav id='date-picker-from' date={fromDate} setDate={handleFromDateSelect} tooltip='From' minDate={minDate} maxDate={maxDate}/>
                     <ArrowRightLeftIcon className='size-4 shrink-0 text-muted-foreground'/>
-                    <DateContext value={toDateContextValue}>
-                        <DatePickerWithNav id='date-picker-to' tooltip='To' minDate={minDate} maxDate={maxDate}/>
-                    </DateContext>
+                    <DatePickerWithNav id='date-picker-to' date={toDate} setDate={handleToDateSelect} tooltip='To' minDate={minDate} maxDate={maxDate}/>
                 </div>
                 <TeamChooser season={resolvedSeason} selected={selectedTeams} onChange={setSelectedTeams}/>
                 <StatSelect value={statName} onChange={handleStatChange}/>

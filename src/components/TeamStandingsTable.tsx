@@ -1,7 +1,6 @@
 import * as React from 'react'
 import 'react-calendar/dist/Calendar.css'
 import type {TeamStatEntry} from '@/state/types'
-import {DateContext} from '@/state/DateContext.tsx'
 import DatePickerWithNav from '@/components/DatePickerWithNav.tsx'
 import {SeasonSelect} from '@/components/SeasonSelect.tsx'
 import TeamChooser from '@/components/TeamChooser.tsx'
@@ -24,8 +23,8 @@ import {cn} from '@/lib/utils.ts'
 
 const CLASS_TD = 'p-2 align-middle'
 const CLASS_TD_CENTER = `${CLASS_TD} text-center`
-const CLASS_TH_BASE   = 'h-8 px-4 align-middle font-semibold text-[var(--table-header-fg)] cursor-pointer select-none hover:text-[var(--text-h)]'
-const CLASS_TH_LEFT   = CLASS_TH_BASE + ' text-left'
+const CLASS_TH_BASE = 'h-8 px-4 align-middle font-semibold text-[var(--table-header-fg)] cursor-pointer select-none hover:text-[var(--text-h)]'
+const CLASS_TH_LEFT = CLASS_TH_BASE + ' text-left'
 const CLASS_TH_CENTER = CLASS_TH_BASE + ' text-center'
 
 const features = tableFeatures({
@@ -81,10 +80,18 @@ function buildColumns(alwaysShowFourL10: boolean) {
         helper.accessor('losses', {header: 'Losses', meta: {align: 'center', cellClassName: CLASS_TD_CENTER}}),
         helper.accessor('otLosses', {header: 'OT Losses', meta: {align: 'center', cellClassName: CLASS_TD_CENTER}}),
         helper.accessor('points', {header: 'Points', meta: {align: 'center', cellClassName: CLASS_TD_CENTER}}),
-        helper.accessor('winPctg', {header: 'Win%', meta: {align: 'center', cellClassName: CLASS_TD_CENTER},
-            cell: (info) => {return formatPctg(info.getValue()) }}),
-        helper.accessor('pointPctg', {header: 'Point%', meta: {align: 'center', cellClassName: CLASS_TD_CENTER},
-            cell: (info) => {return formatPctg(info.getValue()) }}),
+        helper.accessor('winPctg', {
+            header: 'Win%', meta: {align: 'center', cellClassName: CLASS_TD_CENTER},
+            cell: (info) => {
+                return formatPctg(info.getValue())
+            }
+        }),
+        helper.accessor('pointPctg', {
+            header: 'Point%', meta: {align: 'center', cellClassName: CLASS_TD_CENTER},
+            cell: (info) => {
+                return formatPctg(info.getValue())
+            }
+        }),
         helper.accessor('goalsFor', {header: 'Goals For', meta: {align: 'center', cellClassName: CLASS_TD_CENTER}}),
         helper.accessor('goalsAgainst', {header: 'Goals Against', meta: {align: 'center', cellClassName: CLASS_TD_CENTER}}),
         helper.accessor('goalDiff', {header: 'Goal Diff', meta: {align: 'center', cellClassName: CLASS_TD_CENTER}}),
@@ -124,7 +131,7 @@ const SLOW_FETCH_MS = 1500
 
 
 export default function TeamStandingsTable() {
-    // FIXME: WHY THE DEFAULT OF 2025-12-02?  'TODAY' OR 'SEASON.ENDDATE' WOULD BE MORE SENSIBLE
+    // FIXME: WHY THE DEFAULT OF 2025-12-02?  USE DATE.EARLIER(YESTERDAY, SEASON.ENDDATE)
     const [date, setDate] = useLocalStorageState<Date>('nhlStats.table.date', new Date('2025-12-02'), {
         serialize: serializeDate,
         deserialize: deserializeDate,
@@ -145,7 +152,7 @@ export default function TeamStandingsTable() {
 
     const minDate = selectedSeason ? parseApiDateString(selectedSeason.startDate) : undefined
     let maxDate = selectedSeason ? parseApiDateString(selectedSeason.endDate) : undefined
-    if(maxDate) {
+    if (maxDate) {
         maxDate = limitDateToYesterday(maxDate)
     }
 
@@ -159,15 +166,6 @@ export default function TeamStandingsTable() {
     if (selectedSeason && selectedSeason.seasonId !== clampedSeasonId) {
         setClampedSeasonId(selectedSeason.seasonId)
         setDate(maxDate ?? parseApiDateString(selectedSeason.endDate))
-    }
-
-    const handleDateSelect = (selected: Date | undefined) => {
-        setDate(selected ?? new Date())
-    }
-
-    const dateContextValue = {
-        date: date,
-        setDate: handleDateSelect
     }
 
     const {data: teamStats, isPending, isFetching, error} = useTeamStats(date, date, resolvedSeason || undefined)
@@ -238,44 +236,42 @@ export default function TeamStandingsTable() {
     }
 
     return (
-        <DateContext value={dateContextValue}>
-            <div className='h-full flex flex-col'>
-                <div className='top-controls-container shrink-0 w-full flex flex-row items-center gap-4 py-2 px-4'>
-                    <SeasonSelect value={resolvedSeason} onChange={setSeason}/>
-                    <div className='flex justify-start items-center'>
-                        <DatePickerWithNav id='date-picker' label='Date' tooltip='Date' minDate={minDate} maxDate={maxDate}/>
-                    </div>
-                    <div className='flex justify-start'>
-                        <TeamChooser season={resolvedSeason} selected={selectedTeams} onChange={setSelectedTeams}/>
-                    </div>
+        <div className='h-full flex flex-col'>
+            <div className='top-controls-container shrink-0 w-full flex flex-row items-center gap-4 py-2 px-4'>
+                <SeasonSelect value={resolvedSeason} onChange={setSeason}/>
+                <div className='flex justify-start items-center'>
+                    <DatePickerWithNav id='date-picker' date={date} setDate={setDate} label='Date' tooltip='Date' minDate={minDate} maxDate={maxDate}/>
                 </div>
-                <div className='main-table-container border rounded-lg overflow-hidden mx-4 flex-1 min-h-0 flex flex-col '>
-                    <div className='inner-table-container relative w-full overflow-auto flex-1 min-h-0'>
-                        <table className='w-full caption-bottom text-sm'>
-                            <thead>
-                            {table.getHeaderGroups().map((headerGroup) => (
-                                <tr key={headerGroup.id} className='transition-colors data-[state=selected]:bg-muted'>
-                                    {headerGroup.headers.map((header) => (
-                                        <th
-                                            key={header.id}
-                                            className={cn(header.column.columnDef.meta?.align === 'left' ? CLASS_TH_LEFT : CLASS_TH_CENTER,
-                                                'shadow-[inset_0_-1px_0_var(--table-border)] sticky top-0 z-10 bg-[var(--table-header-bg)]')}
-                                            onClick={header.column.getToggleSortingHandler()}
-                                        >
-                                            {!header.isPlaceholder && <table.FlexRender header={header}/>}
-                                            {header.column.getIsSorted() === 'asc' ? ' ▲' : header.column.getIsSorted() === 'desc' ? ' ▼' : null}
-                                        </th>
-                                    ))}
-                                </tr>
-                            ))}
-                            </thead>
-                            <tbody>
-                            {tableBody}
-                            </tbody>
-                        </table>
-                    </div>
+                <div className='flex justify-start'>
+                    <TeamChooser season={resolvedSeason} selected={selectedTeams} onChange={setSelectedTeams}/>
                 </div>
             </div>
-        </DateContext>
+            <div className='main-table-container border rounded-lg overflow-hidden mx-4 flex-1 min-h-0 flex flex-col '>
+                <div className='inner-table-container relative w-full overflow-auto flex-1 min-h-0'>
+                    <table className='w-full caption-bottom text-sm'>
+                        <thead>
+                        {table.getHeaderGroups().map((headerGroup) => (
+                            <tr key={headerGroup.id} className='transition-colors data-[state=selected]:bg-muted'>
+                                {headerGroup.headers.map((header) => (
+                                    <th
+                                        key={header.id}
+                                        className={cn(header.column.columnDef.meta?.align === 'left' ? CLASS_TH_LEFT : CLASS_TH_CENTER,
+                                            'shadow-[inset_0_-1px_0_var(--table-border)] sticky top-0 z-10 bg-[var(--table-header-bg)]')}
+                                        onClick={header.column.getToggleSortingHandler()}
+                                    >
+                                        {!header.isPlaceholder && <table.FlexRender header={header}/>}
+                                        {header.column.getIsSorted() === 'asc' ? ' ▲' : header.column.getIsSorted() === 'desc' ? ' ▼' : null}
+                                    </th>
+                                ))}
+                            </tr>
+                        ))}
+                        </thead>
+                        <tbody>
+                        {tableBody}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     )
 }

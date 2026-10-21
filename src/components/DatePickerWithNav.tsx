@@ -12,12 +12,13 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import {addDays, format, subDays} from "date-fns"
 import { CalendarIcon, ChevronFirstIcon, ChevronLastIcon, ChevronLeftIcon, ChevronRightIcon, ChevronsLeftIcon, ChevronsRightIcon } from "lucide-react"
 import type {OnSelectHandler} from "react-day-picker"
+import {useState} from 'react'
 
-import { use, useState } from 'react';
-import {DateContext} from "@/state/DateContext.tsx";
 
 type DatePickerWithNavProps = {
     id: string
+    date: Date
+    setDate: (date:Date) => void
     tooltip: string
     label?: string
     // when set, days outside [minDate, maxDate] are disabled in the calendar and the -/+ nav
@@ -26,10 +27,9 @@ type DatePickerWithNavProps = {
     maxDate?: Date
 }
 
-export default function DatePickerWithNav({id, tooltip, label, minDate, maxDate}: DatePickerWithNavProps) {
+export default function DatePickerWithNav({id, date, setDate, tooltip, label, minDate, maxDate}: DatePickerWithNavProps) {
     const dateFormat = "MM-dd-yyyy";
 
-    const dc = use(DateContext);
     const [open, setOpen] = useState(false);
 
     // compare at day granularity via yyyy-MM-dd strings, so a Date's time-of-day / timezone can't
@@ -37,7 +37,7 @@ export default function DatePickerWithNav({id, tooltip, label, minDate, maxDate}
     const dayKey = (d: Date) => format(d, "yyyy-MM-dd");
     const minKey = minDate ? dayKey(minDate) : undefined;
     const maxKey = maxDate ? dayKey(maxDate) : undefined;
-    const currentKey = dayKey(dc.date);
+    const currentKey = dayKey(date);
 
     const atOrBeforeMin = minKey !== undefined && currentKey <= minKey;
     const atOrAfterMax = maxKey !== undefined && currentKey >= maxKey;
@@ -54,32 +54,32 @@ export default function DatePickerWithNav({id, tooltip, label, minDate, maxDate}
     ];
 
     const handleCalendarSelect: OnSelectHandler<Date | undefined> = (selected) => {
-        dc.setDate(selected ?? new Date());
+        setDate(selected ?? new Date());
         setOpen(false);
     };
 
     function goToFirstDay() {
-        if (minDate) dc.setDate(minDate)
+        if (minDate) setDate(minDate)
     }
 
     function goToPreviousWeek() {
-        dc.setDate(clampToBounds(subDays(dc.date, 7)))
+        setDate(clampToBounds(subDays(date, 7)))
     }
 
     function goToPreviousDay() {
-        dc.setDate(clampToBounds(subDays(dc.date, 1)))
+        setDate(clampToBounds(subDays(date, 1)))
     }
 
     function goToNextDay() {
-        dc.setDate(clampToBounds(addDays(dc.date, 1)))
+        setDate(clampToBounds(addDays(date, 1)))
     }
 
     function goToNextWeek() {
-        dc.setDate(clampToBounds(addDays(dc.date, 7)))
+        setDate(clampToBounds(addDays(date, 7)))
     }
 
     function goToLastDay() {
-        if (maxDate) dc.setDate(maxDate)
+        if (maxDate) setDate(maxDate)
     }
 
     // the leftmost/rightmost buttons in the group get the outer corner radius; everything between
@@ -131,11 +131,7 @@ export default function DatePickerWithNav({id, tooltip, label, minDate, maxDate}
                                     className="justify-start select-none border-neutral-800 px-2.5 font-normal"
                                 >
                                     <CalendarIcon />
-                                    {dc.date ? (
-                                        format(dc.date, dateFormat)
-                                    ) : (
-                                        <span>Pick a date</span>
-                                    )}
+                                    {format(date, dateFormat)}
                                 </Button>
                             </PopoverTrigger>
                         </TooltipTrigger>
@@ -144,8 +140,8 @@ export default function DatePickerWithNav({id, tooltip, label, minDate, maxDate}
                     <PopoverContent className="w-auto p-0" align="start">
                         <Calendar
                             mode="single"
-                            defaultMonth={dc.date}
-                            selected={dc.date}
+                            defaultMonth={date}
+                            selected={date}
                             onSelect={handleCalendarSelect}
                             numberOfMonths={1}
                             disabled={disabledDays.length ? disabledDays : undefined}
