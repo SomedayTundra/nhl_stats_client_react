@@ -5,6 +5,7 @@ import DOMPurify from 'dompurify'
 
 // Jira's statusCategory key: every status, whatever its name, falls into one of these three
 export type JiraStatusCategory = 'new' | 'indeterminate' | 'done'
+export type JiraComponentCategory = 'CI/CD' | 'client' | 'Jira' | 'server' | 'test'
 
 export type JiraStatus = {
     name: string
@@ -26,6 +27,7 @@ export type JiraIssueRef = {
 }
 
 export type JiraIssueSummary = JiraIssueRef & {
+    components: string[]
     priority: string | null
     assignee: JiraUser | null
     created: string | null
