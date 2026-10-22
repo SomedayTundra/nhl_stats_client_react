@@ -26,6 +26,10 @@ export function JiraStatusPill({status}: { status: JiraStatus }) {
     return <span className='jira-status' data-category={status.category ?? undefined}>{status.name}</span>
 }
 
+export function JiraComponentPill({name}: { name: string }) {
+    return <span className='jira-component' data-category={name}>{name}</span>
+}
+
 // Jira's own icon for an issue type, proxied by the backend since Jira only serves it to a logged-in user. If it
 // can't be loaded it just disappears, leaving the type's name to stand on its own.
 export function JiraIssueTypeIcon({iconId, typeName}: { iconId: string | null, typeName: string | null }) {
@@ -60,7 +64,7 @@ function UserChip({user}: { user: JiraUser | null }) {
 function IssueRefLine({issue}: { issue: JiraIssueRef }) {
     return (
         <span className='inline-flex items-center gap-2'>
-            <span className='font-medium text-[var(--navbar-fg)]'>{issue.key}</span>
+            <span className='font-medium text-(--navbar-fg)'>{issue.key}</span>
             <span>{issue.summary}</span>
             {issue.status && <JiraStatusPill status={issue.status}/>}
         </span>
@@ -128,7 +132,7 @@ export default function JiraIssueOverlay({issueKey, listEntry, onClose, onPrevio
                     <span className='inline-flex items-center gap-2 text-sm text-muted-foreground'>
                         <JiraIssueTypeIcon iconId={header?.issueTypeIconId ?? null} typeName={header?.issueType ?? null}/>
                         {header?.issueType && `${header.issueType} / `}
-                        <span className='font-medium text-[var(--navbar-fg)]'>{issueKey}</span>
+                        <span className='font-medium text-(--navbar-fg)'>{issueKey}</span>
                     </span>
                     <div className='flex items-center gap-1'>
                         {navButton('Previous issue', onPrevious, <ChevronUp className='h-5 w-5'/>)}
@@ -137,7 +141,7 @@ export default function JiraIssueOverlay({issueKey, listEntry, onClose, onPrevio
                 </div>
 
                 <div className='flex-1 min-h-0 overflow-y-auto px-6 py-5'>
-                    {header?.summary && <h1 className='mb-5 text-2xl font-semibold text-[var(--text-h)]'>{header.summary}</h1>}
+                    {header?.summary && <h1 className='mb-5 text-2xl font-semibold text-(--text-h)'>{header.summary}</h1>}
 
                     {error && <p>An error occurred: {error.message}</p>}
                     {isPending && !error && <p className='text-muted-foreground'>Loading...</p>}

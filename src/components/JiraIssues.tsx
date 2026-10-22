@@ -13,10 +13,10 @@ import {
 } from '@tanstack/react-table'
 import {format, parseISO} from 'date-fns'
 
-import JiraIssueOverlay, {JiraIssueTypeIcon, JiraStatusPill} from '@/components/JiraIssueOverlay.tsx'
+import JiraIssueOverlay, {JiraComponentPill, JiraIssueTypeIcon, JiraStatusPill} from '@/components/JiraIssueOverlay.tsx'
 import {JiraStatusSelect} from '@/components/JiraStatusSelect.tsx'
 import {jiraIssueQueryOptions, useJiraIssues, useJiraStatuses} from '@/hooks/useJiraIssues.ts'
-import {compareStatuses, distinctStatuses, type JiraIssueSummary, type JiraStatus, priorityRank} from '@/lib/jira.ts'
+import {compareStatuses, distinctStatuses, type JiraIssueSummary, type JiraStatus} from '@/lib/jira.ts'
 import {useLocalStorageState} from '@/lib/useLocalStorageState.ts'
 import {cn} from '@/lib/utils.ts'
 
@@ -77,13 +77,16 @@ const columns = helper.columns([
             </span>
         ),
     }),
-    // by rank (Highest -> Lowest), so ascending reads most important first
-    helper.accessor(issue => priorityRank(issue.priority), {
-        id: 'priority',
-        header: 'Priority',
+    helper.accessor(issue => issue.components, {
+        id: 'components',
+        header: 'Components',
         sortFn: 'basic',
         sortDescFirst: false,
-        cell: info => info.row.original.priority,
+        cell: info => (
+            <span className='inline-flex flex-wrap gap-1'>
+                {info.getValue().map(name => <JiraComponentPill key={name} name={name}/>)}
+            </span>
+        ),
     }),
     helper.accessor(issue => issue.updated ? parseISO(issue.updated).getTime() : 0, {
         id: 'updated',
