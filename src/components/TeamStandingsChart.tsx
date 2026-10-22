@@ -31,7 +31,7 @@ import {isStatType, showStatAsPercent, StatSelect, statToLabel, type StatType} f
 import type {TeamStatEntry} from '@/lib/teamStats.ts'
 
 const lineTypes = [
-    'basis', 'bump', 'linear', 'natural', 'monotone', 'step',
+    'basis', 'bump', 'linear', 'monotone', 'natural', 'step',
 ] as const
 
 // used to size the line-type select control to exactly fit its longest choice, whichever one that is
