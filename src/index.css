@@ -773,7 +773,7 @@ p {
 
 .patch-notes-release-header {
     padding: 0.75rem 1.25rem;
-    background: var(--navbar-bg);
+    background: var(--table-header-bg);
     color: var(--navbar-fg);
 
     h2 {
