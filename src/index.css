@@ -795,6 +795,18 @@ p {
     white-space: nowrap;
 }
 
+.patch-notes-ticket {
+    display: inline-block;
+    padding: 0.05rem 0.55rem;
+    border-radius: 999px;
+    background: #ffedd5; /* pale orange */
+    color: #c2410c; /* dark orange */
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1.4;
+    white-space: nowrap;
+}
+
 .patch-notes-body {
     padding: 1rem 1.25rem 1.25rem;
     color: var(--text);

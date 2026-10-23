@@ -168,7 +168,7 @@ async function summarize(clientCommits, serverCommits, voiceExample) {
         '- Start every bullet with the repo its commits came from, as inline code followed by a space:',
         '  `client`, `server`, or `client + server` when the bullet draws on commits from both lists.',
         '  Write the label exactly as shown, e.g. "- `client` The table now ...".',
-        '- Drop ticket prefixes such as [NHL-55] or [no JIRA].',
+        '- Keep Jira ticket ids, written as [NHL-55] right after the repo label. Drop [no JIRA].',
         '- Output only the Markdown. No title, no frontmatter, no preamble.',
         style && `\nHouse style, which overrides the above where they disagree:\n${style}`,
         voiceExample && `\nThe most recently published notes, for voice and level of detail:\n${voiceExample}`,

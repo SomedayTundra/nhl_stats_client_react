@@ -1,16 +1,55 @@
+import type {Element, ElementContent, Root, RootContent} from 'hast'
 import Markdown, {type Components} from 'react-markdown'
 import {patchNotes} from '@/lib/patchNotes.ts'
 
 // The notes mark which repo a change came from with an inline-code label at the start of a bullet
-// (`client`, `server`, `client + server`). Those exact labels render as grey pills; any other
-// inline code is left as ordinary code.
+// (`client`, `server`, `client + server`). Those exact labels render as grey pills, and a code span
+// holding only a ticket id renders as a ticket pill; any other inline code is left as ordinary code.
 const REPO_LABELS = new Set(['client', 'server', 'client + server'])
 const CATEGORIES = new Set(['new', 'improved', 'fixed', 'misc'])
 
+// Jira ticket ids, bare (NHL-86) or bracketed ([NHL-86]), render as orange pills showing the bare id.
+const TICKET = /\[NHL-\d+]|\bNHL-\d+\b/g
+const NO_TICKET_PILLS = new Set(['code', 'pre', 'a'])
+
+function ticketPills(text: string): ElementContent[] {
+    const out: ElementContent[] = []
+    let last = 0
+    for (const match of text.matchAll(TICKET)) {
+        if (match.index > last) out.push({type: 'text', value: text.slice(last, match.index)})
+        out.push({
+            type: 'element',
+            tagName: 'span',
+            properties: {className: ['patch-notes-ticket']},
+            children: [{type: 'text', value: match[0].replace(/^\[|]$/g, '')}],
+        })
+        last = match.index + match[0].length
+    }
+    if (last < text.length) out.push({type: 'text', value: text.slice(last)})
+    return out
+}
+
+// Rehype plugin: splits ticket ids out of text nodes, leaving code and links alone.
+function rehypeTicketPills() {
+    const visit = (node: Root | Element) => {
+        const children: RootContent[] = node.children
+        node.children = children.flatMap((child): RootContent[] => {
+            if (child.type === 'text') return ticketPills(child.value)
+            if (child.type === 'element' && !NO_TICKET_PILLS.has(child.tagName)) visit(child)
+            return [child]
+        }) as Element['children']
+    }
+    return (tree: Root) => visit(tree)
+}
+const rehypePlugins = [rehypeTicketPills]
+
 const markdownComponents: Components = {
     code({children, className}) {
-        if (typeof children === 'string' && REPO_LABELS.has(children)) {
-            return <span className='patch-notes-tag'>{children}</span>
+        if (typeof children === 'string') {
+            if (REPO_LABELS.has(children)) return <span className='patch-notes-tag'>{children}</span>
+            if (/^\[?NHL-\d+]?$/.test(children)) {
+                return <span className='patch-notes-ticket'>{children.replace(/^\[|]$/g, '')}</span>
+            }
         }
         return <code className={className}>{children}</code>
     },
@@ -32,7 +71,7 @@ export default function PatchNotes() {
                         <h2>{note.title}</h2>
                     </header>
                     <div className='patch-notes-body'>
-                        <Markdown components={markdownComponents}>{note.body}</Markdown>
+                        <Markdown components={markdownComponents} rehypePlugins={rehypePlugins}>{note.body}</Markdown>
                     </div>
                 </article>
             ))}
