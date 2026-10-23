@@ -5,7 +5,7 @@ import {patchNotes} from '@/lib/patchNotes.ts'
 // (`client`, `server`, `client + server`). Those exact labels render as grey pills; any other
 // inline code is left as ordinary code.
 const REPO_LABELS = new Set(['client', 'server', 'client + server'])
-const CATEGORIES = new Set(['new', 'improved', 'fixed'])
+const CATEGORIES = new Set(['new', 'improved', 'fixed', 'misc'])
 
 const markdownComponents: Components = {
     code({children, className}) {

@@ -34,7 +34,7 @@ const DRAFT_BRANCH_PREFIX = 'patch-notes/draft-'
 const TIME_ZONE = process.env.PATCH_NOTES_TZ ?? 'America/Chicago'
 const MODEL = process.env.PATCH_NOTES_MODEL ?? 'claude-opus-5-5'
 const NOTE_FILE = /^\d{4}-\d{2}-\d{2}\.md$/
-const SECTION_ORDER = ['new', 'improved', 'fixed']
+const SECTION_ORDER = ['new', 'improved', 'fixed', 'misc']
 
 const git = (cwd, ...args) => execFileSync('git', args, {cwd, encoding: 'utf8'}).trim()
 
@@ -109,7 +109,7 @@ function parseSections(body) {
 }
 
 // Adds `added`'s bullets under the matching headings of `existing`, which is kept verbatim. A
-// heading `existing` lacks is inserted in New, Improved, Fixed order.
+// heading `existing` lacks is inserted in New, Improved, Fixed, Misc order.
 function mergeNotes(existing, added) {
     const base = parseSections(existing)
     const extra = parseSections(added)
@@ -152,22 +152,24 @@ async function summarize(clientCommits, serverCommits, voiceExample) {
         ? readFileSync(path.join(NOTES_DIR, 'STYLE.md'), 'utf8') : ''
     const system = [
         'You write patch notes for NHL Stats, a web app for browsing NHL standings tables, standings',
-        'charts, playoff brackets, and a "league shape" quiz. The audience is people using the app,',
-        'not its developer.',
+        'charts, playoff brackets, and a "league shape" quiz. The audience is people who use the',
+        'app, as well as fellow developers who would be interested in behind-the-curtain info.',
         '',
         'Turn the commit messages you are given into Markdown patch notes:',
         '- Use only these second-level headings, in this order, and omit any with nothing under them:',
-        '  "## New", "## Improved", "## Fixed".',
-        '- One bullet per user-visible change, in plain language. Merge related commits into one bullet.',
+        '  "## New", "## Improved", "## Fixed", "## Misc".',
+        '- New, Improved, and Fixed are for user-visible changes: one bullet per change, in plain',
+        '  language. Merge related commits into one bullet.',
+        '- Misc is the catch-all for everything else: changes users cannot see, such as CI, build',
+        '  tooling, dependency bumps, refactors, renames, lint and type fixes, internal docs, and',
+        '  deployment plumbing. Keep these short, one bullet per change, merging related commits.',
+        '  Every commit belongs under some heading; none are left out.',
         '- Server and client commits that implement the same feature become one bullet.',
         '- Start every bullet with the repo its commits came from, as inline code followed by a space:',
         '  `client`, `server`, or `client + server` when the bullet draws on commits from both lists.',
         '  Write the label exactly as shown, e.g. "- `client` The table now ...".',
-        '- Leave out changes users cannot see: CI, build tooling, dependency bumps, refactors, renames,',
-        '  lint and type fixes, internal docs, and deployment plumbing.',
         '- Drop ticket prefixes such as [NHL-55] or [no JIRA].',
         '- Output only the Markdown. No title, no frontmatter, no preamble.',
-        '- If nothing in the list is user-visible, output exactly: NONE',
         style && `\nHouse style, which overrides the above where they disagree:\n${style}`,
         voiceExample && `\nThe most recently published notes, for voice and level of detail:\n${voiceExample}`,
     ].filter(Boolean).join('\n')
@@ -195,7 +197,7 @@ async function summarize(clientCommits, serverCommits, voiceExample) {
     }
     if (response.stop_reason === 'max_tokens') throw new Error('response hit max_tokens')
     const text = response.content.filter(block => block.type === 'text').map(block => block.text).join('').trim()
-    return text === 'NONE' ? '' : labelBullets(text, clientCommits, serverCommits)
+    return labelBullets(text, clientCommits, serverCommits)
 }
 
 // The model labels each bullet with its repo. When only one repo has commits, the label can't be
@@ -229,7 +231,7 @@ if (clientCommits.length === 0 && serverCommits.length === 0) {
 
 const notes = await summarize(clientCommits, serverCommits, published.body)
 if (!draft && !notes) {
-    // Nothing user-visible and no PR open for today: don't open one just to move cursors.
+    // The model returned nothing and no PR is open for today: don't open one just to move cursors.
     setOutput('changed', 'false')
     process.exit(0)
 }
@@ -237,7 +239,7 @@ if (!draft && !notes) {
 const target = draft ?? (published.name === `${today}.md` ? published : null)
 const name = target?.name ?? `${today}.md`
 
-// With an open draft, cursors advance even when nothing user-visible was added.
+// With an open draft, cursors advance even when no bullets were added.
 const body = target && notes ? mergeNotes(target.body, notes) : target?.body ?? notes
 // The page builds the title from the date, so only a hand-written title is carried forward.
 const meta = {

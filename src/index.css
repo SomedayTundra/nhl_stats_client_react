@@ -823,6 +823,10 @@ p {
         --category-color: #cd2121 /* red */
     }
 
+    h2[data-category='misc'] {
+        --category-color: #5b21b6 /* dark purple */
+    }
+
     h2[data-category] {
         color: var(--category-color);
         border-bottom-color: var(--category-color);
