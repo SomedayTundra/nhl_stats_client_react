@@ -3,10 +3,12 @@ import {apiFetch} from '@/lib/apiFetch.ts'
 
 import type {SeasonInfo} from '@/lib/season.ts'
 
-// GET /api/season_info -> a SeasonInfo containing the seasonId, and the season's start/end dates
+// GET /api/season_info
 //
-// Pass no seasonId to get the season currently in progress, or the most-recently-completed one,
-// if today falls between seasons.
+// Returns a SeasonInfo containing the seasonId, and that season's start/end dates
+//
+// If you pass no seasonId, you get the season currently in progress, or the most-recently-completed one,
+// if 'today' falls between seasons.
 //
 // Season date spans never change once set, so this is cached indefinitely ("Infinity").
 //

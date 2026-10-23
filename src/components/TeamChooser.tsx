@@ -107,14 +107,6 @@ export default function TeamChooser({season, selected, onChange}: TeamChooserPro
     const [open, setOpen] = React.useState(false)
     const [draftSelected, setDraftSelected] = React.useState<string[]>(selected)
 
-    // keep the draft in sync with externally-driven changes to `selected` (e.g. the default
-    // select-all above) as long as the popover is closed; while open, edits stay local to the draft
-    React.useEffect(() => {
-        if (!open) {
-            setDraftSelected(selected)
-        }
-    }, [selected, open])
-
     function handleOpenChange(nextOpen: boolean) {
         if (nextOpen) {
             setDraftSelected(selected)
@@ -217,6 +209,11 @@ export default function TeamChooser({season, selected, onChange}: TeamChooserPro
     // custom pick that doesn't line up with any stop just leaves that off rather than guess
     const currentStopName = wheelStops.find((stop) => haveSameElements(stop.abbrevs, selected))?.name
 
+    // when the select popover is open, this holds the count of the "draft selection," basically
+    // whatever the user has checked/unchecked; when the popover closes, the draft becomes the
+    // actual selection ('selected') so this holds that length instead
+    const shownSelectedCount = open ? draftSelected.length : selected.length
+
     function renderDivision(division: TeamDivisionGroup, wrapperClassName: string, labelClassName: string) {
         const divisionAbbrevs = division.teams.map((team) => team.teamAbbrev)
         const divisionChecked = groupCheckedState(divisionAbbrevs, draftSelectedSet)
@@ -250,8 +247,8 @@ export default function TeamChooser({season, selected, onChange}: TeamChooserPro
                     <TooltipTrigger asChild>
                         <PopoverTrigger asChild>
                             <Button variant="outline" className="justify-between select-none border-neutral-800">
-                                <span className={draftSelected.length === 0 ? 'text-red-600' : undefined}>
-                                    {currentStopName ? currentStopName : "Teams"} ({draftSelected.length}/{teams.length})
+                                <span className={shownSelectedCount === 0 ? 'text-red-600' : undefined}>
+                                    {currentStopName ? currentStopName : "Teams"} ({shownSelectedCount}/{teams.length})
                                 </span>
                                 <ChevronDownIcon/>
                             </Button>

@@ -21,8 +21,9 @@ export type SeasonInfo = {
     l10OtAndTieOverlap?: boolean
 }
 
-// a seasonId is two consecutive years concatenated, e.g. '19421943'
-export function seasonStartYear(seasonId: string | number): number {
+// a seasonId is two consecutive years concatenated, e.g. '19421943';
+// this function returns the first one, e.g. '1942'
+export function getSeasonStartYear(seasonId: string | number): number {
     return Number(String(seasonId).slice(0, 4))
 }
 
@@ -31,17 +32,22 @@ export function seasonIdToLabel(seasonId: string): string {
     return `${seasonId.slice(0, 4)}-${seasonId.slice(6, 8)}`
 }
 
-// every playable seasonId from 1942-43 through the given current season, newest first so the most
-// recent season sits at the top of the picker
-export function buildSeasonIds(currentSeasonId: string | number): string[] {
-    const lastStartYear = seasonStartYear(currentSeasonId)
-    const ids: string[] = []
-    for (let startYear = lastStartYear; startYear >= EARLIEST_SEASON_START_YEAR; startYear--) {
-        const id = `${startYear}${startYear + 1}`
-        if (!CANCELLED_SEASON_IDS.has(id)) {
-            ids.push(id)
+// builds a list of seasonIds, starting with the given one, and ending at the value
+// in EARLIEST_SEASON_START_YEAR, which is currently (and will likely always be) 1942
+//
+// if any of the seasonIds matches the "cancelled season ids" list (which currently
+// contains, and hopefully always will contain, a single '19941995' entry), it is
+// removed from the returned array
+//
+export function buildAllSeasonIds(latestSeasonId: string | number): string[] {
+    const latestStartYear = getSeasonStartYear(latestSeasonId)
+    const seasonIds: string[] = []
+    for (let startYear = latestStartYear; startYear >= EARLIEST_SEASON_START_YEAR; startYear--) {
+        const seasonId = `${startYear}${startYear + 1}`
+        if (!CANCELLED_SEASON_IDS.has(seasonId)) {
+            seasonIds.push(seasonId)
         }
     }
-    return ids
+    return seasonIds
 }
 

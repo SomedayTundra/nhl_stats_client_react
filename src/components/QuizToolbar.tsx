@@ -7,7 +7,7 @@ import {Checkbox} from '@/components/ui/checkbox'
 import {FieldLabel} from '@/components/ui/field.tsx'
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select'
 import {Tooltip, TooltipContent, TooltipTrigger} from '@/components/ui/tooltip'
-import {isTeamCountFraction, teamCountForFraction, teamCountFractions, type TeamCountFraction} from '@/lib/quizTeamCount.ts'
+import {isTeamCountFraction, teamCountForFraction, teamCountFractions, type TeamCountFraction} from '@/lib/quiz.ts'
 import {useLocalStorageState} from '@/lib/useLocalStorageState.ts'
 
 function randomOf<T>(items: readonly T[]): T {

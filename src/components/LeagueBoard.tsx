@@ -3,12 +3,7 @@ import {useDroppable} from '@dnd-kit/core'
 import * as React from 'react'
 import {CornerLeftDown, CornerRightDown} from 'lucide-react'
 import type {Conference, TeamInfo} from '@/lib/teamGrouping.ts'
-
-// a team is only considered "placed" when dropped on the division droppable whose id matches its
-// own conference/division - any other drop target (or a miss) leaves it unplaced
-export function divisionDroppableId(conferenceName: string, divisionName: string): string {
-    return `division:${conferenceName}:${divisionName}`
-}
+import {divisionDroppableId} from '@/lib/quiz.ts'
 
 type DivisionDropZoneProps = {
     conferenceName: string
@@ -44,7 +39,7 @@ export function LeagueBoard({teams, unplacedAbbrevs, showTeamNames, isPending, e
     // built from every team, placed or not, so a division that's been fully emptied out into the
     // bucket still renders its (empty) drop zone - otherwise there'd be no way to drop a team back
     // into a division with nothing currently placed in it
-    let newConferences: Map<string, Conference> = new Map()
+    const newConferences: Map<string, Conference> = new Map()
 
     if (!isPending && !error) {
         teams.forEach((teamInfo) => {

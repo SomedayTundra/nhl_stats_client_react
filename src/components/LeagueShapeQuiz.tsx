@@ -3,12 +3,12 @@
 import * as React from 'react'
 import {DndContext, DragOverlay, type DragEndEvent, type DragStartEvent} from '@dnd-kit/core'
 import {UnplacedTeamBucket, UNPLACED_TEAM_BUCKET_DROPPABLE_ID, type QuizResultsSummary} from '@/components/UnplacedTeamBucket.tsx'
-import {LeagueBoard, divisionDroppableId} from '@/components/LeagueBoard.tsx'
+import {LeagueBoard} from '@/components/LeagueBoard.tsx'
 import {TeamInfoCardView} from '@/components/TeamInfoCard.tsx'
 import QuizToolbar from '@/components/QuizToolbar.tsx'
 import {EraSelect} from '@/components/EraSelect.tsx'
 import {defaultSeasonId, getSeasonEntry, isValidSeasonId, validSeasonIds, type SeasonId} from '@/lib/seasonId.ts'
-import {teamCountForFraction, type TeamCountFraction} from '@/lib/quizTeamCount.ts'
+import {divisionDroppableId, teamCountForFraction, type TeamCountFraction} from '@/lib/quiz.ts'
 import {useLocalStorageState} from '@/lib/useLocalStorageState.ts'
 import {useTeamInfo} from '@/hooks/useTeamInfo.ts'
 import type {TeamInfo} from '@/lib/teamGrouping.ts'
@@ -62,28 +62,14 @@ export default function LeagueShapeQuiz() {
     // era's team list finishes loading (see the effect below), then consumed to start the round
     const [pendingRandomFraction, setPendingRandomFraction] = React.useState<TeamCountFraction | null>(null)
 
-    // once every team the round started with has been correctly placed, the bucket empties out -
-    // end the round (re-enable Go) and snapshot the result for the bucket to display
-    React.useEffect(() => {
-        if (isRunning && unplacedAbbrevs.size === 0) {
-            setIsRunning(false)
-            setCompletedRound({
-                teamsSorted: roundTeamCount,
-                correctGuesses,
-                incorrectGuesses,
-                era: getSeasonEntry(season)?.name ?? season,
-                totalTeams: teams?.length ?? 0,
-                showTeamNames,
-            })
-        }
-    }, [isRunning, unplacedAbbrevs, roundTeamCount, correctGuesses, incorrectGuesses, season, teams, showTeamNames])
-
     // "Randomize & Go" rolls the era right here, but a round can't be built until that era's team
     // list has loaded. Once it's in, start the round with the fraction the toolbar rolled; a load
     // failure just drops the pending request. (Round-start body mirrors handleGo.)
+    //
     React.useEffect(() => {
         if (pendingRandomFraction === null) return
         if (error) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect -- reacting to the new era's team list finishing loading (or failing) is a legitimate effect
             setPendingRandomFraction(null)
             return
         }
@@ -120,38 +106,52 @@ export default function LeagueShapeQuiz() {
     }
 
     function handleDragEnd(event: DragEndEvent) {
+        // clear out the team abbreviation for the "team being dragged"
         setActiveTeamAbbrev(null)
 
+        // figure out what the mouse was over when the drag ended
         const {active, over} = event
         if (!over) return
         const abbrev = String(active.id)
         const overId = String(over.id)
 
+        // if we were over the unplaced bucket, this doesn't count as a guess
         if (overId === UNPLACED_TEAM_BUCKET_DROPPABLE_ID) {
-            setUnplacedAbbrevs((current) => new Set(current).add(abbrev))
             return
         }
 
         // dropping on the board only places the team if it lands on its own conference/division's
-        // drop zone - any other division (or missing the board entirely) sends it back to the bucket
+        // drop zone - any other division (or missing the board entirely) sends it back to the unplaced bucket
         const team = teams?.find((candidate) => candidate.teamAbbrev === abbrev)
         const isCorrectSlot = team !== undefined && overId === divisionDroppableId(team.conferenceName ?? 'NA', team.divisionName)
 
-        if (isCorrectSlot) {
-            setCorrectGuesses((current) => current + 1)
-        } else {
-            setIncorrectGuesses((current) => current + 1)
+        // update the scoreboard
+        const nextCorrectGuesses = correctGuesses + (isCorrectSlot ? 1 : 0)
+        const nextIncorrectGuesses = incorrectGuesses + (isCorrectSlot ? 0 : 1)
+        setCorrectGuesses(nextCorrectGuesses)
+        setIncorrectGuesses(nextIncorrectGuesses)
+
+        if (!isCorrectSlot) {
+            return
         }
 
-        setUnplacedAbbrevs((current) => {
-            const next = new Set(current)
-            if (isCorrectSlot) {
-                next.delete(abbrev)
-            } else {
-                next.add(abbrev)
-            }
-            return next
-        })
+        // remove the active team abbrev from the list of unplaced teams
+        const nextUnplacedAbbrevs = new Set(unplacedAbbrevs)
+        nextUnplacedAbbrevs.delete(abbrev)
+        setUnplacedAbbrevs(nextUnplacedAbbrevs)
+
+        // if this drag was a successful placement of the last team tile, complete this round of quizzing!
+        if (isRunning && nextUnplacedAbbrevs.size === 0) {
+            setIsRunning(false)
+            setCompletedRound({
+                teamsSorted: roundTeamCount,
+                correctGuesses: nextCorrectGuesses,
+                incorrectGuesses: nextIncorrectGuesses,
+                era: getSeasonEntry(season)?.name ?? season,
+                totalTeams: teams?.length ?? 0,
+                showTeamNames,
+            })
+        }
     }
 
     const activeTeam = teams?.find((team) => team.teamAbbrev === activeTeamAbbrev) ?? null
@@ -222,5 +222,5 @@ export default function LeagueShapeQuiz() {
                 </DragOverlay>
             </DndContext>
         </div>
-    );
+    )
 }

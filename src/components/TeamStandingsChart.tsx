@@ -27,8 +27,9 @@ import {addDays, isAfter, isBefore, isSameDay, subDays} from 'date-fns'
 import {type BracketTeamView, buildBracketView, type NhlBracketPayload} from '@/lib/playoffBracket.ts'
 import nhlLogoSmall from '@/assets/nhl_logo_small.png'
 import {useNavigate} from '@tanstack/react-router'
-import {isStatType, showStatAsPercent, StatSelect, statToLabel, type StatType} from '@/components/StatSelect.tsx'
+import {StatSelector} from '@/components/StatSelector.tsx'
 import type {TeamStatEntry} from '@/lib/teamStats.ts'
+import {isStatType, showStatAsPercent, statToLabel, type StatType} from '@/lib/stat.ts'
 
 const lineTypes = [
     'basis', 'bump', 'linear', 'monotone', 'natural', 'step',
@@ -680,7 +681,7 @@ export default function TeamStandingsChart() {
                     <DatePickerWithNav id='date-picker-to' date={toDate} setDate={handleToDateSelect} tooltip='To' minDate={minDate} maxDate={maxDate}/>
                 </div>
                 <TeamChooser season={resolvedSeason} selected={selectedTeams} onChange={setSelectedTeams}/>
-                <StatSelect value={statName} onChange={handleStatChange}/>
+                <StatSelector value={statName} onChange={handleStatChange}/>
                 {/* hidden twin of the longest line-type choice, measured to size the select */}
                 <span
                     ref={lineTypeSizerRef}

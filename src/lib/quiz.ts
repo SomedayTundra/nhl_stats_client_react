@@ -38,3 +38,9 @@ export function isTeamCountFraction(value: string): value is TeamCountFraction {
 export function teamCountForFraction(fraction: TeamCountFraction, totalTeams: number): number {
     return Math.round(totalTeams * teamCountFractionMultipliers[fraction])
 }
+
+// a team is only considered "placed" when dropped on the division droppable whose id matches its
+// own conference/division - any other drop target (or a miss) leaves it unplaced
+export function divisionDroppableId(conferenceName: string, divisionName: string): string {
+    return `division:${conferenceName}:${divisionName}`
+}

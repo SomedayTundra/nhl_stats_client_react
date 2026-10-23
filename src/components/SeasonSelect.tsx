@@ -1,16 +1,18 @@
 'use client'
 
-import {useEffect, useRef} from 'react'
+import {useEffect, useMemo, useRef} from 'react'
 
 import {FieldLabel} from '@/components/ui/field.tsx'
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select'
 import {Tooltip, TooltipContent, TooltipTrigger} from '@/components/ui/tooltip'
 import {useSeasonInfo} from '@/hooks/useSeasonInfo.ts'
-import {buildSeasonIds, seasonIdToLabel} from '@/lib/season.ts'
+import {buildAllSeasonIds, seasonIdToLabel} from '@/lib/season.ts'
 
 type SeasonSelectProps = {
     // the selected seasonId, e.g. '19951996' (empty string until the caller has resolved a default)
     value: string
+
+    // who to tell when the selected season changes
     onChange: (seasonId: string) => void
 }
 
@@ -18,31 +20,32 @@ type SeasonSelectProps = {
 // per this window so one gesture doesn't skip across several seasons
 const WHEEL_STEP_COOLDOWN_MS = 120
 
-// "Season:" label + a select holding one entry per playable season from 1942-43 through the
-// current season (newest first). Controlled: the caller owns the value and persists it.
+// ("Season:" label) + (a <Select>)
+//
+// The Select holds one entry per playable season from 1942-43 through the current season (newest first).
+//
+// Callers are in charge of persisting and reacting to the selection, via SeasonSelectProps.onChange
+//
 export function SeasonSelect({value, onChange}: SeasonSelectProps) {
-    // the newest entry the picker offers: the season currently in progress, or the most recently
-    // completed one if today falls between seasons.
+    // useSeasonInfo returns either the season currently in progress, or the most recently completed season if today falls between seasons
     const {data: currentSeasonInfo} = useSeasonInfo()
     const latestSeasonId = currentSeasonInfo ? String(currentSeasonInfo.seasonId) : ''
 
-    // before the lookup resolves, fall back to just the selected id so the control still shows the
-    // right thing
-    const ids = latestSeasonId
-        ? buildSeasonIds(latestSeasonId)
-        : (value ? [value] : [])
+    // before the lookup resolves, fall back to just the selected id so the control still shows the right thing
+    const ids = useMemo(() => {
+        return (latestSeasonId ? buildAllSeasonIds(latestSeasonId) : (value ? [value] : []))
+    }, [latestSeasonId, value])
 
-    // an id that isn't a valid choice (e.g. stale localStorage from before the valid range changed,
+    // if the given value isn't a valid choice (e.g. stale localStorage from before the valid range changed,
     // or a corrupted manual edit) shows as nothing selected for the one render where that's true;
     // the effect below self-corrects the persisted value so everything downstream that reads it
-    // recovers too, not just this control's display.
-    const isKnownValue = ids.includes(value)
-
+    // recovers too, not just this control's display
+    const isValidSeasonId = ids.includes(value)
     useEffect(() => {
-        if (value && latestSeasonId && !ids.includes(value)) {
+        if (value && latestSeasonId && !isValidSeasonId) {
             onChange(ids[0])
         }
-    }, [value, latestSeasonId, ids, onChange])
+    }, [value, latestSeasonId, isValidSeasonId, onChange, ids])
 
     // latest-value refs so the wheel listener can be bound once instead of re-subscribed on every
     // step (the selection changes on each wheel tick)
@@ -102,7 +105,7 @@ export function SeasonSelect({value, onChange}: SeasonSelectProps) {
                 <TooltipTrigger asChild>
                     <div className="flex">
                         <Select
-                            value={isKnownValue ? value : ''}
+                            value={isValidSeasonId ? value : ''}
                             onValueChange={onChange}
                             onOpenChange={(open) => {
                                 openRef.current = open

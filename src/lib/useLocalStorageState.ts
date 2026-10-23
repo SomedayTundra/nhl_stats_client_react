@@ -16,6 +16,14 @@ function readFromStorage<T>(key: string, defaultValue: T, deserialize: (raw: str
     }
 }
 
+function defaultSerialize<T>(value: T): string {
+    return JSON.stringify(value)
+}
+
+function defaultDeserialize<T>(raw: string): T {
+    return JSON.parse(raw) as T
+}
+
 /**
  * Same shape as React.useState, but the value is read from and written back to localStorage under `key`.
  *
@@ -26,8 +34,8 @@ export function useLocalStorageState<T>(
     defaultValue: T,
     options?: LocalStorageOptions<T>
 ): [T, React.Dispatch<React.SetStateAction<T>>] {
-    const serialize = options?.serialize ?? ((value: T) => JSON.stringify(value))
-    const deserialize = options?.deserialize ?? ((raw: string) => JSON.parse(raw) as T)
+    const serialize = options?.serialize ?? defaultSerialize
+    const deserialize = options?.deserialize ?? defaultDeserialize
 
     const [state, setState] = React.useState<T>(() => readFromStorage(key, defaultValue, deserialize))
 
