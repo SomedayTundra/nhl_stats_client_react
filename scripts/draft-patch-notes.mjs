@@ -32,7 +32,7 @@ const DRAFT_BRANCH_PREFIX = 'patch-notes/draft-'
 // en-CA formats dates as YYYY-MM-DD. Taken in the developer's zone rather than UTC so an evening
 // commit isn't filed under tomorrow.
 const TIME_ZONE = process.env.PATCH_NOTES_TZ ?? 'America/Chicago'
-const MODEL = process.env.PATCH_NOTES_MODEL ?? 'claude-opus-5-5'
+const MODEL = process.env.PATCH_NOTES_MODEL ?? 'claude-sonnet-5-5'
 const NOTE_FILE = /^\d{4}-\d{2}-\d{2}\.md$/
 const SECTION_ORDER = ['new', 'improved', 'fixed', 'misc']
 
