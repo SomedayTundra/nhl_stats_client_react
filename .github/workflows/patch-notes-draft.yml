@@ -2,7 +2,8 @@
 # updates) that day's PR from patch-notes/draft-YYYY-MM-DD. GitHub's PR notification email is the
 # "a draft is ready" signal. Edit the note in the PR, then merge it to publish. See scripts/draft-patch-notes.mjs.
 #
-# Needs repo secrets ANTHROPIC_API_KEY and SERVER_REPO_TOKEN (a fine-grained PAT with read-only
+# Needs repo secrets CLAUDE_CODE_OAUTH_TOKEN (from `claude setup-token`, which bills runs to the
+# Claude subscription instead of the API) and SERVER_REPO_TOKEN (a fine-grained PAT with read-only
 # Contents access to nhl_stats_server_fastapi, which is private), plus Settings > Actions >
 # General > "Allow GitHub Actions to create and approve pull requests".
 
@@ -50,10 +51,12 @@ jobs:
 
       - run: npm ci
 
+      - run: npm install -g @anthropic-ai/claude-code
+
       - id: draft
         run: node scripts/draft-patch-notes.mjs
         env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           SERVER_DIR: .server
 
       - if: steps.draft.outputs.changed == 'true'

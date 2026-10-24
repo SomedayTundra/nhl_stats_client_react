@@ -15,15 +15,16 @@
 // The same goes for a published file being added to: new bullets land under the matching
 // heading, and existing text is left as written.
 //
-// Env: ANTHROPIC_API_KEY (required), SERVER_DIR (server repo checkout, default ../nhl_stats_server_fastapi),
+// Env: CLAUDE_CODE_OAUTH_TOKEN (required in CI; from `claude setup-token`, so runs bill to the Claude
+//      subscription rather than the API), SERVER_DIR (server repo checkout, default ../nhl_stats_server_fastapi),
 //      DRAFT_REMOTE (default origin), PATCH_NOTES_TZ (the zone "today" is taken in, default
-//      America/Chicago), PATCH_NOTES_MODEL (default claude-opus-5-5),
+//      America/Chicago), PATCH_NOTES_MODEL (default sonnet),
 //      GITHUB_OUTPUT (set by Actions; receives changed=true|false, plus file, branch, and date).
 
 import {execFileSync} from 'node:child_process'
 import {appendFileSync, existsSync, readdirSync, readFileSync, writeFileSync} from 'node:fs'
+import {tmpdir} from 'node:os'
 import path from 'node:path'
-import Anthropic from '@anthropic-ai/sdk'
 
 const NOTES_DIR = 'patch-notes'
 const SERVER_DIR = process.env.SERVER_DIR ?? '../nhl_stats_server_fastapi'
@@ -32,7 +33,7 @@ const DRAFT_BRANCH_PREFIX = 'patch-notes/draft-'
 // en-CA formats dates as YYYY-MM-DD. Taken in the developer's zone rather than UTC so an evening
 // commit isn't filed under tomorrow.
 const TIME_ZONE = process.env.PATCH_NOTES_TZ ?? 'America/Chicago'
-const MODEL = process.env.PATCH_NOTES_MODEL ?? 'claude-sonnet-5-5'
+const MODEL = process.env.PATCH_NOTES_MODEL ?? 'sonnet'
 const NOTE_FILE = /^\d{4}-\d{2}-\d{2}\.md$/
 const SECTION_ORDER = ['new', 'improved', 'fixed', 'misc']
 
@@ -147,7 +148,7 @@ function commitsSince(cwd, since, excludeNotes) {
     })
 }
 
-async function summarize(clientCommits, serverCommits, voiceExample) {
+function summarize(clientCommits, serverCommits, voiceExample) {
     const style = existsSync(path.join(NOTES_DIR, 'STYLE.md'))
         ? readFileSync(path.join(NOTES_DIR, 'STYLE.md'), 'utf8') : ''
     const system = [
@@ -177,26 +178,27 @@ async function summarize(clientCommits, serverCommits, voiceExample) {
     const list = (label, commits) => commits.length
         ? `${label} commits (date, then message):\n${commits.map(c => `- ${c.replace(/\n+/g, ' ')}`).join('\n')}`
         : ''
-    const client = new Anthropic()
-    const response = await client.beta.messages.create({
-        model: MODEL,
-        max_tokens: 16000,
-        output_config: {effort: 'medium'},
-        // On a safety-classifier decline, the API reruns the request on a fallback model.
-        betas: ['server-side-fallback-2026-07-01'],
-        fallbacks: 'default',
-        system,
-        messages: [{
-            role: 'user',
-            content: [list('Client (web app)', clientCommits), list('Server (API and data)', serverCommits)]
-                .filter(Boolean).join('\n\n'),
-        }],
+    // Claude Code in print mode, as a plain completion: no tools, one turn, and run from a temp dir
+    // so it doesn't pick up this repo's CLAUDE.md as context.
+    const output = execFileSync('claude', [
+        '-p',
+        '--model', MODEL,
+        '--system-prompt', system,
+        '--tools', '',
+        '--max-turns', '1',
+        '--output-format', 'json',
+    ], {
+        cwd: tmpdir(),
+        input: [list('Client (web app)', clientCommits), list('Server (API and data)', serverCommits)]
+            .filter(Boolean).join('\n\n'),
+        encoding: 'utf8',
+        maxBuffer: 16 * 1024 * 1024,
     })
-    if (response.stop_reason === 'refusal') {
-        throw new Error(`model declined: ${response.stop_details?.explanation ?? 'no explanation'}`)
+    const response = JSON.parse(output)
+    if (response.is_error || response.subtype !== 'success') {
+        throw new Error(`claude failed (${response.subtype}): ${response.result ?? 'no result'}`)
     }
-    if (response.stop_reason === 'max_tokens') throw new Error('response hit max_tokens')
-    const text = response.content.filter(block => block.type === 'text').map(block => block.text).join('').trim()
+    const text = response.result.trim()
     return labelBullets(text, clientCommits, serverCommits)
 }
 
@@ -229,7 +231,7 @@ if (clientCommits.length === 0 && serverCommits.length === 0) {
     process.exit(0)
 }
 
-const notes = await summarize(clientCommits, serverCommits, published.body)
+const notes = summarize(clientCommits, serverCommits, published.body)
 if (!draft && !notes) {
     // The model returned nothing and no PR is open for today: don't open one just to move cursors.
     setOutput('changed', 'false')
