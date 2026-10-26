@@ -70,22 +70,35 @@ jobs:
           done
           echo "Production deployments found: $(wc -l < "$all")"
 
-          doomed=$(jq -rs --arg live "$live" --argjson keep "$KEEP" '
-            sort_by(-.created) | .[$keep:][]
-            | select(.uid != $live)
-            | select((.meta.githubCommitRef // "") | startswith("deploy/") | not)
-            | "\(.uid) \(.meta.githubCommitRef // "?") \(.created / 1000 | todate) \(.url)"' "$all")
+          # one row per deployment, newest first, kept ones included, showing what Vercel's Deployments
+          # list shows (short SHA, the commit message's first line) so a dry run can be checked by eye
+          rows=$(jq -rs --arg live "$live" --argjson keep "$KEEP" '
+            sort_by(-.created) | to_entries[]
+            | .key as $i | .value
+            | (if .uid == $live then "keep (live)"
+               elif $i < $keep then "keep (newest)"
+               elif (.meta.githubCommitRef // "") | startswith("deploy/") then "keep (deploy/*)"
+               elif $ENV.DRY_RUN == "true" then "WOULD DELETE"
+               else "DELETE" end) as $action
+            | [$action, .uid,
+               ((.meta.githubCommitSha // "") | .[0:7]),
+               (.created / 1000 | strftime("%Y-%m-%d %H:%M")),
+               (.meta.githubCommitRef // "?"),
+               ((.meta.githubCommitMessage // "") | split("\n")[0])]
+            | @tsv' "$all")
 
-          if [ -z "$doomed" ]; then
-            echo "Nothing to delete."
-            exit 0
-          fi
-
-          echo "$doomed" | while read -r id ref when url; do
-            if [ "$DRY_RUN" = true ]; then
-              echo "Would delete $id ($ref, $when) $url"
-            else
-              echo "Deleting $id ($ref, $when) $url"
+          printf '\n%-16s %-7s  %-16s  %-10s %s\n' ACTION SHA 'CREATED (UTC)' BRANCH 'COMMIT MESSAGE'
+          deleted=0
+          while IFS=$'\t' read -r action id sha when ref message; do
+            printf '%-16s %-7s  %-16s  %-10s %s\n' "$action" "$sha" "$when" "$ref" "$message"
+            if [ "$action" = DELETE ]; then
               curl -sf -X DELETE "$api/v13/deployments/$id?teamId=$VERCEL_TEAM_ID" -H "$auth" > /dev/null
             fi
-          done
+            case "$action" in *DELETE) deleted=$((deleted + 1)) ;; esac
+          done <<< "$rows"
+
+          if [ "$DRY_RUN" = true ]; then
+            echo; echo "Dry run: $deleted deployment(s) would be deleted."
+          else
+            echo; echo "Deleted $deleted deployment(s)."
+          fi
