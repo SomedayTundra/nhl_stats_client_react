@@ -25,3 +25,5 @@ dist-ssr
 /.claude/settings.local.json
 /.claude/settings.json
 /CLAUDE.md
+/docs/jira.md
+/docs/layout-notes.md
