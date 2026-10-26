@@ -136,6 +136,9 @@ export function buildBracketView(payload: NhlBracketPayload | undefined): Bracke
         return null
     }
 
+    // sort all the playoff series data in to buckets, one-per-round; rounds as provided by
+    // the NHL API are digits from 1-3 or 1-4, with round1 being the opening round, and the
+    // largest round-digit representing the Stanley Cup Final round
     const byRound = new Map<number, NhlBracketSeries[]>()
     for (const series of played) {
         const bucket = byRound.get(series.playoffRound)
@@ -146,12 +149,20 @@ export function buildBracketView(payload: NhlBracketPayload | undefined): Bracke
         }
     }
 
+    // convience variables: all the round numbers in order from 1-{max round}, digit representing
+    // the first round, and digit representing the last round
     const roundNumbers = [...byRound.keys()].sort((a, b) => a - b)
-    const firstRound = roundNumbers[0]
-    const lastRound = roundNumbers[roundNumbers.length - 1]
+    const firstRoundNumber = roundNumbers[0]
+    const lastRoundNumber = roundNumbers[roundNumbers.length - 1]
 
     // the final is the lone series of the deepest round; without one there's no bracket to draw
-    const finalCandidates = byRound.get(lastRound) ?? []
+    //
+    // TODO: in truth, for an ongoing playoffs, we'd probably prefer to draw empty brackets
+    //       with ?? for the team or teams in that round that are not yet know... we'll have
+    //       to wait eight months or so to see what the NHL API returns to us, if it's
+    //       no data, partial data...?
+    //
+    const finalCandidates = byRound.get(lastRoundNumber) ?? []
     if (finalCandidates.length !== 1) {
         return null
     }
@@ -176,9 +187,9 @@ export function buildBracketView(payload: NhlBracketPayload | undefined): Bracke
     // that fed it, so every column stays in parent order (which is what lines the connectors up)
     const buildSide = (finalist: BracketTeamView): BracketSideView => {
         const columns: BracketColumn[] = []
-        let level: BracketSlot[] = [slotFor(finalist, lastRound - 1)]
+        let level: BracketSlot[] = [slotFor(finalist, lastRoundNumber - 1)]
 
-        for (let round = lastRound - 1; round >= firstRound; round--) {
+        for (let round = lastRoundNumber - 1; round >= firstRoundNumber; round--) {
             const label = level.find((slot) => slot.kind === 'series')?.series.title ?? ''
             columns.unshift({label, slots: level})
 
@@ -203,11 +214,45 @@ export function buildBracketView(payload: NhlBracketPayload | undefined): Bracke
         return {columns}
     }
 
+    // does the given set of columns include a column with the given word in its label?
+    const columnLabelsIncludeWord = (bracketView: BracketSideView, word: string): boolean => {
+        return bracketView.columns.some((column) => column.label.toLowerCase().includes(word))
+    }
+
+    // ASSUMPTION: any poorly-labeled conference final round given to us by the NHL API will have named the column, simply: "Conference Finals"
+    const adjustConferenceName = (bsv: BracketSideView, prefix: 'Eastern' | 'Western') => ({
+        columns: bsv.columns.map((column) => column.label === 'Conference Finals' ? {...column, label: `${prefix} Conference Finals`} : column)
+    })
+
+    // grab the arbitrarily-positioned left and right sides
+    let left = buildSide(final.top)
+    let right = buildSide(final.bottom)
+
+    const leftContainsEastLabel = columnLabelsIncludeWord(left, "east")
+    const rightContainsWestLabel = columnLabelsIncludeWord(right, "west")
+
+    // swap 'em if necessary to make sure left is "west" and right is "east"
+    if(leftContainsEastLabel || rightContainsWestLabel) {
+        console.log("...swapping sides!")
+        const temp = left
+        left = right
+        right = temp
+    }
+
+    // the NHL API sometimes returns shoddy data, where once conference is labelled e.g. "Eastern Conference Finals"
+    // but the opposite column is simply labelled "Conference Finals"; we'll try and spackle over that if we see it...
+    // since we've already made sure that left-is-west and right-is-east, we can just hard-code a side that's missing
+    // the correct compass designation
+    if(columnLabelsIncludeWord(left, "west") || columnLabelsIncludeWord(right, "east")) {
+        left = adjustConferenceName(left, 'Western')
+        right = adjustConferenceName(right, 'Eastern')
+    }
+
     return {
         finalTitle: final.title,
         finalLogoUrl: finalSeries.seriesLogo ?? '',
         final,
-        left: buildSide(final.top),
-        right: buildSide(final.bottom),
+        left,
+        right,
     }
 }

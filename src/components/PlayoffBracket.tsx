@@ -110,7 +110,7 @@ function SideColumns({side, sideName}: {side: BracketSideView; sideName: 'left' 
 // Fallback only: the payload carries the NHL's own Stanley Cup shield for every season we've
 // checked, so this hand-drawn stand-in is here for one that doesn't. Flared bowl, narrow collar,
 // and the stepped bands of the base - the gaps between the bands are what make it read as the Cup.
-function CupMark() {
+function HandDrawnStanleyCup() {
     return (
         <svg className='bracket-cup' viewBox='0 0 26 32' aria-hidden='true'>
             <path d='M1.6 1h22.8v2.2H1.6z'/>
@@ -201,7 +201,7 @@ export default function PlayoffBracket({seasonId}: PlayoffBracketProps) {
                     ) : view.finalLogoUrl !== '' ? (
                         <img className='bracket-cup-logo' src={view.finalLogoUrl} alt=''/>
                     ) : (
-                        <CupMark/>
+                        <HandDrawnStanleyCup/>
                     )}
                     <FinalTeam team={final.top}/>
                     <FinalTeam team={final.bottom}/>
