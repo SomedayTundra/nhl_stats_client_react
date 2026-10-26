@@ -1,0 +1,91 @@
+# Deletes old production deployments of main, which nothing else ever cleans up (cleanup-preview.yml
+# only handles PR branches, and Vercel's retention policy can't tell deploy/* apart from the rest).
+# Keeps the live production deployment, the newest KEEP production deployments as Instant Rollback
+# targets, and anything built from a deploy/* branch (historical snapshots, kept indefinitely).
+#
+# Scheduled runs delete. A manual run is a dry run unless "dry_run" is unticked; it lists what it
+# would delete, so check that list before the first real run.
+#
+# Uses the same repo secrets as cleanup-preview.yml: VERCEL_TOKEN, VERCEL_PROJECT_ID, VERCEL_TEAM_ID.
+
+name: Cleanup Production Deployments
+
+on:
+  # weekly, Mon 15:00 UTC
+  schedule:
+    - cron: '0 15 * * 1'
+  workflow_dispatch:
+    inputs:
+      keep:
+        description: 'How many of the newest production deployments to keep'
+        default: '5'
+      dry_run:
+        description: 'Only list what would be deleted'
+        type: boolean
+        default: true
+
+concurrency:
+  group: cleanup-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  delete-old-production:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete old Vercel production deployments
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          VERCEL_TEAM_ID: ${{ secrets.VERCEL_TEAM_ID }}
+          KEEP: ${{ inputs.keep || '5' }}
+          # inputs are empty on a scheduled run, so only an explicit manual dry run skips deleting
+          DRY_RUN: ${{ inputs.dry_run == true }}
+        run: |
+          set -euo pipefail
+          api=https://api.vercel.com
+          auth="Authorization: Bearer $VERCEL_TOKEN"
+
+          live=$(curl -sf "$api/v9/projects/$VERCEL_PROJECT_ID?teamId=$VERCEL_TEAM_ID" -H "$auth" \
+            | jq -r '.targets.production.id // empty')
+          if [ -z "$live" ]; then
+            echo "Couldn't determine the live production deployment; deleting nothing."
+            exit 1
+          fi
+          echo "Live production deployment: $live"
+
+          # the list endpoint pages at 100, newest first; follow pagination.next to the end
+          all=$(mktemp)
+          until_param=""
+          while :; do
+            page=$(curl -sf \
+              "$api/v6/deployments?projectId=$VERCEL_PROJECT_ID&teamId=$VERCEL_TEAM_ID&target=production&limit=100$until_param" \
+              -H "$auth")
+            echo "$page" | jq -c '.deployments[]' >> "$all"
+            next=$(echo "$page" | jq -r '.pagination.next // empty')
+            [ -z "$next" ] && break
+            until_param="&until=$next"
+          done
+          echo "Production deployments found: $(wc -l < "$all")"
+
+          doomed=$(jq -rs --arg live "$live" --argjson keep "$KEEP" '
+            sort_by(-.created) | .[$keep:][]
+            | select(.uid != $live)
+            | select((.meta.githubCommitRef // "") | startswith("deploy/") | not)
+            | "\(.uid) \(.meta.githubCommitRef // "?") \(.created / 1000 | todate) \(.url)"' "$all")
+
+          if [ -z "$doomed" ]; then
+            echo "Nothing to delete."
+            exit 0
+          fi
+
+          echo "$doomed" | while read -r id ref when url; do
+            if [ "$DRY_RUN" = true ]; then
+              echo "Would delete $id ($ref, $when) $url"
+            else
+              echo "Deleting $id ($ref, $when) $url"
+              curl -sf -X DELETE "$api/v13/deployments/$id?teamId=$VERCEL_TEAM_ID" -H "$auth" > /dev/null
+            fi
+          done
