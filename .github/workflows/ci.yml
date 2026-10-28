@@ -31,7 +31,5 @@ jobs:
       # tsc -b && vite build - the same thing Vercel runs
       - run: npm run build
 
-      # non-blocking until the existing findings (react-hooks/set-state-in-effect etc.) are fixed;
-      # drop continue-on-error once `npm run lint` is clean
-      - run: npm run lint
-        continue-on-error: true
+      # fail if there are any lint warnings
+      - run: npm run lint -- --max-warnings 0
