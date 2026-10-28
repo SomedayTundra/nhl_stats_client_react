@@ -94,7 +94,13 @@ function buildColumns(alwaysShowFourL10: boolean) {
         }),
         helper.accessor('goalsFor', {header: 'Goals For', meta: {align: 'center', cellClassName: CLASS_TD_CENTER}}),
         helper.accessor('goalsAgainst', {header: 'Goals Against', meta: {align: 'center', cellClassName: CLASS_TD_CENTER}}),
-        helper.accessor('goalDiff', {header: 'Goal Diff', meta: {align: 'center', cellClassName: CLASS_TD_CENTER}}),
+        helper.accessor('goalDiff', {
+            header: 'Goal Diff',
+            meta: {
+                align: 'center', cellClassName: CLASS_TD_CENTER
+            },
+            cell: (info) => renderGoalDiffValue(info.getValue())
+        }),
         // sorts on the wins of that record, the one number a "who's hot right now" sort wants
         helper.accessor('l10Wins', {
             header: 'Last 10',
@@ -117,9 +123,17 @@ function buildColumns(alwaysShowFourL10: boolean) {
         helper.accessor('l10GoalDiff', {
             header: 'Last 10 GDiff',
             meta: {align: 'center', cellClassName: CLASS_TD_CENTER},
-            cell: (info) => info.getValue() ?? MISSING,
+            cell: (info) => renderGoalDiffValue(info.getValue())
         }),
     ])
+}
+
+function renderGoalDiffValue(value?: number|null) {
+    const textColor = (value == null) ? '' : (value > 0) ? 'text-gdiff-positive' : (value < 0) ? 'text-gdiff-negative' : ''
+    return (
+        <span className={cn('inline-block min-w-[4ch] text-right tabular-nums font-semibold', textColor)}>
+            {value ?? MISSING}
+        </span>)
 }
 
 const EMPTY_DATA: TeamStatEntry[] = []
