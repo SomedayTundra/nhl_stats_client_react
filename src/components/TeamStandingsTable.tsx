@@ -31,7 +31,7 @@ const features = tableFeatures({
     rowSortingFeature,
     sortedRowModel: createSortedRowModel(),
     sortFns: {alphanumeric: sortFn_alphanumeric},
-    columnMeta: metaHelper<{ align: 'left' | 'center'; cellClassName: string }>(),
+    columnMeta: metaHelper<{ align: 'left' | 'center'; cellClassName: string, headerClassName?: string, }>(),
 })
 
 const helper = createColumnHelper<typeof features, TeamStatEntry>()
@@ -63,6 +63,11 @@ function formatPctg(value: number) {
 
 function buildColumns(alwaysShowFourL10: boolean) {
     return helper.columns([
+        helper.display({
+            id: 'rowNumber',
+            cell: ({table, row}) => table.getRowModel().rows.findIndex((r) => r.id === row.id) + 1,
+            meta: {align: 'center', cellClassName: cn(CLASS_TD_CENTER, 'text-row-number pl-1 pr-0'), headerClassName: cn(CLASS_TH_CENTER, 'text-row-number pl-0 pr-0 cursor-default')}
+        }),
         helper.accessor('teamName', {
             header: 'Team',
             sortFn: 'alphanumeric',
@@ -269,7 +274,8 @@ export default function TeamStandingsTable() {
                                     <th
                                         key={header.id}
                                         className={cn(header.column.columnDef.meta?.align === 'left' ? CLASS_TH_LEFT : CLASS_TH_CENTER,
-                                            'shadow-[inset_0_-1px_0_var(--table-border)] sticky top-0 z-10 bg-[var(--table-header-bg)]')}
+                                            header.column.columnDef.meta?.headerClassName,
+                                            'shadow-[inset_0_-1px_0_var(--table-border)] sticky top-0 z-10 bg-(--table-header-bg)')}
                                         onClick={header.column.getToggleSortingHandler()}
                                     >
                                         {!header.isPlaceholder && <table.FlexRender header={header}/>}
