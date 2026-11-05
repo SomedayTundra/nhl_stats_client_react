@@ -1,5 +1,5 @@
 import {useDraggable} from '@dnd-kit/core'
-import {getTeamLogoUrl} from '@/lib/teamLogo.ts'
+import TeamLogo from '@/components/TeamLogo.tsx'
 import type {TeamInfo} from '@/lib/teamGrouping.ts'
 
 type TeamInfoCardProps = {
@@ -11,12 +11,12 @@ type TeamInfoCardProps = {
 export function TeamInfoCardView({info, showTeamNames = true, dragOverlay = false}: TeamInfoCardProps & {dragOverlay?: boolean}) {
     const verbose = false;
 
-    const logoURL = getTeamLogoUrl(info.logo, '2x')
-
     return (
         <div className={dragOverlay ? 'team-info-card team-info-card-drag-overlay' : 'team-info-card'}>
             <div className='team-logo-and-name font-normal'>
-                <img src={logoURL} alt='logo' loading='eager'/>
+                {/* light crests in every theme: the cards stay pale on Aurora (--team-card-bg), where the
+                    white-outlined dark crests wash out. Pass logoDark={info.logoDark} if the cards go dark. */}
+                <TeamLogo logo={info.logo} size='2x' alt='logo' loading='eager'/>
                 {showTeamNames && <span className='team-name-label'>{info.teamName}</span>}
             </div>
             {verbose &&

@@ -1,5 +1,5 @@
 import type * as React from 'react'
-import {getTeamLogoUrl} from '@/lib/teamLogo.ts'
+import TeamLogo from '@/components/TeamLogo.tsx'
 import {usePlayoffs} from '@/hooks/usePlayoffs.ts'
 import {buildBracketView, type BracketSideView, type BracketSlot, type BracketTeamView} from '@/lib/playoffBracket.ts'
 import {seasonIdToLabel} from '@/lib/season.ts'
@@ -13,12 +13,20 @@ type PlayoffBracketProps = {
 // that's what the grid's content-row track below is sized off of
 const BRACKET_ROW_HEIGHT_REM = 2.8
 
-// the NHL's own crest URL, used only when our backend doesn't have that era's logo on disk
-function handleLogoError(event: React.SyntheticEvent<HTMLImageElement>, fallbackUrl: string) {
-    const image = event.currentTarget
-    if (fallbackUrl !== '' && image.src !== fallbackUrl) {
-        image.src = fallbackUrl
-    }
+// a team's crest in the bracket: ours when we have that era's logo on disk, else the NHL's own
+// URL, in the dark-background version on Aurora when there is one
+function BracketLogo({team, className, loading}: {team: BracketTeamView, className?: string, loading?: 'lazy'}) {
+    return (
+        <TeamLogo
+            className={className}
+            loading={loading}
+            logo={team.logoFilename}
+            logoDark={team.logoDarkFilename}
+            fallbackUrl={team.logoFallbackUrl}
+            darkFallbackUrl={team.logoDarkFallbackUrl}
+            size='2x'
+        />
+    )
 }
 
 // each team always shows its own win count in this series - the winner's as a filled pill
@@ -26,12 +34,7 @@ function handleLogoError(event: React.SyntheticEvent<HTMLImageElement>, fallback
 function TeamRow({team}: {team: BracketTeamView}) {
     return (
         <div className='bracket-team' data-outcome={team.won ? 'won' : 'lost'}>
-            <img
-                src={getTeamLogoUrl(team.logoFilename, '2x')}
-                alt=''
-                loading='lazy'
-                onError={(event) => handleLogoError(event, team.logoFallbackUrl)}
-            />
+            <BracketLogo team={team} loading='lazy'/>
             <span className='bracket-team-name'>{team.commonName}</span>
             <span className='bracket-record'>{team.wins}</span>
         </div>
@@ -128,11 +131,7 @@ function HandDrawnStanleyCup() {
 function FinalTeam({team}: {team: BracketTeamView}) {
     return (
         <div className='bracket-final-team' data-outcome={team.won ? 'won' : 'lost'}>
-            <img
-                src={getTeamLogoUrl(team.logoFilename, '2x')}
-                alt=''
-                onError={(event) => handleLogoError(event, team.logoFallbackUrl)}
-            />
+            <BracketLogo team={team}/>
             <span className='bracket-final-name'>{team.commonName}</span>
             <span className='bracket-final-record'>{team.wins}</span>
         </div>
@@ -192,12 +191,7 @@ export default function PlayoffBracket({seasonId}: PlayoffBracketProps) {
                 <SideColumns side={view.left} sideName='left'/>
                 <div className='bracket-final'>
                     {champion !== null ? (
-                        <img
-                            className='bracket-winner-logo'
-                            src={getTeamLogoUrl(champion.logoFilename, '2x')}
-                            alt=''
-                            onError={(event) => handleLogoError(event, champion.logoFallbackUrl)}
-                        />
+                        <BracketLogo team={champion} className='bracket-winner-logo'/>
                     ) : view.finalLogoUrl !== '' ? (
                         <img className='bracket-cup-logo' src={view.finalLogoUrl} alt=''/>
                     ) : (

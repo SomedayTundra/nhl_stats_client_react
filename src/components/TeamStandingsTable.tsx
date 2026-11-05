@@ -7,7 +7,7 @@ import {deserializeDate, getYesterday, limitDateToYesterday, parseApiDateString,
 import {useLocalStorageState} from '@/lib/useLocalStorageState.ts'
 import {useSeasonInfo} from '@/hooks/useSeasonInfo.ts'
 import {useTeamStats} from '@/hooks/useTeamStats.ts'
-import {getTeamLogoUrl} from '@/lib/teamLogo.ts'
+import TeamLogo from '@/components/TeamLogo.tsx'
 import {
     createColumnHelper,
     createSortedRowModel,
@@ -75,7 +75,7 @@ function buildColumns(alwaysShowFourL10: boolean) {
             meta: {align: 'left', cellClassName: 'flex items-center'},
             cell: (info) => (
                 <>
-                    <img className='h-12 w-12 align-middle justify-center' src={getTeamLogoUrl(info.row.original.logo, '2x')} alt='logo'/>
+                    <TeamLogo className='h-12 w-12 align-middle justify-center' logo={info.row.original.logo} logoDark={info.row.original.logoDark} size='2x' alt='logo'/>
                     <p className={CLASS_TD}>{info.getValue()}</p>
                 </>
             ),

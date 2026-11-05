@@ -181,7 +181,7 @@ export default function JiraIssues() {
             <tr
                 key={row.id}
                 onClick={() => selectIssue(row.original.key)}
-                className={cn('cursor-pointer border-t transition-colors hover:bg-muted', row.original.key === selectedKey && 'bg-muted')}
+                className={cn('cursor-pointer border-t border-(--row-number) transition-colors hover:bg-muted', row.original.key === selectedKey && 'bg-muted')}
             >
                 {row.getAllCells().map(cell => (
                     <td key={cell.id} className={cn(CLASS_TD, cell.column.id !== 'summary' && 'whitespace-nowrap')}>

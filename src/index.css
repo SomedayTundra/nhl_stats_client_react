@@ -1,8 +1,12 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+/* the SomedayTundra themes (Glacier Forest and Aurora): --st-* tokens on <html data-theme="…">,
+   with Tailwind names like bg-st-surface; the shadcn tokens below are mapped onto them */
+@import "@somedaytundra/theme/theme.css";
 
-@custom-variant dark (&:is(.dark *));
+/* shadcn's dark: tweaks follow the dark ST theme rather than a .dark class */
+@custom-variant dark (&:where([data-theme="aurora"], [data-theme="aurora"] *));
 
 @theme inline {
     --radius-sm: calc(var(--radius) - 4px);
@@ -30,55 +34,73 @@
     --color-border: var(--border);
     --color-input: var(--input);
     --color-ring: var(--ring);
-    --color-row-number: var(--color-gray-300);
+    --color-row-number: var(--row-number);
     --color-gdiff-positive: var(--color-green-600);
     --color-gdiff-negative: var(--color-red-600);
 }
 
 :root {
     --radius: 0.625rem;
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.145 0 0);
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.145 0 0);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.205 0 0);
-    --primary-foreground: oklch(0.985 0 0);
-    --secondary: oklch(0.97 0 0);
-    --secondary-foreground: oklch(0.205 0 0);
-    --muted: oklch(0.97 0 0);
-    --muted-foreground: oklch(0.556 0 0);
-    /* accent is themed to the navbar palette (see --navbar-* below); kept here so all
-       shadcn-contract tokens live in one place and the pair stays self-consistent */
-    --accent: var(--navbar-bg);
-    --accent-foreground: var(--navbar-fg);
+    /* shadcn's tokens, mapped onto the current ST theme. They're var()s, so one mapping covers both
+       themes: each resolves against whichever --st-* values <html data-theme> has. */
+    --background: var(--st-page);
+    --foreground: var(--st-ink);
+    --card: var(--st-surface-solid);
+    --card-foreground: var(--st-ink);
+    --popover: var(--st-surface-solid);
+    --popover-foreground: var(--st-ink);
+    --primary: var(--st-accent);
+    --primary-foreground: var(--st-accent-ink);
+    --secondary: var(--st-nav-hover);
+    --secondary-foreground: var(--st-ink);
+    --muted: var(--st-line-soft);
+    --muted-foreground: var(--st-muted);
+    /* shadcn's hover/selected highlight: the one hover shade on the ST blue scale */
+    --accent: var(--st-accent-tint);
+    --accent-foreground: var(--st-accent-soft-ink);
     --destructive: oklch(0.577 0.245 27.325);
-    --border: #8dfb72;
-    --input: oklch(0.922 0 0);
-    --ring: oklch(0.708 0 0);
-    --text: #212B3F;
-    --text-h: #08060d;
-    --bg: #fff;
-    --table-border: #000;
-    /* sticky header row of the standings and Jira tables: a pale tint of the navbar blue, navbar navy text */
-    --table-header-bg: #D9E6FF;
-    --table-header-fg: var(--navbar-fg);
+    --border: var(--st-line);
+    --input: var(--st-line);
+    --ring: var(--st-accent);
+    --text: var(--st-ink);
+    --text-h: var(--st-ink);
+    /* panels and overlays (Jira issue overlay, patch notes) */
+    --bg: var(--st-surface-solid);
+    --table-border: var(--st-ink);
+    /* the standings' row numbers sit faintly in the background: about 1.4:1 against the page in
+       both themes (gray-300 on Glacier Forest's near-white, gray-800 on Aurora's near-black) */
+    --row-number: var(--color-gray-300);
+    /* Every blue below comes from the ST theme's scale, lightest to darkest: st-accent-soft (resting
+       tints), st-accent-tint (hover and highlight), st-accent-soft-ink (blue text on a tint),
+       st-accent (solid blue), st-ink (navy). */
+    /* sticky header row of the standings and Jira tables */
+    --table-header-bg: var(--st-accent-soft);
+    --table-header-fg: var(--st-accent-soft-ink);
 
-    --navbar-bg: #B0CCFF;
-    --navbar-fg: #263D69;
+    /* named for the old navbar palette; still used for chips, the chart grid, the footer, Jira keys */
+    --navbar-bg: var(--st-accent-tint);
+    --navbar-fg: var(--st-accent-soft-ink);
 
-    --league-board-bg-dark: #212B3F;
-    --league-board-bg-light: rgb(33 43 63 / 0.75);
+    --league-board-bg-dark: var(--st-ink);
+    --league-board-bg-light: color-mix(in srgb, var(--st-ink) 75%, transparent);
     --league-board-text-header: var(--navbar-bg);
     --league-board-text-conference: #ffffff;
-    --league-board-text-division: #B0CCFF;
+    --league-board-text-division: var(--st-accent-tint);
 
     /* the bucket now wears the navbar palette: navbar-bg fill, navbar-fg (dark blue) text.
        -bg-light is the drag-over highlight, kept a shade lighter than the base fill. */
     --unplaced-team-bucket-bg-dark: var(--navbar-bg);
-    --unplaced-team-bucket-bg-light: #D9E6FF;
+    --unplaced-team-bucket-bg-light: var(--st-accent-tint);
     --unplaced-team-bucket-text-color: var(--navbar-fg);
+    /* the bucket's own fill; the same pale blue as the table headers, but its own variable so
+       the two can differ per theme */
+    --unplaced-team-bucket-bg: var(--table-header-bg);
+
+    /* the division drop areas, the team cards, and the white score pills in the bucket */
+    --league-board-drop-bg: #fff;
+    --league-board-drop-text: #333;
+    --team-card-bg: var(--st-line);
+    --quiz-pill-bg: #fff;
 
     --shadow: rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
 
@@ -88,13 +110,46 @@
 
     font: 18px/145% var(--sans);
     letter-spacing: 0.18px;
-    color-scheme: light dark;
+    /* no color-scheme here: the ST theme sets light or dark to match itself */
     color: var(--text);
-    background: var(--bg);
+    background: var(--st-page);
     font-synthesis: none;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+}
+
+[data-theme="aurora"] {
+    --row-number: var(--color-gray-800);
+
+    /* Aurora's st-accent-soft is a translucent tint, which would let rows scroll through the sticky
+       header; this is the same tint (#5BE7A9 at 11%) laid opaquely over the solid surface */
+    --table-header-bg: color-mix(in srgb, #5BE7A9 11%, var(--st-surface-solid));
+
+    /* shadcn draws dark-mode control fills as --input at 30% (50% on hover), so a lighter --input
+       lifts the date picker, selects and outline buttons off the near-black page */
+    --input: #3B5169;
+
+    /* League Shape Quiz: a deep blue-black frame, light text, and the aurora's teal, violet and
+       green for the header, division names and drag highlights */
+    --league-board-bg-dark: #101A26;
+    --league-board-bg-light: rgba(91, 231, 169, 0.16);
+    --league-board-text-header: #4CCFE0;
+    --league-board-text-conference: #E7EEF4;
+    --league-board-text-division: #C4B2FF;
+    --league-board-drop-bg: #0C1118;
+    --league-board-drop-text: #E7EEF4;
+    --unplaced-team-bucket-bg: #101A26;
+    --unplaced-team-bucket-bg-light: rgba(76, 207, 224, 0.16);
+    --unplaced-team-bucket-text-color: #E7EEF4;
+    --quiz-pill-bg: rgba(76, 207, 224, 0.14);
+    /* team cards stay pale: several crests are mostly black and would vanish on a dark card */
+    --team-card-bg: #C5D1DE;
+}
+
+/* the cards' text is set dark on their pale fill; they otherwise inherit the board's light text */
+[data-theme="aurora"] .team-info-card {
+    color: #0E2238;
 }
 
 #root {
@@ -136,11 +191,13 @@ p {
 }
 
 .navbar {
-    background-color: var(--navbar-bg);
-    color: var(--navbar-fg);
+    background-color: var(--st-sidebar);
+    color: var(--st-ink);
+    border-bottom: 1px solid var(--st-line);
+    backdrop-filter: blur(12px);
 
-    .label {
-        color: var(--navbar-fg);
+    .navbar-label {
+        color: var(--st-accent);
     }
 }
 
@@ -180,16 +237,16 @@ p {
     display: flex;
     flex-direction: column;
     gap: 2rem;
-    /* the division drop-target areas are white */
-    background: var(--bg);
-    color: #333;
+    /* the division drop-target areas: white on Glacier Forest, near-black on Aurora */
+    background: var(--league-board-drop-bg);
+    color: var(--league-board-drop-text);
 }
 
 .league-ref-one-conference-container {
     width: 100%;
     display: flex;
     flex-direction: column;
-    color: #333;
+    color: var(--league-board-drop-text);
 }
 
 .conference-name-row {
@@ -205,7 +262,7 @@ p {
     width: 100%;
     display: flex;
     flex-direction: column;
-    color: #333;
+    color: var(--league-board-drop-text);
 }
 
 .league-ref-one-division-container-drag-over {
@@ -225,8 +282,8 @@ p {
 
 .unplaced-team-bucket-content {
     font-weight: bold;
-    border: clamp(0.15rem, 1cqh, 0.5rem) solid var(--table-header-bg);
-    background: var(--table-header-bg);
+    border: clamp(0.15rem, 1cqh, 0.5rem) solid var(--unplaced-team-bucket-bg);
+    background: var(--unplaced-team-bucket-bg);
     border-radius: 0.75rem;
     overflow: hidden;
     height: 100%;
@@ -239,7 +296,7 @@ p {
 /* header + scoreboard share one dark band */
 .unplaced-team-bucket-heading {
     width: 100%;
-    background: var(--table-header-bg);
+    background: var(--unplaced-team-bucket-bg);
     color: var(--unplaced-team-bucket-text-color);
 }
 
@@ -335,7 +392,7 @@ p {
    resolves against the one size container wrapping both, but the bucket is also its own
    inline-size container (for .quiz-results' cqw), so a cqw-based size would differ between them */
 .team-info-card {
-    background: #d7dee8;
+    background: var(--team-card-bg);
     font-size: clamp(0.42rem, 1.15cqh, 0.68rem);
     font-style: normal;
     width: clamp(2.625rem, 11cqh, 6.75rem);
@@ -395,12 +452,21 @@ p {
 .bracket {
     --bracket-gap: 0.875rem;
     --bracket-stub: calc(var(--bracket-gap) / 2);
-    --bracket-rule: #a9bfe4;
-    --bracket-hairline: #e2e9f6;
+    /* the connectors want a mid blue, between the tints and the solid accent */
+    --bracket-rule: color-mix(in srgb, var(--st-accent) 40%, var(--st-surface-solid));
+    --bracket-hairline: var(--st-line);
     --bracket-ink: var(--league-board-bg-dark);
-    --bracket-frost: #eaf1ff;
+    --bracket-frost: var(--st-accent-soft);
     --bracket-silver: #ccd5e4;
-    --bracket-dim: #77839c;
+    --bracket-dim: var(--st-muted);
+    /* the remaining colors, as variables so Aurora can swap them (see the block after this one) */
+    --bracket-text: var(--st-ink);
+    --bracket-label: var(--st-muted);
+    --bracket-card-bg: #fff;
+    --bracket-record-fg: #000;
+    --bracket-won-bg: var(--navbar-bg);
+    --bracket-won-fg: var(--navbar-fg);
+    --bracket-final-shadow: color-mix(in srgb, var(--st-ink) 35%, transparent);
     /* a series' two team rows, and the Final panel's two finalist rows, are all pinned to this -
        see .bracket-team and .bracket-final-team. Also mirrored as a plain number in
        PlayoffBracket.tsx (BRACKET_ROW_HEIGHT_REM), which needs it to size the grid's row track. */
@@ -420,7 +486,25 @@ p {
     padding: 0.9rem 0.75rem;
     box-sizing: border-box;
     text-align: left;
-    color: var(--navbar-fg);
+    color: var(--bracket-text);
+}
+
+/* Aurora: light text on cards a step lighter than the page, with the aurora's teal for the rules
+   and the Final's frame, violet for the champion's ring and green for the winner's record chip */
+[data-theme="aurora"] .bracket {
+    --bracket-rule: rgba(76, 207, 224, 0.5);
+    --bracket-hairline: #223142;
+    --bracket-ink: #4CCFE0;
+    --bracket-frost: #172433;
+    --bracket-silver: #C4B2FF;
+    --bracket-dim: #93A5B8;
+    --bracket-text: #E7EEF4;
+    --bracket-label: #93A5B8;
+    --bracket-card-bg: #101822;
+    --bracket-record-fg: #E7EEF4;
+    --bracket-won-bg: rgba(91, 231, 169, 0.2);
+    --bracket-won-fg: #7EF0BE;
+    --bracket-final-shadow: rgba(76, 207, 224, 0.3);
 }
 
 /* the panel wrapping the bracket (or the message standing in for it, while loading/empty) keeps a
@@ -455,7 +539,7 @@ p {
     font-weight: 500;
     line-height: 1.25;
     text-align: center;
-    color: #4b5f86;
+    color: var(--bracket-label);
     overflow-wrap: break-word;
 }
 
@@ -483,16 +567,16 @@ p {
 
 .bracket-series {
     position: relative;
-    background: #fff;
+    background: var(--bracket-card-bg);
     border: 1px solid var(--bracket-hairline);
     border-radius: 0.375rem;
     overflow: hidden;
 }
 
-/* cards gain weight as they near the Cup: depth 0 is the round that feeds the final */
+/* cards gain weight as they near the Cup: depth 0 is the round that feeds the final. Same fill
+   as every other card: a tint here read as see-through against the page. */
 .bracket-series[data-depth='0'] {
     border-color: var(--bracket-rule);
-    background: #f7faff;
 }
 
 .bracket-team {
@@ -524,7 +608,7 @@ p {
     font-size: var(--bracket-name-size);
     line-height: 1.15;
     font-weight: 600;
-    color: var(--navbar-fg);
+    color: var(--bracket-text);
     /* two lines fits the two-word names ("Golden Knights", "Maple Leafs") outright; break-word is
        the backstop for the long single-word ones ("Hurricanes") in a narrow first-round column,
        so a name that still doesn't fit wraps instead of being clipped mid-letter */
@@ -535,23 +619,23 @@ p {
     overflow-wrap: break-word;
 }
 
-/* the eliminated team's own win count: black digit on a white pill shaped and padded exactly like
-   the navbar-blue one below, so both sit in the same footprint and every row's numbers line up -
-   the white just blends into the card's own white background, rather than announcing a pill */
+/* the eliminated team's own win count: a plain digit on a pill shaped and padded exactly like the
+   winner's colored one below, so both sit in the same footprint and every row's numbers line up -
+   the pill is the card's own fill, so it blends in rather than announcing itself */
 .bracket-record {
     flex: none;
     font-size: 0.66rem;
     font-weight: 700;
     font-variant-numeric: tabular-nums;
-    color: #000;
-    background: #fff;
+    color: var(--bracket-record-fg);
+    background: var(--bracket-card-bg);
     border-radius: 999px;
     padding: 0.05rem 0.3rem;
 }
 
 .bracket-team[data-outcome='won'] .bracket-record {
-    background: var(--navbar-bg);
-    color: var(--navbar-fg);
+    background: var(--bracket-won-bg);
+    color: var(--bracket-won-fg);
 }
 
 /* the right half is a true mirror: logo to the outside, record toward the middle */
@@ -573,14 +657,14 @@ p {
     padding: 0.3rem 0.5rem;
     border: 1px dashed var(--bracket-rule);
     border-radius: 0.375rem;
-    background: #fbfcff;
+    background: var(--bracket-card-bg);
 }
 
 .bracket-bye-team {
     font-size: var(--bracket-name-size);
     line-height: 1.15;
     font-weight: 600;
-    color: var(--navbar-fg);
+    color: var(--bracket-text);
 }
 
 .bracket-bye-note {
@@ -669,9 +753,9 @@ p {
     gap: 0.5rem;
     padding: 0.875rem 0.75rem 0.75rem;
     border-radius: 0.75rem;
-    background: #fff;
+    background: var(--bracket-card-bg);
     border: 2px solid var(--bracket-ink);
-    box-shadow: 0 16px 32px -20px rgba(33, 43, 63, 0.35);
+    box-shadow: 0 16px 32px -20px var(--bracket-final-shadow);
 }
 
 .bracket-cup {
@@ -709,7 +793,7 @@ p {
     padding: 0.4rem 0.5rem;
     border-radius: 0.5rem;
     background: var(--bracket-frost);
-    color: var(--navbar-fg);
+    color: var(--bracket-text);
 }
 
 /* both finalists get the same tile; the silver ring is what marks the champion */
@@ -732,8 +816,8 @@ p {
     line-height: 1.15;
 }
 
-/* same convention as the side rounds' .bracket-record: black digit for the runner-up, on a pill
-   shaped/padded to match the champion's navbar-blue one below so both sit in the same footprint -
+/* same convention as the side rounds' .bracket-record: plain digit for the runner-up, on a pill
+   shaped/padded to match the champion's colored one below so both sit in the same footprint -
    colored to match the finalist tile (--bracket-frost), not literal white, since that's what it's
    actually sitting on here, so the pill still doesn't announce itself */
 .bracket-final-record {
@@ -741,15 +825,15 @@ p {
     font-size: 0.75rem;
     font-weight: 700;
     font-variant-numeric: tabular-nums;
-    color: #000;
+    color: var(--bracket-record-fg);
     background: var(--bracket-frost);
     border-radius: 999px;
     padding: 0.05rem 0.35rem;
 }
 
 .bracket-final-team[data-outcome='won'] .bracket-final-record {
-    background: var(--navbar-bg);
-    color: var(--navbar-fg);
+    background: var(--bracket-won-bg);
+    color: var(--bracket-won-fg);
 }
 
 
@@ -840,6 +924,12 @@ p {
 
     h2[data-category='misc'] {
         --category-color: #5b21b6 /* dark purple */
+    }
+
+    /* on Aurora the dark purple nearly vanishes; this violet (~9:1 against the page)
+       stands out nearly as well as the green "NHL Stats" label (~12:1) */
+    [data-theme="aurora"] & h2[data-category='misc'] {
+        --category-color: #BCA4FF
     }
 
     h2[data-category] {

@@ -46,7 +46,9 @@ function TooltipContent({
         sideOffset={sideOffset}
         side={side}
         className={cn(
-          `z-50 w-fit rounded-md bg-(--navbar-fg) px-3 py-1.5 text-xs text-balance text-white animate-in fade-in-0 zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2`,
+          // the theme's text color for its accent fill: white on Glacier Forest's dark blue, near-black
+          // on Aurora's pale green
+          `z-50 w-fit rounded-md bg-(--navbar-fg) px-3 py-1.5 text-xs text-balance text-st-accent-ink animate-in fade-in-0 zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2`,
           className
         )}
         {...props}

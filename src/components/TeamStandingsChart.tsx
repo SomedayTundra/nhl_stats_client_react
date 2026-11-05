@@ -13,7 +13,7 @@ import DatePickerWithNav from '@/components/DatePickerWithNav.tsx'
 import {SeasonSelect} from '@/components/SeasonSelect.tsx'
 import TeamChooser from '@/components/TeamChooser.tsx'
 import {Button} from '@/components/ui/button'
-import {Checkbox} from '@/components/ui/checkbox'
+import {Switch} from '@/components/ui/switch'
 import {Field, FieldGroup, FieldLabel} from '@/components/ui/field.tsx'
 import {Tooltip, TooltipContent, TooltipTrigger} from '@/components/ui/tooltip'
 import {deserializeDate, formatApiDateForDisplay, formatDateForApi, limitDateToYesterday, parseApiDateString, serializeDate} from '@/lib/date.ts'
@@ -22,7 +22,9 @@ import {useLocalStorageState} from '@/lib/useLocalStorageState.ts'
 import {useSeasonInfo} from '@/hooks/useSeasonInfo.ts'
 import {useTeamStats} from '@/hooks/useTeamStats.ts'
 import {usePlayoffs} from '@/hooks/usePlayoffs.ts'
-import {getTeamLogoUrl} from '@/lib/teamLogo.ts'
+import {getTeamLogoUrl, themedLogoFilename} from '@/lib/teamLogo.ts'
+import TeamLogo from '@/components/TeamLogo.tsx'
+import {useTheme} from '@somedaytundra/theme'
 import {addDays, isAfter, isBefore, isSameDay, subDays} from 'date-fns'
 import {type BracketTeamView, buildBracketView, type NhlBracketPayload} from '@/lib/playoffBracket.ts'
 import nhlLogoSmall from '@/assets/nhl_logo_small.png'
@@ -69,7 +71,7 @@ const LOGO_SIZE_STEP = 8
 const DEFAULT_LOGO_SIZE = 48
 
 // each team's line color comes from the backend (chartLineColor, measured from that season's
-// logo). This is a safety net only, for a backend that predates that field or a team it hasn't
+// logo; chartLineColorDark on Aurora, when the backend has one). This is a safety net only, for a backend that predates that field or a team it hasn't
 // colored yet
 const randomColorCache = new Map<string, string>()
 
@@ -190,6 +192,8 @@ export default function TeamStandingsChart() {
     })
 
     const [showDots, setShowDots] = useLocalStorageState<boolean>('nhlStats.chart.showDots', false)
+    // the chart's logos use the dark-background crests on Aurora
+    const darkTheme = useTheme().theme === 'aurora'
     const [logoSize, setLogoSize] = useLocalStorageState<number>('nhlStats.chart.logoSize', DEFAULT_LOGO_SIZE)
     const [sidebarIconMode, setSidebarIconMode] = useLocalStorageState<SidebarIconMode>('nhlStats.chart.sidebarIconMode', 'swatch', {
         deserialize: (raw) => {
@@ -525,9 +529,10 @@ export default function TeamStandingsChart() {
             // add an entry associating this team's abbreviation with this team's points
             existingDate[teamStatEntry.teamAbbrev] = teamStatEntry[statName]
             teamNameByAbbrev.set(teamStatEntry.teamAbbrev, teamStatEntry.teamName)
-            teamLogoByAbbrev.set(teamStatEntry.teamAbbrev, teamStatEntry.logo)
-            if (teamStatEntry.chartLineColor) {
-                teamColorByAbbrev.set(teamStatEntry.teamAbbrev, teamStatEntry.chartLineColor)
+            teamLogoByAbbrev.set(teamStatEntry.teamAbbrev, themedLogoFilename(teamStatEntry.logo, teamStatEntry.logoDark, darkTheme))
+            const lineColor = (darkTheme && teamStatEntry.chartLineColorDark) || teamStatEntry.chartLineColor
+            if (lineColor) {
+                teamColorByAbbrev.set(teamStatEntry.teamAbbrev, lineColor)
             }
         })
 
@@ -721,15 +726,14 @@ export default function TeamStandingsChart() {
                     <TooltipContent side='top'>Line Type</TooltipContent>
                 </Tooltip>
                 <FieldGroup className='w-auto shrink-0'>
-                    <Field orientation='horizontal' className='gap-0.5'>
-                        <Checkbox
-                            id='show-dots-checkbox-basic'
-                            name='show-dots-checkbox-basic'
+                    <Field orientation='horizontal' className='gap-2'>
+                        <Switch
+                            id='show-dots-switch'
+                            name='show-dots-switch'
                             checked={showDots}
-                            onCheckedChange={(checked) => setShowDots(checked === true)}
-                            className='border-neutral-800'
+                            onCheckedChange={setShowDots}
                         />
-                        <FieldLabel htmlFor='show-dots-checkbox-basic' className='whitespace-nowrap'>
+                        <FieldLabel htmlFor='show-dots-switch' className='whitespace-nowrap'>
                             Show Dots
                         </FieldLabel>
                     </Field>
@@ -760,7 +764,7 @@ export default function TeamStandingsChart() {
                                 aria-pressed={sidebarIconMode === 'logo'}
                                 aria-label={sidebarIconMode === 'logo' ? 'Showing team logos in the sidebar' : 'Showing team swatches in the sidebar'}
                                 className={cn(
-                                    'flex items-center justify-center shrink-0 rounded-md p-1 hover:bg-accent hover:text-accent-foreground',
+                                    'flex items-center justify-center shrink-0 rounded-md border border-transparent dark:border-input p-1 hover:bg-accent hover:text-accent-foreground',
                                     sidebarIconMode === 'logo' && 'bg-accent text-accent-foreground',
                                 )}
                             >
@@ -771,9 +775,12 @@ export default function TeamStandingsChart() {
                                     // and scaling the image up crops most of that padding away rather
                                     // than just shrinking the visible mark inside a bigger empty box
                                     <span className='relative size-8 shrink-0 overflow-hidden rounded-sm'>
-                                        <img
-                                            src={getTeamLogoUrl(cupChampion.logoFilename, '1x')}
-                                            alt=''
+                                        <TeamLogo
+                                            logo={cupChampion.logoFilename}
+                                            logoDark={cupChampion.logoDarkFilename}
+                                            fallbackUrl={cupChampion.logoFallbackUrl}
+                                            darkFallbackUrl={cupChampion.logoDarkFallbackUrl}
+                                            size='1x'
                                             className='absolute inset-0 h-full w-full scale-[1.4] object-contain'
                                         />
                                     </span>

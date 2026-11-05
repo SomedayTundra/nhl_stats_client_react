@@ -39,7 +39,7 @@ export function QuizResults({teamsSorted, correctGuesses, incorrectGuesses, era,
             <span className="quiz-results-line">
                 You correctly sorted {teamsSorted} teams in {correctGuesses + incorrectGuesses} attempts
             </span>
-            <span className="quiz-results-line rounded-md bg-white px-3 py-0.5">
+            <span className="quiz-results-line rounded-md bg-(--quiz-pill-bg) px-3 py-0.5">
                 Your score is: <span className={cn('font-bold', scoreColor(scorePercent))}>{scorePercent}%</span>
             </span>
             <div className="quiz-results-details">

@@ -14,6 +14,9 @@ import { CalendarIcon, ChevronFirstIcon, ChevronLastIcon, ChevronLeftIcon, Chevr
 import type {OnSelectHandler} from "react-day-picker"
 import {useState} from 'react'
 
+// the step buttons either side of the date. Disabled ones (at the season's first or last day) fade
+// further than the Button default's 50%, so they read as unavailable rather than just quieter.
+const NAV_BUTTON_CLASS = 'bg-st-accent-soft hover:bg-accent hover:text-accent-foreground disabled:opacity-30'
 
 type DatePickerWithNavProps = {
     id: string
@@ -98,7 +101,7 @@ export default function DatePickerWithNav({id, date, setDate, tooltip, label, mi
                 {minDate && (
                     <Tooltip>
                         <TooltipTrigger asChild>
-                            <Button variant="outline" size="icon-xs" className="rounded-r-none bg-blue-100 hover:bg-accent hover:text-accent-foreground" onClick={goToFirstDay} disabled={atOrBeforeMin} aria-label="First day">
+                            <Button variant="outline" size="icon-xs" className={`rounded-r-none ${NAV_BUTTON_CLASS}`} onClick={goToFirstDay} disabled={atOrBeforeMin} aria-label="First day">
                                 <ChevronFirstIcon />
                             </Button>
                         </TooltipTrigger>
@@ -107,7 +110,7 @@ export default function DatePickerWithNav({id, date, setDate, tooltip, label, mi
                 )}
                 <Tooltip>
                     <TooltipTrigger asChild>
-                        <Button variant="outline" size="icon-xs" className={`bg-blue-100 hover:bg-accent hover:text-accent-foreground ${weekBackIsLeftmost ? 'rounded-r-none' : 'rounded-none'}`} onClick={goToPreviousWeek} disabled={atOrBeforeMin} aria-label="Previous week">
+                        <Button variant="outline" size="icon-xs" className={`${NAV_BUTTON_CLASS} ${weekBackIsLeftmost ? 'rounded-r-none' : 'rounded-none'}`} onClick={goToPreviousWeek} disabled={atOrBeforeMin} aria-label="Previous week">
                             <ChevronsLeftIcon />
                         </Button>
                     </TooltipTrigger>
@@ -115,7 +118,7 @@ export default function DatePickerWithNav({id, date, setDate, tooltip, label, mi
                 </Tooltip>
                 <Tooltip>
                     <TooltipTrigger asChild>
-                        <Button variant="outline" size="icon-xs" className="rounded-none bg-blue-100 hover:bg-accent hover:text-accent-foreground" onClick={goToPreviousDay} disabled={atOrBeforeMin} aria-label="Previous day">
+                        <Button variant="outline" size="icon-xs" className={`rounded-none ${NAV_BUTTON_CLASS}`} onClick={goToPreviousDay} disabled={atOrBeforeMin} aria-label="Previous day">
                             <ChevronLeftIcon />
                         </Button>
                     </TooltipTrigger>
@@ -152,7 +155,7 @@ export default function DatePickerWithNav({id, date, setDate, tooltip, label, mi
                 </Popover>
                 <Tooltip>
                     <TooltipTrigger asChild>
-                        <Button variant="outline" size="icon-xs" className="rounded-none bg-blue-100 hover:bg-accent hover:text-accent-foreground" onClick={goToNextDay} disabled={atOrAfterMax} aria-label="Next day">
+                        <Button variant="outline" size="icon-xs" className={`rounded-none ${NAV_BUTTON_CLASS}`} onClick={goToNextDay} disabled={atOrAfterMax} aria-label="Next day">
                             <ChevronRightIcon />
                         </Button>
                     </TooltipTrigger>
@@ -160,7 +163,7 @@ export default function DatePickerWithNav({id, date, setDate, tooltip, label, mi
                 </Tooltip>
                 <Tooltip>
                     <TooltipTrigger asChild>
-                        <Button variant="outline" size="icon-xs" className={`bg-blue-100 hover:bg-accent hover:text-accent-foreground ${weekForwardIsRightmost ? 'rounded-l-none' : 'rounded-none'}`} onClick={goToNextWeek} disabled={atOrAfterMax} aria-label="Next week">
+                        <Button variant="outline" size="icon-xs" className={`${NAV_BUTTON_CLASS} ${weekForwardIsRightmost ? 'rounded-l-none' : 'rounded-none'}`} onClick={goToNextWeek} disabled={atOrAfterMax} aria-label="Next week">
                             <ChevronsRightIcon />
                         </Button>
                     </TooltipTrigger>
@@ -169,7 +172,7 @@ export default function DatePickerWithNav({id, date, setDate, tooltip, label, mi
                 {maxDate && (
                     <Tooltip>
                         <TooltipTrigger asChild>
-                            <Button variant="outline" size="icon-xs" className="rounded-l-none bg-blue-100 hover:bg-accent hover:text-accent-foreground" onClick={goToLastDay} disabled={atOrAfterMax} aria-label="Last day">
+                            <Button variant="outline" size="icon-xs" className={`rounded-l-none ${NAV_BUTTON_CLASS}`} onClick={goToLastDay} disabled={atOrAfterMax} aria-label="Last day">
                                 <ChevronLastIcon />
                             </Button>
                         </TooltipTrigger>

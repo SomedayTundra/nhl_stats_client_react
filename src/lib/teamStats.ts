@@ -5,7 +5,12 @@ export type TeamStatEntry = {
     teamCommonName: string,
     teamAbbrev: string,
     logo: string,
+    // the dark-background crest, for Aurora; null when the NHL has no dark version of it
+    logoDark?: string | null,
     chartLineColor?: string | null,
+    // Aurora's line color, only for teams whose light one is too dark to read there or looks
+    // noticeably different on the dark crest; null means use chartLineColor in both themes
+    chartLineColorDark?: string | null,
     gamesPlayed: number,
     winPctg: number,
     wins: number,

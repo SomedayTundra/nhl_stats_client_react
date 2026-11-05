@@ -8,6 +8,8 @@ export type TeamInfo = {
     teamName: string
     teamCommonName: string
     logo: string
+    // the dark-background crest, for Aurora; null when the NHL has no dark version of it
+    logoDark?: string | null
     conferenceName?: string
     conferenceAbbrev?: string
     divisionName: string

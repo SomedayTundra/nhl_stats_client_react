@@ -1,11 +1,13 @@
 import {Link, Outlet} from '@tanstack/react-router'
 import logo from "../assets/nhl_logo.png"
 import {ReactQueryDevtools} from '@tanstack/react-query-devtools'
+import {ThemeToggle} from '@somedaytundra/theme'
 
 const NavBar = () => {
 
-    const inactiveClass = 'text-[var(--navbar-fg)] hover:bg-[var(--navbar-fg)] hover:text-[var(--navbar-bg)] rounded-md px-3 py-2';
-    const activeClass = 'text-white bg-[var(--navbar-fg)] hover:bg-[var(--navbar-fg)] hover:text-white rounded-md px-3 py-2';
+    // the SomedayTundra theme's nav colors, matching the dashboard's sidebar; Link marks the current
+    // page with data-status="active"
+    const navClass = 'text-st-ink-2 hover:bg-st-nav-hover hover:text-st-ink rounded-md px-3 py-2 data-[status=active]:bg-st-accent-soft data-[status=active]:text-st-accent-soft-ink';
 
     return (
         <div className="flex flex-col h-full min-h-0">
@@ -23,13 +25,15 @@ const NavBar = () => {
                                     NHL Stats
                                 </span>
                             </Link>
-                            <Link className={inactiveClass} activeProps={{className: activeClass}} to="/nhl_standings">Standings</Link>
-                            <Link className={inactiveClass} activeProps={{className: activeClass}} to="/nhl_stats_chart">Chart</Link>
-                            <Link className={inactiveClass} activeProps={{className: activeClass}} to="/nhl_playoffs">Playoffs</Link>
-                            <Link className={inactiveClass} activeProps={{className: activeClass}} to="/league_shape_quiz">Quiz</Link>
-                            <Link className={`${inactiveClass} ml-auto`} activeProps={{className: `${activeClass} ml-auto`}} to="/jira">Jira</Link>
-                            <Link className={inactiveClass} activeProps={{className: activeClass}} to="/about/patch_notes">Patch Notes</Link>
-                            {import.meta.env.DEV && <ReactQueryDevtools/>}
+                            <Link className={navClass} to="/nhl_standings">Standings</Link>
+                            <Link className={navClass} to="/nhl_stats_chart">Chart</Link>
+                            <Link className={navClass} to="/nhl_playoffs">Playoffs</Link>
+                            <Link className={navClass} to="/league_shape_quiz">Quiz</Link>
+                            <Link className={`${navClass} ml-auto`} to="/jira">Jira</Link>
+                            <Link className={navClass} to="/about/patch_notes">Patch Notes</Link>
+                            <div className="ml-3 flex items-center">
+                                <ThemeToggle compact animationToggle={false}/>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -37,6 +41,8 @@ const NavBar = () => {
             <div className="flex-1 min-h-0 overflow-y-auto">
                 <Outlet/>
             </div>
+            {/* outside the nav: its backdrop-filter would pin the devtools' fixed button to the nav */}
+            {import.meta.env.DEV && <ReactQueryDevtools/>}
         </div>
     );
 };

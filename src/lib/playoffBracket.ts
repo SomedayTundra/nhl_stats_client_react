@@ -16,6 +16,8 @@ export type NhlBracketTeam = {
     name?: {default?: string}
     commonName?: {default?: string}
     logo?: string
+    // the same crest recolored for a dark background (absent on a few historical crests)
+    darkLogo?: string
 }
 
 export type NhlBracketSeries = {
@@ -43,6 +45,9 @@ export type BracketTeamView = {
     // crest the team wore that season), plus the NHL's own URL to fall back to if we don't have it
     logoFilename: string
     logoFallbackUrl: string
+    // the same pair for the dark-background crest, used on Aurora
+    logoDarkFilename: string
+    logoDarkFallbackUrl: string
     wins: number
     losses: number
     won: boolean
@@ -87,11 +92,14 @@ export type BracketView = {
 
 function teamView(team: NhlBracketTeam, wins: number, opponentWins: number, won: boolean): BracketTeamView {
     const logoUrl = team.logo ?? ''
+    const darkLogoUrl = team.darkLogo ?? ''
     return {
         id: team.id,
         commonName: team.commonName?.default ?? team.name?.default ?? team.abbrev,
         logoFilename: logoUrl.split('/').pop() ?? '',
         logoFallbackUrl: logoUrl,
+        logoDarkFilename: darkLogoUrl.split('/').pop() ?? '',
+        logoDarkFallbackUrl: darkLogoUrl,
         wins,
         losses: opponentWins,
         won,

@@ -3,8 +3,8 @@
 import {useEffect, useRef} from 'react'
 import {Dice5Icon} from 'lucide-react'
 import {Button} from '@/components/ui/button'
-import {Checkbox} from '@/components/ui/checkbox'
 import {FieldLabel} from '@/components/ui/field.tsx'
+import {Switch} from '@/components/ui/switch'
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select'
 import {Tooltip, TooltipContent, TooltipTrigger} from '@/components/ui/tooltip'
 import {isTeamCountFraction, teamCountForFraction, teamCountFractions, type TeamCountFraction} from '@/lib/quiz.ts'
@@ -123,7 +123,7 @@ export default function QuizToolbar({showTeamNames, onShowTeamNamesChange, onRan
                 </Tooltip>
             </div>
             <div className="flex flex-row items-center gap-2 shrink-0">
-                <Checkbox id="quiz-show-team-names" checked={showTeamNames} onCheckedChange={(checked) => onShowTeamNamesChange(checked === true)}/>
+                <Switch id="quiz-show-team-names" checked={showTeamNames} onCheckedChange={onShowTeamNamesChange}/>
                 <FieldLabel htmlFor="quiz-show-team-names" className="whitespace-nowrap">Show Team Names</FieldLabel>
             </div>
             <div className="ml-auto flex flex-row items-center">
@@ -144,7 +144,7 @@ export default function QuizToolbar({showTeamNames, onShowTeamNamesChange, onRan
                 <Tooltip>
                     <TooltipTrigger asChild>
                         <Button
-                            className="rounded-l-none bg-(--navbar-fg) text-white hover:text-(--navbar-fg) hover:bg-(--navbar-bg)"
+                            className="rounded-l-none bg-st-accent text-st-accent-ink hover:bg-st-accent-soft-ink"
                             onClick={() => onGo(teamCount)}
                         >
                             Go!
