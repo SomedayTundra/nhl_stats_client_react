@@ -2,6 +2,7 @@ import {Link, Outlet} from '@tanstack/react-router'
 import logo from "../assets/nhl_logo.png"
 import {ReactQueryDevtools} from '@tanstack/react-query-devtools'
 import {ThemeToggle} from '@somedaytundra/theme'
+import AuthCard from '@/components/auth/AuthCard.tsx'
 
 const NavBar = () => {
 
@@ -33,6 +34,9 @@ const NavBar = () => {
                             <Link className={navClass} to="/about/patch_notes">Patch Notes</Link>
                             <div className="ml-3 flex items-center">
                                 <ThemeToggle compact animationToggle={false}/>
+                            </div>
+                            <div className="ml-3 flex items-center">
+                                <AuthCard/>
                             </div>
                         </div>
                     </div>

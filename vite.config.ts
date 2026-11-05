@@ -11,6 +11,7 @@ import path from 'node:path'
 const LOCAL_THEME = path.resolve(__dirname, '../somedaytundra_theme')
 const LOCAL_THEME_ALIASES: Alias[] = [
   { find: /^@somedaytundra\/theme$/, replacement: `${LOCAL_THEME}/dist/index.js` },
+  { find: /^@somedaytundra\/theme\/clerk$/, replacement: `${LOCAL_THEME}/dist/clerk.js` },
   { find: /^@somedaytundra\/theme\/theme\.css$/, replacement: `${LOCAL_THEME}/css/theme.css` }
 ]
 
@@ -42,8 +43,9 @@ export default defineConfig(({ command, mode }) => {
         { find: '@', replacement: path.resolve(__dirname, 'src') },
         ...(useLocalTheme ? LOCAL_THEME_ALIASES : [])
       ],
-      // the local theme checkout has its own dev copy of React; one shared copy keeps hooks working
-      dedupe: ['react', 'react-dom']
+      // the local theme checkout has its own dev copies of these; one shared copy keeps React's
+      // hooks and Clerk's context working across the two
+      dedupe: ['react', 'react-dom', '@clerk/react']
     },
     build: {
       outDir: 'dist',
