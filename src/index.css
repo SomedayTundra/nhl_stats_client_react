@@ -123,8 +123,9 @@
     --row-number: var(--color-gray-800);
 
     /* Aurora's st-accent-soft is a translucent tint, which would let rows scroll through the sticky
-       header; this is the same tint (#5BE7A9 at 11%) laid opaquely over the solid surface */
-    --table-header-bg: color-mix(in srgb, #5BE7A9 11%, var(--st-surface-solid));
+       header; this is the same tint (the accent at st-accent-soft's 11%) laid opaquely over the solid
+       surface. CSS can't feed a color's alpha into color-mix, so the 11% is the one number copied. */
+    --table-header-bg: color-mix(in srgb, var(--st-accent) 11%, var(--st-surface-solid));
 
     /* shadcn draws dark-mode control fills as --input at 30% (50% on hover), so a lighter --input
        lifts the date picker, selects and outline buttons off the near-black page */

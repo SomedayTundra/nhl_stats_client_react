@@ -1,7 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <!-- hockey puck -->
-  <ellipse cx="16" cy="22" rx="12" ry="5" fill="#1a1a1f"/>
-  <rect x="4" y="11" width="24" height="11" fill="#1a1a1f"/>
-  <ellipse cx="16" cy="11" rx="12" ry="5" fill="#2e2e38"/>
-  <ellipse cx="16" cy="11" rx="12" ry="5" fill="none" stroke="#5b6b8c" stroke-width="1.5"/>
+  <!-- hockey puck, in the SomedayTundra dashboard's NHL Stats blue (the st-proj-nhl CSS variable, light theme) -->
+  <ellipse cx="16" cy="22" rx="12" ry="5" fill="#1F6BC0"/>
+  <rect x="4" y="11" width="24" height="11" fill="#1F6BC0"/>
+  <ellipse cx="16" cy="11" rx="12" ry="5" fill="#1F6BC0"/>
+  <!-- light arc on the top face's front edge (white at 55% over the blue) -->
+  <path d="M4 11 A12 5 0 0 0 28 11" fill="none" stroke="#9ABCE2" stroke-width="1.5"/>
 </svg>
