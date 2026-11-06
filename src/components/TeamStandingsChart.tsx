@@ -4,7 +4,7 @@ import * as React from 'react'
 import {createPortal} from 'react-dom'
 import 'react-calendar/dist/Calendar.css'
 import {CartesianGrid, Dot, Line, LineChart, XAxis, YAxis} from 'recharts'
-import {Card, CardContent, CardDescription, CardHeader, CardTitle,} from './ui/card'
+import {Card, CardContent} from './ui/card'
 import {type ChartConfig, ChartContainer, ChartTooltip} from './ui/chart'
 
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from './ui/select'
@@ -126,6 +126,7 @@ type DockedTooltipPanelProps = {
     teamLogoByAbbrev: Map<string, string>
     sidebarIconMode: SidebarIconMode,
     statType: StatType
+    title: string
 }
 
 // docked along the chart's right edge instead of following the cursor, stretched to the chart's
@@ -134,38 +135,43 @@ type DockedTooltipPanelProps = {
 // the swatch/logo toggle that used to live pinned to the bottom of this panel now lives in the
 // chart's top toolbar instead (see the right-justified control cluster there) - this component
 // only reads sidebarIconMode to decide what each row draws
-function DockedTooltipPanel({payload, label, scrollContainerRef, teamLogoByAbbrev, sidebarIconMode, statType}: DockedTooltipPanelProps) {
+function DockedTooltipPanel({payload, label, scrollContainerRef, teamLogoByAbbrev, sidebarIconMode, statType, title}: DockedTooltipPanelProps) {
     const sorted = payload ? [...payload].sort((a, b) => (Number(b.value) || 0) - (Number(a.value) || 0)) : null
 
     return (
         <div className='h-full w-36 shrink-0 border-l flex flex-col text-xs'>
+            {/* pinned above the scroll area, so only the rows scroll. The chart's title lives here
+                rather than in a card header, which cost the chart too much height */}
+            <div className='shrink-0 border-b px-3 py-2 text-sm'>
+                <div className='font-bold'>{title}</div>
+                {sorted && sorted.length > 0 && label && (
+                    <div className='mt-1 font-medium'>{formatApiDateForDisplay(label)}</div>
+                )}
+            </div>
             <div ref={scrollContainerRef} className='flex-1 min-h-0 overflow-y-auto px-3 py-2'>
                 {sorted && sorted.length > 0 ? (
-                    <>
-                        <div className='mb-1 font-medium'>{label && formatApiDateForDisplay(label)}</div>
-                        <div className='flex flex-col'>
-                            {sorted.map((item) => {
-                                const abbrev = String(item.name ?? item.dataKey ?? '')
-                                const logoFilename = teamLogoByAbbrev.get(abbrev)
-                                return (
-                                    <div key={item.dataKey} className='flex items-center gap-1.5 whitespace-nowrap py-0.5 [font-family:var(--mono)] tabular-nums'>
-                                        {/* height-only (no fixed width): the source crests aren't
-                                            square, so pinning both dimensions would letterbox the
-                                            visible mark down well under this height */}
-                                        {sidebarIconMode === 'logo' && logoFilename ? (
-                                            <img src={getTeamLogoUrl(logoFilename, '1x')} alt='' className='h-8 w-auto shrink-0'/>
-                                        ) : (
-                                            <span className='inline-block size-2 shrink-0 rounded-[2px]' style={{backgroundColor: item.color}}/>
-                                        )}
-                                        <span>{abbrev}</span>
-                                        <span className='ml-auto'>{
-                                            showStatAsPercent(statType) ? formatPercent(item.value) : formatPaddedPoints(item.value)
-                                        }</span>
-                                    </div>
-                                )
-                            })}
-                        </div>
-                    </>
+                    <div className='flex flex-col'>
+                        {sorted.map((item) => {
+                            const abbrev = String(item.name ?? item.dataKey ?? '')
+                            const logoFilename = teamLogoByAbbrev.get(abbrev)
+                            return (
+                                <div key={item.dataKey} className='flex items-center gap-1.5 whitespace-nowrap py-0.5 [font-family:var(--mono)] tabular-nums'>
+                                    {/* height-only (no fixed width): the source crests aren't
+                                        square, so pinning both dimensions would letterbox the
+                                        visible mark down well under this height */}
+                                    {sidebarIconMode === 'logo' && logoFilename ? (
+                                        <img src={getTeamLogoUrl(logoFilename, '1x')} alt='' className='h-8 w-auto shrink-0'/>
+                                    ) : (
+                                        <span className='inline-block size-2 shrink-0 rounded-[2px]' style={{backgroundColor: item.color}}/>
+                                    )}
+                                    <span>{abbrev}</span>
+                                    <span className='ml-auto'>{
+                                        showStatAsPercent(statType) ? formatPercent(item.value) : formatPaddedPoints(item.value)
+                                    }</span>
+                                </div>
+                            )
+                        })}
+                    </div>
                 ) : (
                     <p className='text-muted-foreground'>Hover the chart to see values</p>
                 )}
@@ -608,7 +614,9 @@ export default function TeamStandingsChart() {
                             onMouseLeave={handleChartMouseLeave}
                             onDoubleClick={handleChartDoubleClick}
                             margin={{
-                                top: 12,
+                                // a hovered logo is centered on its point, so one at the y-axis max reaches
+                                // half a logo above the plot area; leave room for it rather than clipping it
+                                top: Math.max(12, logoSize / 2 + 2),
                                 bottom: 12,
                                 left: 24,
                                 right: 12 + logoSize / 2,
@@ -670,6 +678,7 @@ export default function TeamStandingsChart() {
                     teamLogoByAbbrev={teamLogoByAbbrev}
                     sidebarIconMode={sidebarIconMode}
                     statType={statName}
+                    title={statToLabel(statName)}
                 />
             </div>
         )
@@ -797,11 +806,6 @@ export default function TeamStandingsChart() {
             </div>
             <div className='flex-1 min-h-0 flex justify-center'>
                 <Card className='w-full flex flex-col overflow-hidden'>
-                    <CardHeader className='shrink-0'>
-                        <CardTitle>{statToLabel(statName)}</CardTitle>
-                        <CardDescription>
-                        </CardDescription>
-                    </CardHeader>
                     <CardContent className='flex-1 min-h-0 overflow-hidden'>
                         {chartArea}
                     </CardContent>
