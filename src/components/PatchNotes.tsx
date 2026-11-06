@@ -9,7 +9,7 @@ const REPO_LABELS = new Set(['client', 'server', 'client + server'])
 const CATEGORIES = new Set(['new', 'improved', 'fixed', 'misc'])
 
 // Jira ticket ids, bare (NHL-86) or bracketed ([NHL-86]), render as orange pills showing the bare id.
-const TICKET = /\[NHL-\d+]|\bNHL-\d+\b/g
+const TICKET = /\[(NHL|DSH)-\d+]|\bNHL-\d+\b/g
 const NO_TICKET_PILLS = new Set(['code', 'pre', 'a'])
 
 function ticketPills(text: string): ElementContent[] {
