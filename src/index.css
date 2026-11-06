@@ -68,7 +68,7 @@
     --bg: var(--st-surface-solid);
     --table-border: var(--st-ink);
     /* the standings' row numbers sit faintly in the background: about 1.4:1 against the page in
-       both themes (gray-300 on Glacier Forest's near-white, gray-800 on Aurora's near-black) */
+       both themes (gray-300 on Glacier Forest's near-white, a brightened gray-800 on Aurora's near-black) */
     --row-number: var(--color-gray-300);
     /* Every blue below comes from the ST theme's scale, lightest to darkest: st-accent-soft (resting
        tints), st-accent-tint (hover and highlight), st-accent-soft-ink (blue text on a tint),
@@ -120,7 +120,8 @@
 }
 
 [data-theme="aurora"] {
-    --row-number: var(--color-gray-800);
+    /* gray-800 with its lightness raised 20%, so the numbers read a touch more clearly on near-black */
+    --row-number: oklch(from var(--color-gray-800) calc(l * 1.2) c h);
 
     /* Aurora's st-accent-soft is a translucent tint, which would let rows scroll through the sticky
        header; this is the same tint (the accent at st-accent-soft's 11%) laid opaquely over the solid
