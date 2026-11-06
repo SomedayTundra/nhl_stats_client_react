@@ -197,10 +197,6 @@ p {
     color: var(--st-ink);
     border-bottom: 1px solid var(--st-line);
     backdrop-filter: blur(12px);
-
-    .navbar-label {
-        color: var(--st-accent);
-    }
 }
 
 .nhl-page-footer {

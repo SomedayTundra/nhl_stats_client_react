@@ -15,16 +15,13 @@ const NavBar = () => {
             <nav className="navbar shrink-0">
                 <div className="mx-auto px-2 sm:px-6 lg:px-4">
                     <div className="flex h-15 items-center justify-start">
-                        <div className="flex flex-1 items-start justify-left md:items-stretch md:justify-start">
-                            <Link to="/" className="flex shrink-0 items-center mr-8">
+                        <div className="flex flex-1 items-center justify-start">
+                            <Link to="/" className="flex shrink-0 items-center mr-4">
                                 <img
                                     className="h-10 w-auto"
                                     src={logo}
-                                    alt="NHL Stats"
+                                    alt="NHL Logo"
                                 />
-                                <span className="navbar-label hidden md:block text-2xl font-bold ml-2">
-                                    NHL Stats
-                                </span>
                             </Link>
                             <Link className={navClass} to="/nhl_standings">Standings</Link>
                             <Link className={navClass} to="/nhl_stats_chart">Chart</Link>
