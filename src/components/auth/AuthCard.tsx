@@ -87,8 +87,16 @@ function UnconfiguredAuthCard() {
             {explained && (
                 <p role='status'
                    className='absolute top-full right-0 z-50 mt-2 w-64 rounded-lg border border-st-line bg-st-surface p-2.5 text-[12.5px] leading-snug text-st-muted shadow-st-card'>
-                    Sign-in isn't set up yet: add <code className='font-mono'>VITE_CLERK_PUBLISHABLE_KEY</code> to{' '}
-                    <code className='font-mono'>.env.local</code>.
+                    {/* the setup hint is for developers; a visitor to a deployment missing its key just
+                        gets told sign-in is unavailable */}
+                    {import.meta.env.DEV ? (
+                        <>
+                            Sign-in isn't set up yet: add <code className='font-mono'>VITE_CLERK_PUBLISHABLE_KEY</code> to{' '}
+                            <code className='font-mono'>.env.local</code>.
+                        </>
+                    ) : (
+                        "Sign-in isn't available right now."
+                    )}
                 </p>
             )}
         </div>
