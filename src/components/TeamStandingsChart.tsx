@@ -70,6 +70,13 @@ const MAX_LOGO_SIZE = 64
 const LOGO_SIZE_STEP = 8
 const DEFAULT_LOGO_SIZE = 48
 
+// the plot area's left edge is the chart's left margin plus the y-axis's width (Recharts' default,
+// set explicitly so this stays true); a row of tied hover logos that would start left of it is
+// laid out rightward instead
+const CHART_MARGIN_LEFT = 24
+const Y_AXIS_WIDTH = 60
+const PLOT_LEFT = CHART_MARGIN_LEFT + Y_AXIS_WIDTH
+
 // each team's line color comes from the backend (chartLineColor, measured from that season's
 // logo; chartLineColorDark on Aurora, when the backend has one). This is a safety net only, for a backend that predates that field or a team it hasn't
 // colored yet
@@ -562,13 +569,26 @@ export default function TeamStandingsChart() {
 
         // teams tied on the selected stat at whichever date is currently hovered would render their active-dot
         // logos on top of each other; group them by that date's value and give each one after the
-        // first an increasing leftward offset so they lay out in a row instead of overlapping
-        function logoStackOffset(rowIndex: number, abbrev: string): number {
+        // first an increasing offset so they lay out in a row instead of overlapping. Rows grow
+        // leftward from the point, unless the longest row at that date would run past the plot's
+        // left edge (a date near the start of the season); then every row at that date grows
+        // rightward, so they all read the same way. Every team's point at one date shares one cx.
+        function logoStackX(rowIndex: number, abbrev: string, cx: number): number {
+            const centered = cx - logoSize / 2
             const row = chartData[rowIndex]
             const value = row?.[abbrev]
-            if (typeof value !== 'number') return 0
+            if (typeof value !== 'number') return centered
             const tiedAbbrevs = visibleTeamAbbrevs.filter((candidate) => row[candidate] === value)
-            return Math.max(tiedAbbrevs.indexOf(abbrev), 0)
+            const position = Math.max(tiedAbbrevs.indexOf(abbrev), 0)
+
+            const tieCounts = new Map<number, number>()
+            visibleTeamAbbrevs.forEach((candidate) => {
+                const candidateValue = row[candidate]
+                if (typeof candidateValue === 'number') tieCounts.set(candidateValue, (tieCounts.get(candidateValue) ?? 0) + 1)
+            })
+            const longestRow = Math.max(...tieCounts.values())
+            const direction = centered - (longestRow - 1) * logoStackSpacing < PLOT_LEFT ? 1 : -1
+            return centered + direction * position * logoStackSpacing
         }
 
         // shown only for the point the user is currently hovering over (Recharts' "active dot");
@@ -584,12 +604,11 @@ export default function TeamStandingsChart() {
                 const logoFilename = teamLogoByAbbrev.get(abbrev)
 
                 if (typeof value === 'number' && typeof index === 'number' && logoFilename) {
-                    const offset = logoStackOffset(index, abbrev)
                     const logo = (
                         <image
                             key={key}
                             href={getTeamLogoUrl(logoFilename, '2x')}
-                            x={(cx ?? 0) - logoSize / 2 - offset * logoStackSpacing}
+                            x={logoStackX(index, abbrev, cx ?? 0)}
                             y={(cy ?? 0) - logoSize / 2}
                             width={logoSize}
                             height={logoSize}
@@ -618,7 +637,7 @@ export default function TeamStandingsChart() {
                                 // half a logo above the plot area; leave room for it rather than clipping it
                                 top: Math.max(12, logoSize / 2 + 2),
                                 bottom: 12,
-                                left: 24,
+                                left: CHART_MARGIN_LEFT,
                                 right: 12 + logoSize / 2,
                             }}
                         >
@@ -632,6 +651,7 @@ export default function TeamStandingsChart() {
                                 tickFormatter={(value: string) => value.slice(5)}
                             />
                             <YAxis
+                                width={Y_AXIS_WIDTH}
                                 tickLine={true}
                                 axisLine={true}
                                 tickMargin={8}
