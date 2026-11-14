@@ -72,12 +72,14 @@ function buildColumns(alwaysShowFourL10: boolean) {
             header: 'Team',
             sortFn: 'alphanumeric',
             sortDescFirst: false,
-            meta: {align: 'left', cellClassName: 'flex items-center'},
+            // the flex lives on an inner div (a flex <td> stops being a table cell), and the name
+            // never wraps, so the auto-layout table sizes this column to the widest logo + name shown
+            meta: {align: 'left', cellClassName: 'align-middle'},
             cell: (info) => (
-                <>
-                    <TeamLogo className='h-12 w-12 align-middle justify-center' logo={info.row.original.logo} logoDark={info.row.original.logoDark} size='2x' alt='logo'/>
-                    <p className={CLASS_TD}>{info.getValue()}</p>
-                </>
+                <div className='flex items-center'>
+                    <TeamLogo className='h-12 w-12 shrink-0 align-middle justify-center' logo={info.row.original.logo} logoDark={info.row.original.logoDark} size='2x' alt='logo'/>
+                    <p className={cn(CLASS_TD, 'whitespace-nowrap')}>{info.getValue()}</p>
+                </div>
             ),
         }),
         helper.accessor('gamesPlayed', {header: 'GP', meta: {align: 'center', cellClassName: CLASS_TD_CENTER}}),
