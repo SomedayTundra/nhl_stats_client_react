@@ -29,6 +29,7 @@ const NavBar = () => {
                             <Link className={navClass} to="/league_shape_quiz">Quiz</Link>
                             <Link className={`${navClass} ml-auto`} to="/jira">Jira</Link>
                             <Link className={navClass} to="/about/patch_notes">Patch Notes</Link>
+                            <Link className={navClass} to="/farm_runs">Farm Runs</Link>
                             <div className="ml-3 flex items-center">
                                 <ThemeToggle compact animationToggle={false}/>
                             </div>

@@ -7,6 +7,7 @@ import Playoffs from '@/components/Playoffs.tsx'
 import LeagueShapeQuiz from '@/components/LeagueShapeQuiz.tsx'
 import PatchNotes from '@/components/PatchNotes.tsx'
 import JiraIssues from '@/components/JiraIssues.tsx'
+import FarmRuns from '@/components/FarmRuns.tsx'
 import NotFound from '@/components/NotFound.tsx'
 
 const rootRoute = createRootRoute({
@@ -68,8 +69,15 @@ const jiraRoute = createRoute({
     }),
 })
 
+// the server's most recent data farm runs (update_mongodb.py), newest first
+const farmRunsRoute = createRoute({
+    path: '/farm_runs',
+    getParentRoute: () => navBarRoute,
+    component: FarmRuns,
+})
+
 const routeTree = rootRoute.addChildren([
-    navBarRoute.addChildren([indexRoute, standingsRoute, chartRoute, playoffsRoute, quizRoute, jiraRoute, patchNotesRoute]),
+    navBarRoute.addChildren([indexRoute, standingsRoute, chartRoute, playoffsRoute, quizRoute, jiraRoute, patchNotesRoute, farmRunsRoute]),
 ])
 
 export const router = createRouter({
