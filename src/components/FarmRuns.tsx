@@ -4,7 +4,7 @@ import {format, parseISO} from 'date-fns'
 import {type FarmRun, useFarmRuns} from '@/hooks/useFarmRuns.ts'
 import {cn} from '@/lib/utils.ts'
 
-const CLASS_TH = 'h-8 px-4 text-left align-middle font-semibold text-[var(--table-header-fg)] whitespace-nowrap'
+const CLASS_TH = 'h-8 px-4 text-left align-middle font-semibold hover:bg-accent hover:text-accent-foreground whitespace-nowrap'
 const CLASS_TD = 'px-4 py-2 text-left align-middle whitespace-nowrap'
 
 const formatTime = (iso: string | null) => iso ? format(parseISO(iso), 'MMM d, yyyy h:mm:ss a') : '—'
@@ -56,7 +56,7 @@ export default function FarmRuns() {
         tableBody = <tr><td colSpan={columns.length} className='p-4 text-center'>No farm runs recorded</td></tr>
     } else {
         tableBody = runs.map(run => (
-            <tr key={`${run.startedAt}-${run.githubRunId ?? ''}`} className='border-t border-(--row-number)'>
+            <tr key={`${run.startedAt}-${run.githubRunId ?? ''}`} className='border-t border-row-number'>
                 {columns.map(column => <td key={column.header} className={cn(CLASS_TD, column.align === 'right' && 'text-right')}>{column.cell(run)}</td>)}
             </tr>
         ))

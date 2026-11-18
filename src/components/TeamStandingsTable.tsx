@@ -23,7 +23,7 @@ import type {TeamStatEntry} from '@/lib/teamStats.ts'
 
 const CLASS_TD = 'p-2 align-middle'
 const CLASS_TD_CENTER = `${CLASS_TD} text-center`
-const CLASS_TH_BASE = 'h-8 px-4 align-middle font-semibold text-[var(--table-header-fg)] cursor-pointer select-none hover:text-[var(--text-h)]'
+const CLASS_TH_BASE = 'h-8 px-4 align-middle font-semibold hover:bg-accent hover:text-accent-foreground cursor-pointer select-none'
 const CLASS_TH_LEFT = CLASS_TH_BASE + ' text-left'
 const CLASS_TH_CENTER = CLASS_TH_BASE + ' text-center'
 

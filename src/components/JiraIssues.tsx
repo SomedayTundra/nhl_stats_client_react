@@ -20,7 +20,7 @@ import {compareStatuses, distinctStatuses, type JiraIssueSummary, type JiraStatu
 import {useLocalStorageState} from '@/lib/useLocalStorageState.ts'
 import {cn} from '@/lib/utils.ts'
 
-const CLASS_TH = 'h-8 px-4 text-left align-middle font-semibold text-[var(--table-header-fg)] cursor-pointer select-none hover:text-[var(--text-h)]'
+const CLASS_TH = 'h-8 px-4 text-left align-middle font-semibold hover:bg-accent hover:text-accent-foreground cursor-pointer select-none]'
 const CLASS_TD = 'px-4 py-2 text-left align-middle'
 
 const features = tableFeatures({
