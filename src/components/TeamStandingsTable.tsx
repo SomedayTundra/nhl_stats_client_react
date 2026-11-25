@@ -17,6 +17,7 @@ import {
     tableFeatures,
     useTable,
     type SortingState,
+    type SortFn,
 } from '@tanstack/react-table'
 import {cn} from '@/lib/utils.ts'
 import type {TeamStatEntry} from '@/lib/teamStats.ts'
@@ -37,6 +38,37 @@ const features = tableFeatures({
 const helper = createColumnHelper<typeof features, TeamStatEntry>()
 
 const MISSING = '—'
+
+type NumericField = {
+    [K in keyof TeamStatEntry]-?: TeamStatEntry[K] extends number | null | undefined ? K : never
+}[keyof TeamStatEntry]
+
+function sortByFields(...fields: NumericField[]): SortFn<typeof features, TeamStatEntry> {
+    return (rowA, rowB) => {
+        for(const field of fields) {
+            const a = rowA.original[field] ?? -Infinity
+            const b = rowB.original[field] ?? -Infinity
+            if(a !== b) return (a > b) ? 1 : -1
+        }
+        return 0;
+    }
+}
+
+function defaultSortWithTiebreaks(startingField: NumericField): SortFn<typeof features, TeamStatEntry> {
+    return (rowA, rowB) => {
+        const pointsWithTiebreakFields: NumericField[] = ['gamesPlayed', 'points', 'wins', 'winPctg', 'pointPctg', 'l10Wins', 'l10GoalDiff', 'l10GoalsFor']
+        const startingIndex = pointsWithTiebreakFields.indexOf(startingField)
+        if(startingIndex == -1) return 0
+
+        const fieldsWeCareAbout = pointsWithTiebreakFields.slice(startingIndex)
+        for(const field of fieldsWeCareAbout) {
+            const a = rowA.original[field] ?? -Infinity
+            const b = rowB.original[field] ?? -Infinity
+            if(a !== b) return (a > b) ? 1 : -1
+        }
+        return 0;
+    }
+}
 
 // the last-10 record as wins-losses-(OT losses or ties), normally three numbers. Which of those
 // two the third slot holds falls out of the era: pre-1999-2000 seasons have no OT losses, the
@@ -82,19 +114,23 @@ function buildColumns(alwaysShowFourL10: boolean) {
                 </div>
             ),
         }),
-        helper.accessor('gamesPlayed', {header: 'GP', meta: {align: 'center', cellClassName: CLASS_TD_CENTER}}),
-        helper.accessor('wins', {header: 'Wins', meta: {align: 'center', cellClassName: CLASS_TD_CENTER}}),
+        helper.accessor('gamesPlayed', {header: 'GP', sortFn: defaultSortWithTiebreaks('gamesPlayed'), meta: {align: 'center', cellClassName: CLASS_TD_CENTER}}),
+        helper.accessor('wins', {header: 'Wins', sortFn: defaultSortWithTiebreaks('wins'), meta: {align: 'center', cellClassName: CLASS_TD_CENTER}}),
         helper.accessor('losses', {header: 'Losses', meta: {align: 'center', cellClassName: CLASS_TD_CENTER}}),
         helper.accessor('otLosses', {header: 'OT Losses', meta: {align: 'center', cellClassName: CLASS_TD_CENTER}}),
-        helper.accessor('points', {header: 'Points', meta: {align: 'center', cellClassName: CLASS_TD_CENTER}}),
+        helper.accessor('points', {header: 'Points', sortFn: defaultSortWithTiebreaks('points'), meta: {align: 'center', cellClassName: CLASS_TD_CENTER}}),
         helper.accessor('winPctg', {
-            header: 'Win%', meta: {align: 'center', cellClassName: CLASS_TD_CENTER},
+            header: 'Win%',
+            sortFn: defaultSortWithTiebreaks('winPctg'),
+            meta: {align: 'center', cellClassName: CLASS_TD_CENTER},
             cell: (info) => {
                 return formatPctg(info.getValue())
             }
         }),
         helper.accessor('pointPctg', {
-            header: 'Point%', meta: {align: 'center', cellClassName: CLASS_TD_CENTER},
+            header: 'Point%',
+            sortFn: sortByFields('pointPctg', 'winPctg', 'l10Wins', 'l10GoalDiff', 'l10GoalsFor'),
+            meta: {align: 'center', cellClassName: CLASS_TD_CENTER},
             cell: (info) => {
                 return formatPctg(info.getValue())
             }
