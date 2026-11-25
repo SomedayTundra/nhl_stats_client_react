@@ -224,7 +224,12 @@ export default function TeamStandingsTable() {
         setDate(maxDate ?? parseApiDateString(selectedSeason.endDate))
     }
 
-    const {data: teamStats, isPending, isFetching, error} = useTeamStats(date, date, resolvedSeason || undefined)
+    // hold the fetch until the selected season's info has loaded and `date` has been moved into that
+    // season above. Until then `date` still belongs to the previous season, and the server (which
+    // matches on date AND seasonId) would answer that pair with [] - emptying the table for a beat
+    // before the real request landed. keepPreviousData keeps the old rows up while we wait.
+    const seasonReady = selectedSeason !== undefined && String(selectedSeason.seasonId) === resolvedSeason
+    const {data: teamStats, isPending, isFetching, error} = useTeamStats(date, date, resolvedSeason || undefined, {enabled: seasonReady})
 
     // flip on once a fetch has been running longer than SLOW_FETCH_MS; reset the moment fetching
     // stops (adjust-state-during-render, so no synchronous setState inside an effect)
@@ -252,7 +257,10 @@ export default function TeamStandingsTable() {
         features,
         columns,
         data: filteredTeamStats,
-        getRowId: (row) => `${row.date}_${row.teamName}`,
+        // the table shows a single day, so the team name alone is unique. Leaving the date out keeps
+        // each row (and its logo <img>) mounted across date and season changes instead of rebuilding
+        // the whole body every time
+        getRowId: (row) => row.teamName,
         state: {sorting},
         onSortingChange: setSorting,
         sortDescFirst: true,

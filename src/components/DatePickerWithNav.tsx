@@ -85,32 +85,27 @@ export default function DatePickerWithNav({id, date, setDate, tooltip, label, mi
         if (maxDate) setDate(maxDate)
     }
 
-    // the leftmost/rightmost buttons in the group get the outer corner radius; everything between
-    // them is square. Which button ends up on each edge shifts depending on whether the
-    // first-day/last-day bumper buttons are present (first day is always leftmost when shown,
-    // last day is always rightmost when shown).
-    const weekBackIsLeftmost = minDate === undefined
-    const weekForwardIsRightmost = maxDate === undefined
-
+    // the first-day/last-day buttons are always rendered (just disabled while their bound is
+    // unknown, e.g. while a newly picked season's dates are loading) so the control's width never
+    // changes and the toolbar around it doesn't shift. They sit on the edges and take the outer
+    // corner radius; every button between them is square.
     return (
         <Field className="w-auto flex-row items-center" orientation="horizontal">
             {label && (
                 <FieldLabel htmlFor={id} className="justify-start shrink-0">{label}:</FieldLabel>
             )}
             <div className="flex items-center gap-0">
-                {minDate && (
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <Button variant="outline" size="icon-xs" className={`rounded-r-none ${NAV_BUTTON_CLASS}`} onClick={goToFirstDay} disabled={atOrBeforeMin} aria-label="First day">
-                                <ChevronFirstIcon />
-                            </Button>
-                        </TooltipTrigger>
-                        <TooltipContent side="top">First day</TooltipContent>
-                    </Tooltip>
-                )}
                 <Tooltip>
                     <TooltipTrigger asChild>
-                        <Button variant="outline" size="icon-xs" className={`${NAV_BUTTON_CLASS} ${weekBackIsLeftmost ? 'rounded-r-none' : 'rounded-none'}`} onClick={goToPreviousWeek} disabled={atOrBeforeMin} aria-label="Previous week">
+                        <Button variant="outline" size="icon-xs" className={`rounded-r-none ${NAV_BUTTON_CLASS}`} onClick={goToFirstDay} disabled={!minDate || atOrBeforeMin} aria-label="First day">
+                            <ChevronFirstIcon />
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top">First day</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Button variant="outline" size="icon-xs" className={`rounded-none ${NAV_BUTTON_CLASS}`} onClick={goToPreviousWeek} disabled={atOrBeforeMin} aria-label="Previous week">
                             <ChevronsLeftIcon />
                         </Button>
                     </TooltipTrigger>
@@ -163,22 +158,20 @@ export default function DatePickerWithNav({id, date, setDate, tooltip, label, mi
                 </Tooltip>
                 <Tooltip>
                     <TooltipTrigger asChild>
-                        <Button variant="outline" size="icon-xs" className={`${NAV_BUTTON_CLASS} ${weekForwardIsRightmost ? 'rounded-l-none' : 'rounded-none'}`} onClick={goToNextWeek} disabled={atOrAfterMax} aria-label="Next week">
+                        <Button variant="outline" size="icon-xs" className={`rounded-none ${NAV_BUTTON_CLASS}`} onClick={goToNextWeek} disabled={atOrAfterMax} aria-label="Next week">
                             <ChevronsRightIcon />
                         </Button>
                     </TooltipTrigger>
                     <TooltipContent side="top">+1 week</TooltipContent>
                 </Tooltip>
-                {maxDate && (
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <Button variant="outline" size="icon-xs" className={`rounded-l-none ${NAV_BUTTON_CLASS}`} onClick={goToLastDay} disabled={atOrAfterMax} aria-label="Last day">
-                                <ChevronLastIcon />
-                            </Button>
-                        </TooltipTrigger>
-                        <TooltipContent side="top">Last day</TooltipContent>
-                    </Tooltip>
-                )}
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Button variant="outline" size="icon-xs" className={`rounded-l-none ${NAV_BUTTON_CLASS}`} onClick={goToLastDay} disabled={!maxDate || atOrAfterMax} aria-label="Last day">
+                            <ChevronLastIcon />
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top">Last day</TooltipContent>
+                </Tooltip>
             </div>
         </Field>
     )

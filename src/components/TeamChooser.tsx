@@ -66,7 +66,11 @@ function buildWheelStops(teams: TeamInfo[], conferences: TeamConferenceGroup[], 
 }
 
 export default function TeamChooser({season, selected, onChange}: TeamChooserProps) {
-    const {data: teams, isPending, error} = useTeamInfo(season || undefined)
+    // keepPrevious: on a season change, keep showing the previous season's chooser until the new
+    // teams land rather than swapping in the "Loading teams..." button (which flashed). While that
+    // placeholder is up (isPlaceholderData) the teams are the wrong season's, so nothing below may
+    // act on them: no defaulting the selection, no wheel steps, no opening the popover
+    const {data: teams, isPending, isPlaceholderData, error} = useTeamInfo(season || undefined, {keepPrevious: true})
 
     // computed with a safe `teams ?? []` fallback (rather than after the isPending/error early
     // returns below) specifically so the wheel hooks further down - which need hooks called
@@ -88,7 +92,7 @@ export default function TeamChooser({season, selected, onChange}: TeamChooserPro
     const seenFirstSeason = React.useRef(false)
     React.useEffect(() => {
         // teams is empty for an uncached season until its background farm lands - wait for it
-        if (!season || !teams || teams.length === 0) return
+        if (!season || !teams || teams.length === 0 || isPlaceholderData) return
 
         if (!seenFirstSeason.current) {
             seenFirstSeason.current = true
@@ -101,13 +105,14 @@ export default function TeamChooser({season, selected, onChange}: TeamChooserPro
         if (defaultedForSeason.current === season) return
         defaultedForSeason.current = season
         onChange(teams.map((team) => team.teamAbbrev))
-    }, [season, teams, selected, onChange])
+    }, [season, teams, isPlaceholderData, selected, onChange])
 
     // checkbox clicks only edit this draft; it's only pushed to onChange when the popover closes
     const [open, setOpen] = React.useState(false)
     const [draftSelected, setDraftSelected] = React.useState<string[]>(selected)
 
     function handleOpenChange(nextOpen: boolean) {
+        if (nextOpen && isPlaceholderData) return
         if (nextOpen) {
             setDraftSelected(selected)
         } else if (!haveSameElements(draftSelected, selected)) {
@@ -124,9 +129,11 @@ export default function TeamChooser({season, selected, onChange}: TeamChooserPro
     const selectedRef = React.useRef(selected)
     const onChangeRef = React.useRef(onChange)
     const wheelStopsRef = React.useRef(wheelStops)
+    const isPlaceholderRef = React.useRef(isPlaceholderData)
     const lastStepAtRef = React.useRef(0)
 
     React.useEffect(() => {
+        isPlaceholderRef.current = isPlaceholderData
         openRef.current = open
         selectedRef.current = selected
         onChangeRef.current = onChange
@@ -153,6 +160,11 @@ export default function TeamChooser({season, selected, onChange}: TeamChooserPro
                 return
             }
             event.preventDefault()
+
+            // still showing the previous season's teams; stepping now would select those
+            if (isPlaceholderRef.current) {
+                return
+            }
 
             if (event.timeStamp - lastStepAtRef.current < WHEEL_STEP_COOLDOWN_MS) {
                 return
